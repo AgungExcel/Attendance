@@ -11,7 +11,7 @@
     <style>
         * { font-size: 11px; }
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; padding: 8px; }
-        .table-container { max-height: calc(100vh - 200px); overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .table-container { max-height: calc(100vh - 230px); overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
         table { border-collapse: collapse; width: 100%; }
         th { position: sticky; top: 0; background-color: #1e293b; color: white; z-index: 10; padding: 6px 4px; font-weight: 600; font-size: 10px; }
         td { padding: 4px 4px; border-bottom: 1px solid #e2e8f0; }
@@ -19,7 +19,6 @@
         .time-cell { font-family: monospace; font-size: 9px; white-space: pre-line; }
         .sticky-id { position: sticky; left: 0; background-color: white; z-index: 9; min-width: 70px; }
         .sticky-name { position: sticky; left: 70px; background-color: white; z-index: 9; min-width: 120px; }
-        /* Filter dropdown style - terlihat jelas */
         .filter-select {
             width: 100%;
             padding: 2px 4px;
@@ -29,20 +28,10 @@
             margin-top: 2px;
             background-color: white;
             color: #1e293b;
-            font-weight: normal;
-        }
-        .filter-select:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 1px #3b82f6;
         }
         .btn-export { background: #059669; transition: 0.2s; }
         .btn-export:hover { background: #047857; }
         .btn-reset { background: #dc2626; }
-        .btn-reset:hover { background: #b91c1c; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .rekap-box { background: #f1f5f9; border-radius: 6px; padding: 4px 8px; display: inline-block; margin-right: 8px; }
         .rekap-label { font-size: 9px; font-weight: bold; color: #334155; }
         .rekap-value { font-size: 12px; font-weight: bold; margin-left: 4px; }
@@ -57,7 +46,7 @@
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5">
             <div>
                 <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
-                <p class="text-[9px] text-emerald-400">Dropdown Filter | Time In-Out | Custom Range</p>
+                <p class="text-[9px] text-emerald-400">Kode Absen + Time | Filter Time (Kosong/1 Waktu/Lengkap)</p>
             </div>
         </div>
         <div class="flex items-center gap-1 bg-slate-700 p-1 rounded-lg flex-wrap">
@@ -76,22 +65,13 @@
     <!-- REKAP & FILTER UTAMA -->
     <div class="p-2 bg-slate-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-wrap gap-2 items-center">
-            <div class="rekap-box">
-                <span class="rekap-label">Total Worker:</span>
-                <span id="totalWorker" class="rekap-value">0</span>
-            </div>
-            <div class="rekap-box">
-                <span class="rekap-label">Total Staff:</span>
-                <span id="totalStaff" class="rekap-value">0</span>
-            </div>
-            <div class="rekap-box">
-                <span class="rekap-label">Total Security:</span>
-                <span id="totalSecurity" class="rekap-value">0</span>
-            </div>
-            <div class="rekap-box">
-                <span class="rekap-label">Total Semua:</span>
-                <span id="totalSemua" class="rekap-value">0</span>
-            </div>
+            <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">Total Staff:</span><span id="totalStaff" class="rekap-value">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">Total Security:</span><span id="totalSecurity" class="rekap-value">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">Total Semua:</span><span id="totalSemua" class="rekap-value">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">⏱️ Tanpa Time:</span><span id="rekapNoTime" class="rekap-value">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">⏱️ 1 Waktu:</span><span id="rekapOneTime" class="rekap-value">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">⏱️ In-Out:</span><span id="rekapFullTime" class="rekap-value">0</span></div>
         </div>
         <div class="flex gap-2 items-center">
             <div class="flex items-center gap-1 bg-white border rounded px-1 py-0.5">
@@ -104,9 +84,9 @@
                 <option value="ALL">Semua Kehadiran</option>
                 <option value="HADIR_KODE">Hadir (PR,PRP,PRS,PRM)</option>
                 <option value="TIDAK_HADIR_KODE">Tidak Hadir (AB,LWP,AL,SK,ML,DL,OL)</option>
-                <option value="NO_TIME_IN">Hadir - Tidak ada Time In</option>
-                <option value="NO_TIME_OUT">Hadir - Tidak ada Time Out</option>
-                <option value="NO_TIME_IN_OUT">Hadir - Tanpa Time In & Out</option>
+                <option value="NO_TIME">Tidak ada Time (kosong)</option>
+                <option value="ONE_TIME">Hanya satu waktu (in/out saja)</option>
+                <option value="FULL_TIME">Lengkap (in dan out)</option>
             </select>
             <button id="btnExport" class="btn-export text-white font-bold py-0.5 px-2 rounded text-[9px]">Export XLSX</button>
             <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-0.5 px-2 rounded text-[9px]">Summary</button>
@@ -129,8 +109,8 @@
 
 <script>
     // ======================== GLOBAL ========================
-    let databaseKaryawan = [];
-    let timeMap = new Map();          // key = `${id}_${tanggal}` -> string "08:00-17:00"
+    let databaseKaryawan = [];      // array of { id, name, section, position, joinDate, status, kodePerTanggal: { "1":"PRP", ... } }
+    let timeMap = new Map();         // key = `${id}_${tanggal}` -> string "08:00-17:00" atau "08:00" (jika hanya satu)
     let semuaTanggal = [];
     let databaseGlobal = [];
     let filterAttendanceDetail = "ALL";
@@ -153,6 +133,9 @@
     const totalStaffSpan = document.getElementById('totalStaff');
     const totalSecuritySpan = document.getElementById('totalSecurity');
     const totalSemuaSpan = document.getElementById('totalSemua');
+    const rekapNoTimeSpan = document.getElementById('rekapNoTime');
+    const rekapOneTimeSpan = document.getElementById('rekapOneTime');
+    const rekapFullTimeSpan = document.getElementById('rekapFullTime');
 
     function showAlert(title, msg, type='info') {
         const modal = document.getElementById('modernAlert');
@@ -173,7 +156,7 @@
         const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         return `${String(date.getDate()).padStart(2,'0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
     }
-    // Fungsi format time: ambil time in (pertama) dan time out (terakhir) -> "08:00-17:00"
+    // Format time: ambil time in (pertama) dan time out (terakhir) -> "08:00-17:00" atau "08:00" jika hanya satu
     function formatTimeRange(record) {
         if(!record) return "";
         const parts = record.split(';').map(p=>p.trim()).filter(p=>p);
@@ -286,7 +269,7 @@
         localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan.map(k => ({ ...k, kodePerTanggal: k.kodePerTanggal }))));
         localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
         gabungkanDanRender();
-        showAlert("Sukses",`${databaseKaryawan.length} karyawan dimuat. Upload time clock.`,"success");
+        showAlert("Sukses",`${databaseKaryawan.length} karyawan dimuat. Upload time clock untuk menambah jam.`,"success");
     }
 
     // ======================== BACA TIME CLOCK (hanya time in-out) ========================
@@ -325,7 +308,6 @@
                     if(id && dateStr && record) {
                         let tgl = parseInt(dateStr.split('-')[2], 10);
                         if(!isNaN(tgl)) {
-                            // Format time range (in-out)
                             const formattedTime = formatTimeRange(record);
                             if(formattedTime) timeMapLocal.set(`${id}_${tgl}`, formattedTime);
                         }
@@ -338,7 +320,7 @@
         });
     }
 
-    // ======================== GABUNGKAN DATA ========================
+    // ======================== GABUNGKAN DATA (kode absen tetap, time dari timeMap) ========================
     function gabungkanDanRender() {
         if(!databaseKaryawan.length) return;
         const finalData = databaseKaryawan.map(karyawan => {
@@ -386,7 +368,8 @@
         else return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
 
-    function getFilteredData() {
+    // Filter berdasarkan kolom (ID, Nama, Section, Posisi, Status)
+    function getFilteredByColumn() {
         if(!databaseGlobal.length) return [];
         let filtered = [...databaseGlobal];
         const idFilter = document.getElementById('filter_id')?.value || "";
@@ -402,6 +385,7 @@
         return filtered;
     }
 
+    // Filter kehadiran detail (berdasarkan time)
     function applyAttendanceDetailFilter(data, range) {
         const mode = filterAttendanceDetailSelect.value;
         if(mode === "ALL") return data;
@@ -414,17 +398,32 @@
                 const time = item.time;
                 if(mode === "HADIR_KODE" && hadirKodes.includes(kode)) return true;
                 if(mode === "TIDAK_HADIR_KODE" && tidakHadirKodes.includes(kode)) return true;
-                if(mode === "NO_TIME_IN" && hadirKodes.includes(kode) && (!time || !time.includes('-'))) return true;
-                if(mode === "NO_TIME_OUT" && hadirKodes.includes(kode) && time && time.includes('-') && time.split('-')[1] === "") return true;
-                if(mode === "NO_TIME_IN_OUT" && hadirKodes.includes(kode) && !time) return true;
+                if(mode === "NO_TIME" && !time) return true;
+                if(mode === "ONE_TIME" && time && !time.includes('-')) return true;
+                if(mode === "FULL_TIME" && time && time.includes('-')) return true;
             }
             return false;
         });
     }
 
-    function updateRekap(filteredData) {
+    // Hitung rekap time (untuk ditampilkan di header)
+    function hitungRekapTime(data, range) {
+        let noTime = 0, oneTime = 0, fullTime = 0;
+        for(let row of data) {
+            for(let tgl of range) {
+                const time = row.tanggalData[tgl]?.time || "";
+                if(!time) noTime++;
+                else if(!time.includes('-')) oneTime++;
+                else fullTime++;
+            }
+        }
+        return { noTime, oneTime, fullTime };
+    }
+
+    // Update rekap utama (berdasarkan filter kolom, bukan filter tanggal/kehadiran)
+    function updateRekapUtama(filteredByColumn) {
         let worker = 0, staff = 0, security = 0;
-        for(let row of filteredData) {
+        for(let row of filteredByColumn) {
             if(row.status === "WORKER") worker++;
             else if(row.status === "STAFF") staff++;
             else if(row.status === "SECURITY") security++;
@@ -432,19 +431,31 @@
         totalWorkerSpan.innerText = worker;
         totalStaffSpan.innerText = staff;
         totalSecuritySpan.innerText = security;
-        totalSemuaSpan.innerText = filteredData.length;
+        totalSemuaSpan.innerText = filteredByColumn.length;
     }
 
+    // Render tabel utama
     function renderTableWithFilters() {
         if(!databaseGlobal.length) {
             tableHeader.innerHTML = ''; tableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Belum ada data</td></tr>';
-            updateRekap([]);
+            updateRekapUtama([]);
+            rekapNoTimeSpan.innerText = '0';
+            rekapOneTimeSpan.innerText = '0';
+            rekapFullTimeSpan.innerText = '0';
             return;
         }
-        let filteredData = getFilteredData();
-        updateRekap(filteredData);
+        let filteredByColumn = getFilteredByColumn();
+        updateRekapUtama(filteredByColumn);  // rekap utama selalu berdasarkan filter kolom
+        
         const range = getTanggalRange();
-        filteredData = applyAttendanceDetailFilter(filteredData, range);
+        let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
+        
+        // Hitung rekap time dari filteredData (setelah filter kehadiran) untuk ditampilkan di header
+        const timeStats = hitungRekapTime(filteredData, range);
+        rekapNoTimeSpan.innerText = timeStats.noTime;
+        rekapOneTimeSpan.innerText = timeStats.oneTime;
+        rekapFullTimeSpan.innerText = timeStats.fullTime;
+        
         // Kolom tetap
         const fixedCols = [
             { name: "ID", width: 70, filterKey: "id" },
@@ -456,7 +467,8 @@
         ];
         const tanggalCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: null }));
         const allCols = [...fixedCols, ...tanggalCols];
-        // Header baris 1: nama kolom
+        
+        // Header baris 1
         let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i];
@@ -465,7 +477,7 @@
             if(i===1) cls += " sticky left-[70px] z-20 bg-slate-800";
             th += `<th style="min-width:${col.width}px" class="${cls}">${col.name}</th>`;
         }
-        th += `<tr>`;
+        th += `</tr>`;
         // Header baris 2: dropdown filter
         th += `<tr class="bg-gray-100 text-[9px]">`;
         for(let i=0; i<allCols.length; i++) {
@@ -483,7 +495,7 @@
         }
         th += `</tr>`;
         tableHeader.innerHTML = th;
-        // Pasang event listener untuk dropdown
+        // Pasang event listener untuk dropdown filter kolom
         for(let col of fixedCols) {
             if(col.filterKey) {
                 const sel = document.getElementById(`filter_${col.filterKey}`);
@@ -521,7 +533,8 @@
                 else if(time) display = time;
                 else display = "—";
                 if(kode && !time) display = `<span class="text-orange-500">${display}</span>`;
-                else if(time) display = `<span class="text-green-600">${display}</span>`;
+                else if(time && !time.includes('-')) display = `<span class="text-blue-600">${display}</span>`;
+                else if(time && time.includes('-')) display = `<span class="text-green-600">${display}</span>`;
                 tb += `<td class="attendance-col px-1 py-0.5 text-center time-cell">${display}</td>`;
             }
             tb += `</tr>`;
@@ -530,11 +543,11 @@
         tableBody.innerHTML = tb;
     }
 
-    // Summary berdasarkan data terfilter
+    // Summary berdasarkan data yang sedang difilter (filter kolom + tanggal + kehadiran)
     function openSummary() {
-        let filteredData = getFilteredData();
+        let filteredByColumn = getFilteredByColumn();
         const range = getTanggalRange();
-        filteredData = applyAttendanceDetailFilter(filteredData, range);
+        let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
         if(!filteredData.length) { showAlert("Info","Tidak ada data untuk ditampilkan","info"); return; }
         const summary = new Map();
         let gw=0,gs=0,gsec=0;
@@ -548,7 +561,7 @@
             else if(stat==="SECURITY") { d.SECURITY++; gsec++; }
             d.TOTAL++;
         }
-        let html = `<table class="w-full border text-[9px]"><thead><tr class="bg-slate-700 text-white"><th class="p-1">POSISI</th><th>WORKER</th><th>STAFF</th><th>SECURITY</th><th>TOTAL</th></tr></thead><tbody>`;
+        let html = `<table class="w-full border text-[9px]"><thead><tr class="bg-slate-700 text-white"><th class="p-1">POSISI</th><th>WORKER</th><th>STAFF</th><th>SECURITY</th><th>TOTAL</th></table></thead><tbody>`;
         for(let [pos,data] of [...summary.entries()].sort()) {
             html += `<tr><td class="border p-1">${pos}</td><td class="border p-1 text-center">${data.WORKER}</td><td class="border p-1 text-center">${data.STAFF}</td><td class="border p-1 text-center">${data.SECURITY}</td><td class="border p-1 text-center font-bold">${data.TOTAL}</td></tr>`;
         }
@@ -561,9 +574,9 @@
 
     // Export ke Excel
     function exportToExcel() {
-        let filteredData = getFilteredData();
+        let filteredByColumn = getFilteredByColumn();
         const range = getTanggalRange();
-        filteredData = applyAttendanceDetailFilter(filteredData, range);
+        let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
         if(!filteredData.length) { showAlert("Tidak ada data","","warning"); return; }
         const fixedCols = ["ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS"];
         const tanggalCols = range.map(t => `Tgl ${t}`);
