@@ -19,7 +19,23 @@
         .time-cell { font-family: monospace; font-size: 9px; white-space: pre-line; }
         .sticky-id { position: sticky; left: 0; background-color: white; z-index: 9; min-width: 70px; }
         .sticky-name { position: sticky; left: 70px; background-color: white; z-index: 9; min-width: 120px; }
-        .filter-select { width: 100%; padding: 2px 2px; font-size: 9px; border: 1px solid #cbd5e1; border-radius: 4px; margin-top: 2px; background: white; }
+        /* Filter dropdown style - terlihat jelas */
+        .filter-select {
+            width: 100%;
+            padding: 2px 4px;
+            font-size: 9px;
+            border: 1px solid #94a3b8;
+            border-radius: 4px;
+            margin-top: 2px;
+            background-color: white;
+            color: #1e293b;
+            font-weight: normal;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
         .btn-export { background: #059669; transition: 0.2s; }
         .btn-export:hover { background: #047857; }
         .btn-reset { background: #dc2626; }
@@ -35,13 +51,13 @@
 <body>
 
 <div class="max-w-full mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
-    <!-- HEADER with Logo -->
+    <!-- HEADER -->
     <div class="bg-slate-800 text-white p-2 flex justify-between items-center flex-wrap gap-2">
         <div class="flex items-center gap-2">
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5">
             <div>
                 <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
-                <p class="text-[9px] text-emerald-400">Dropdown Filter | Kehadiran Detail | Custom Range</p>
+                <p class="text-[9px] text-emerald-400">Dropdown Filter | Time In-Out | Custom Range</p>
             </div>
         </div>
         <div class="flex items-center gap-1 bg-slate-700 p-1 rounded-lg flex-wrap">
@@ -98,7 +114,7 @@
         </div>
     </div>
 
-    <!-- TABEL dengan Filter per Kolom (Dropdown) -->
+    <!-- TABEL -->
     <div class="table-container">
         <table id="attendanceTable">
             <thead id="tableHeader"></thead>
@@ -114,10 +130,9 @@
 <script>
     // ======================== GLOBAL ========================
     let databaseKaryawan = [];
-    let timeMap = new Map();
+    let timeMap = new Map();          // key = `${id}_${tanggal}` -> string "08:00-17:00"
     let semuaTanggal = [];
     let databaseGlobal = [];
-    let selectedRange = { from: "ALL", to: "ALL" };
     let filterAttendanceDetail = "ALL";
     const MAX_CONCURRENT = 6;
     const MAX_BARIS_PER_FILE = 2500;
@@ -158,6 +173,7 @@
         const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         return `${String(date.getDate()).padStart(2,'0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
     }
+    // Fungsi format time: ambil time in (pertama) dan time out (terakhir) -> "08:00-17:00"
     function formatTimeRange(record) {
         if(!record) return "";
         const parts = record.split(';').map(p=>p.trim()).filter(p=>p);
@@ -273,7 +289,7 @@
         showAlert("Sukses",`${databaseKaryawan.length} karyawan dimuat. Upload time clock.`,"success");
     }
 
-    // ======================== BACA TIME CLOCK ========================
+    // ======================== BACA TIME CLOCK (hanya time in-out) ========================
     async function loadTimeFile(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -308,7 +324,11 @@
                     let record = String(row[recordCol]||"").trim();
                     if(id && dateStr && record) {
                         let tgl = parseInt(dateStr.split('-')[2], 10);
-                        if(!isNaN(tgl)) timeMapLocal.set(`${id}_${tgl}`, record);
+                        if(!isNaN(tgl)) {
+                            // Format time range (in-out)
+                            const formattedTime = formatTimeRange(record);
+                            if(formattedTime) timeMapLocal.set(`${id}_${tgl}`, formattedTime);
+                        }
                     }
                 }
                 resolve(timeMapLocal);
@@ -325,9 +345,8 @@
             const tanggalData = {};
             for(let tgl of semuaTanggal) {
                 const kode = karyawan.kodePerTanggal?.[String(tgl)] || "";
-                const timeRaw = timeMap.get(`${karyawan.id}_${tgl}`);
-                const timeFormatted = timeRaw ? formatTimeRange(timeRaw) : "";
-                tanggalData[tgl] = { kode, time: timeFormatted };
+                const time = timeMap.get(`${karyawan.id}_${tgl}`) || "";
+                tanggalData[tgl] = { kode, time };
             }
             return {
                 id: karyawan.id,
@@ -351,7 +370,6 @@
         dateTo.innerHTML = optTo.join('');
         dateFrom.value = "ALL";
         dateTo.value = "ALL";
-        selectedRange = { from: "ALL", to: "ALL" };
         renderTableWithFilters();
         dbStatus.innerHTML = `✅ Karyawan: ${databaseKaryawan.length} | Absen: ${timeMap.size}`;
     }
@@ -368,7 +386,6 @@
         else return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
 
-    // Mendapatkan data yang sudah difilter oleh semua dropdown per kolom
     function getFilteredData() {
         if(!databaseGlobal.length) return [];
         let filtered = [...databaseGlobal];
@@ -385,7 +402,6 @@
         return filtered;
     }
 
-    // Filter kehadiran detail (Hadir: PR,PRP,PRS,PRM ; Tidak Hadir: AB,LWP,AL,SK,ML,DL,OL)
     function applyAttendanceDetailFilter(data, range) {
         const mode = filterAttendanceDetailSelect.value;
         if(mode === "ALL") return data;
@@ -406,7 +422,6 @@
         });
     }
 
-    // Update rekap berdasarkan data yang sedang difilter (sebelum filter kehadiran & tanggal)
     function updateRekap(filteredData) {
         let worker = 0, staff = 0, security = 0;
         for(let row of filteredData) {
@@ -420,18 +435,17 @@
         totalSemuaSpan.innerText = filteredData.length;
     }
 
-    // Render tabel dengan semua filter (termasuk dropdown per kolom)
     function renderTableWithFilters() {
         if(!databaseGlobal.length) {
-            tableHeader.innerHTML = ''; tableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Belum ada数据</td></tr>';
+            tableHeader.innerHTML = ''; tableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Belum ada data</td></tr>';
             updateRekap([]);
             return;
         }
         let filteredData = getFilteredData();
-        updateRekap(filteredData); // rekap berdasarkan data sebelum filter tanggal & kehadiran
+        updateRekap(filteredData);
         const range = getTanggalRange();
         filteredData = applyAttendanceDetailFilter(filteredData, range);
-        // Siapkan kolom tetap dan tanggal
+        // Kolom tetap
         const fixedCols = [
             { name: "ID", width: 70, filterKey: "id" },
             { name: "NAMA", width: 120, filterKey: "name" },
@@ -442,7 +456,7 @@
         ];
         const tanggalCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: null }));
         const allCols = [...fixedCols, ...tanggalCols];
-        // Buat header row (nama kolom)
+        // Header baris 1: nama kolom
         let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i];
@@ -452,12 +466,11 @@
             th += `<th style="min-width:${col.width}px" class="${cls}">${col.name}</th>`;
         }
         th += `<tr>`;
-        // Baris filter dropdown
-        th += `<tr class="bg-gray-200 text-[9px]">`;
+        // Header baris 2: dropdown filter
+        th += `<tr class="bg-gray-100 text-[9px]">`;
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i];
             if(col.filterKey) {
-                // Ambil nilai unik dari databaseGlobal untuk kolom tersebut
                 let uniqueValues = [...new Set(databaseGlobal.map(r => r[col.filterKey]).filter(v => v && v !== ""))].sort();
                 let options = `<option value="ALL">Semua</option>`;
                 for(let val of uniqueValues) {
@@ -470,7 +483,7 @@
         }
         th += `</tr>`;
         tableHeader.innerHTML = th;
-        // Pasang event listener untuk setiap dropdown
+        // Pasang event listener untuk dropdown
         for(let col of fixedCols) {
             if(col.filterKey) {
                 const sel = document.getElementById(`filter_${col.filterKey}`);
@@ -517,7 +530,7 @@
         tableBody.innerHTML = tb;
     }
 
-    // Summary berdasarkan data terfilter (sama seperti filter yang dipakai)
+    // Summary berdasarkan data terfilter
     function openSummary() {
         let filteredData = getFilteredData();
         const range = getTanggalRange();
@@ -546,7 +559,7 @@
     }
     function closeSummary() { document.getElementById('summaryModal').classList.add('hidden'); }
 
-    // Export ke Excel berdasarkan data terfilter
+    // Export ke Excel
     function exportToExcel() {
         let filteredData = getFilteredData();
         const range = getTanggalRange();
