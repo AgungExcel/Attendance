@@ -2,24 +2,106 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Hoplun - Attendance Dashboard</title>
     <link rel="icon" type="image/png" href="hoplun128.png">
     <link rel="shortcut icon" href="hoplun128.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
-        * { font-size: 11px; }
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; padding: 8px; }
-        .table-container { max-height: calc(100vh - 230px); overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
-        table { border-collapse: collapse; width: 100%; }
-        th { position: sticky; top: 0; background-color: #1e293b; color: white; z-index: 10; padding: 6px 4px; font-weight: 600; font-size: 10px; }
-        td { padding: 4px 4px; border-bottom: 1px solid #e2e8f0; }
-        .attendance-col { min-width: 90px; text-align: center; }
-        .time-cell { font-family: monospace; font-size: 9px; white-space: pre-line; }
-        .sticky-no { position: sticky; left: 0; background-color: white; z-index: 9; min-width: 40px; text-align: center; }
-        .sticky-id { position: sticky; left: 40px; background-color: white; z-index: 9; min-width: 70px; }
-        .sticky-name { position: sticky; left: 110px; background-color: white; z-index: 9; min-width: 120px; }
+        /* FULL SCREEN FIX - no remaining space below */
+        * { font-size: 11px; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
+            margin: 0; 
+            padding: 8px; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+        .dashboard-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+        .table-container { 
+            flex: 1; 
+            overflow: auto; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            background: white;
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 100%;
+            table-layout: auto;
+        }
+        th { 
+            position: sticky; 
+            top: 0; 
+            background-color: #1e293b; 
+            color: white; 
+            z-index: 10; 
+            padding: 6px 4px; 
+            font-weight: 600; 
+            font-size: 10px;
+            white-space: nowrap;
+        }
+        td { 
+            padding: 4px 4px; 
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .attendance-col { 
+            min-width: 90px; 
+            text-align: center; 
+        }
+        .time-cell { 
+            font-family: monospace; 
+            font-size: 9px; 
+            white-space: pre-line; 
+        }
+        /* STICKY COLUMNS WITH FIXED WIDTH (TIDAK BERUBAH SAAT FILTER TANGGAL) */
+        .sticky-no { 
+            position: sticky; 
+            left: 0; 
+            background-color: white; 
+            z-index: 9; 
+            width: 40px !important;
+            min-width: 40px !important;
+            max-width: 40px !important;
+            text-align: center; 
+        }
+        .sticky-id { 
+            position: sticky; 
+            left: 40px; 
+            background-color: white; 
+            z-index: 9; 
+            width: 70px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+        }
+        .sticky-name { 
+            position: sticky; 
+            left: 110px; 
+            background-color: white; 
+            z-index: 9; 
+            width: 120px !important;
+            min-width: 120px !important;
+            max-width: 120px !important;
+        }
+        /* SECTION & POSISI & JOIN & STATUS tetap lebar */
+        .col-section-fixed { width: 100px !important; min-width: 100px !important; }
+        .col-posisi-fixed { width: 100px !important; min-width: 100px !important; }
+        .col-join-fixed { width: 85px !important; min-width: 85px !important; }
+        .col-status-fixed { width: 75px !important; min-width: 75px !important; }
+        
         .filter-select {
             width: 100%;
             padding: 2px 4px;
@@ -29,6 +111,7 @@
             margin-top: 2px;
             background-color: white;
             color: #1e293b;
+            box-sizing: border-box;
         }
         .btn-export { background: #059669; transition: 0.2s; }
         .btn-export:hover { background: #047857; }
@@ -36,13 +119,20 @@
         .rekap-box { background: #f1f5f9; border-radius: 6px; padding: 4px 8px; display: inline-block; margin-right: 8px; }
         .rekap-label { font-size: 9px; font-weight: bold; color: #334155; }
         .rekap-value { font-size: 12px; font-weight: bold; margin-left: 4px; }
+        .last-update-panel {
+            background: #fef9e3;
+            border-left: 4px solid #f59e0b;
+            font-size: 9px;
+            max-height: 70px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
 
-<div class="max-w-full mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
+<div class="dashboard-container">
     <!-- HEADER -->
-    <div class="bg-slate-800 text-white p-2 flex justify-between items-center flex-wrap gap-2">
+    <div class="bg-slate-800 text-white p-2 flex justify-between items-center flex-wrap gap-2 shrink-0">
         <div class="flex items-center gap-2">
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
@@ -53,7 +143,6 @@
 
         <!-- FITUR BARU: UPDATE ABSEN (FOLDER) & TIME (FILE) TERPISAH -->
         <div class="flex items-center gap-1 bg-slate-700 p-1 rounded-lg border border-slate-600 flex-wrap">
-            <!-- Hidden inputs untuk fallback picker -->
             <input type="file" id="hiddenFolderInput" webkitdirectory directory multiple class="hidden">
             <input type="file" id="hiddenTimeInput" accept=".csv,.xlsx,.xls" class="hidden">
 
@@ -85,7 +174,7 @@
     </div>
 
     <!-- REKAP & FILTER UTAMA -->
-    <div class="p-2 bg-slate-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+    <div class="p-2 bg-slate-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div class="flex flex-wrap gap-2 items-center">
             <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Staff:</span><span id="totalStaff" class="rekap-value">0</span></div>
@@ -93,12 +182,10 @@
             <div class="rekap-box"><span class="rekap-label">Total Semua:</span><span id="totalSemua" class="rekap-value">0</span></div>
         </div>
         <div class="flex gap-2 items-center flex-wrap">
-            <!-- FITUR BARU: SEARCH BY NAME / ID -->
             <div class="flex items-center gap-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-sm">
                 <span class="text-[10px]">🔍</span>
                 <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[9px] border-none outline-none w-32 bg-transparent">
             </div>
-
             <div class="flex items-center gap-1 bg-white border rounded px-1 py-0.5">
                 <span class="text-[9px] font-semibold">Tgl:</span>
                 <select id="dateFrom" class="text-[9px] border-none bg-transparent outline-none"><option value="ALL">Dari</option></select>
@@ -116,6 +203,9 @@
             <span id="dbStatus" class="text-[9px] font-semibold bg-blue-100 px-1 py-0.5 rounded border border-blue-200">Kosong</span>
         </div>
     </div>
+
+    <!-- PANEL LAST UPDATE (TERAKHIR FILE DIEDIT) -->
+    <div id="lastUpdateInfo" class="last-update-panel hidden p-2 text-[10px] border-t border-gray-200 shrink-0 bg-amber-50 flex-wrap gap-x-4 gap-y-1 items-center"></div>
 
     <!-- TABEL -->
     <div class="table-container">
@@ -156,8 +246,8 @@
     const totalSecuritySpan = document.getElementById('totalSecurity');
     const totalSemuaSpan = document.getElementById('totalSemua');
     const globalSearch = document.getElementById('globalSearch');
+    const lastUpdatePanel = document.getElementById('lastUpdateInfo');
     
-    // Elements for folder/file update
     const hiddenFolderInput = document.getElementById('hiddenFolderInput');
     const folderXlsbDisplay = document.getElementById('folderXlsbDisplay');
     const hiddenTimeInput = document.getElementById('hiddenTimeInput');
@@ -192,26 +282,51 @@
         return `${parts[0]}-${parts[parts.length-1]}`;
     }
 
-    // ======================== VALIDASI FILE (MENCEGAH ERROR SHEETJS) ========================
+    // ================= LAST UPDATE MENU ====================
+    function displayLastUpdate(filesArray) {
+        if(!filesArray || filesArray.length === 0) {
+            lastUpdatePanel.classList.add('hidden');
+            return;
+        }
+        const validFiles = filesArray.filter(f => f && f.name && (f.name.toLowerCase().endsWith('.xlsb')));
+        if(validFiles.length === 0) {
+            lastUpdatePanel.classList.add('hidden');
+            return;
+        }
+        let html = '<div class="flex items-center gap-2 flex-wrap"><span class="font-bold text-amber-800">📅 LAST UPDATE (Absen Files):</span>';
+        for(let file of validFiles) {
+            let modDate = new Date(file.lastModified);
+            let dateStr = modDate.toLocaleString('id-ID', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+            let fileType = "📄";
+            if(file.name.toUpperCase().includes('WORKER')) fileType = "👷 WORKER";
+            else if(file.name.toUpperCase().includes('STAFF')) fileType = "👔 STAFF";
+            else if(file.name.toUpperCase().includes('SECURITY')) fileType = "🔒 SECURITY";
+            html += `<span class="bg-white rounded px-2 py-0.5 shadow-sm text-[9px]">${fileType} : ${file.name} (${dateStr})</span>`;
+        }
+        html += '</div>';
+        lastUpdatePanel.innerHTML = html;
+        lastUpdatePanel.classList.remove('hidden');
+    }
+    
+    function clearLastUpdate() {
+        lastUpdatePanel.classList.add('hidden');
+        lastUpdatePanel.innerHTML = '';
+    }
+    
+    // ======================== VALIDASI FILE ========================
     function isFileValid(file) { 
         if (!file || file.size === 0) return false;
-        // Abaikan file hidden dan sistem seperti resource fork dari macOS
         if (file.name.startsWith('~$') || file.name.startsWith('._') || file.name.startsWith('.')) return false;
-        
-        // Filter berdasarkan path folder (sangat penting untuk upload folder)
         const path = file.webkitRelativePath || "";
         if (path.includes('__MACOSX') || path.includes('/.')) return false;
-
         return file.name.toLowerCase().endsWith('.xlsb') && /WORKER|STAFF|SECURITY/i.test(file.name); 
     }
     
     function isTimeFileValid(file) {
         if (!file || file.size === 0) return false;
         if (file.name.startsWith('~$') || file.name.startsWith('._') || file.name.startsWith('.')) return false;
-        
         const path = file.webkitRelativePath || "";
         if (path.includes('__MACOSX') || path.includes('/.')) return false;
-        
         return true;
     }
 
@@ -220,30 +335,23 @@
         try {
             const files = Array.from(e.target.files);
             if(files.length === 0) return;
-
-            // Mendapatkan nama folder secara kasar dari path file
             const firstPath = files[0].webkitRelativePath;
             const folderName = firstPath ? firstPath.split('/')[0] : "Folder terpilih";
             folderXlsbDisplay.value = folderName;
-
             showAlert("Memproses", `Membaca isi folder: ${folderName}...`, "info");
-            
-            // Filter hanya file .xlsb yang berkaitan dengan absen dan mengabaikan file temporary/hidden/__MACOSX
             const xlsbFiles = files.filter(file => isFileValid(file));
-
             if (xlsbFiles.length === 0) {
                 showAlert("Peringatan", "Tidak ditemukan file .xlsb valid (Worker/Staff/Security) di folder tersebut.", "warning");
                 return;
             }
-
             await prosesFileExcel(xlsbFiles);
-            showAlert("Update Berhasil", `Data Absen berhasil di-load dari folder.`, "success");
-
+            displayLastUpdate(xlsbFiles);
+            showAlert("Update Berhasil", `Data Absen berhasil di-load dari folder (${xlsbFiles.length} file).`, "success");
         } catch (error) {
             console.error(error);
             showAlert("Error", "Gagal membaca folder: " + error.message, "error");
         } finally {
-            e.target.value = ""; // Reset input
+            e.target.value = "";
         }
     });
 
@@ -252,22 +360,17 @@
         try {
             if(!e.target.files.length) return;
             const file = e.target.files[0];
-            
             if (!isTimeFileValid(file)) {
                 showAlert("Error", "File time tidak valid atau merupakan file temporary sistem.", "error");
                 e.target.value = "";
                 return;
             }
-
             fileTimeDisplay.value = file.name;
             showAlert("Memproses", `Membaca file time: ${file.name}...`, "info");
-
             const newTimeMap = await loadTimeFile(file);
-            
             if (newTimeMap.size) {
                 timeMap = newTimeMap;
                 localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
-                
                 if (databaseKaryawan.length) {
                     gabungkanDanRender();
                     showAlert("Update Berhasil", `Data Time (${file.name}) berhasil di-load.`, "success");
@@ -277,16 +380,15 @@
             } else {
                 showAlert("Gagal", `File Time (${file.name}) kosong atau format tidak valid.`, "error");
             }
-
         } catch (error) {
             console.error(error);
             showAlert("Error", "Gagal membaca file: " + error.message, "error");
         } finally {
-            e.target.value = ""; // Reset input
+            e.target.value = "";
         }
     });
 
-    // ======================== BACA FILE .XLSB MANUAL ========================
+    // ======================== BACA FILE .XLSB ========================
     async function bacaFileXLSB(file, forcedStatus) {
         return new Promise(async (resolve) => {
             try {
@@ -298,7 +400,6 @@
                 if(range.e.r > MAX_BARIS_PER_FILE) range.e.r = MAX_BARIS_PER_FILE;
                 const rawData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", blankrows:false, range: XLSX.utils.encode_range(range) });
                 if(!rawData.length) { resolve(null); return; }
-                
                 let headerRowIdx = -1, colMap = { id:-1, name:-1, section:-1, position:-1, join:-1 };
                 for(let r=0; r<Math.min(rawData.length,15); r++) {
                     const row = rawData[r];
@@ -338,63 +439,35 @@
                     if(!row) continue;
                     let id = String(row[colMap.id]||"").trim();
                     let name = String(row[colMap.name]||"").trim();
-                    
-                    // PERBAIKAN 1: Hanya lewati jika ID dan NAMA KEDUANYA kosong
                     if(!id && !name) continue;
-                    
-                    // 2. Filter data sampah / header yang terulang dari Excel
                     let idLow = id.toLowerCase();
                     let nameLow = name.toLowerCase();
-                    if (idLow.includes("new id") || idLow.includes("id no") || idLow === "id" || 
-                        nameLow === "name" || nameLow === "nama" || 
-                        nameLow.includes("department") || idLow.includes("department")) {
-                        continue;
-                    }
-                    
-                    // Filter teks bulan tahun (misal: "APRIL 2026")
+                    if (idLow.includes("new id") || idLow.includes("id no") || idLow === "id" || nameLow === "name" || nameLow === "nama" || nameLow.includes("department")) continue;
                     const monthYearRegex = /^(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{4}$/i;
-                    if (monthYearRegex.test(name) || monthYearRegex.test(id)) {
-                        continue;
-                    }
-
-                    // PERBAIKAN 3: Filter Rekap Bawah yang menggunakan Baris Baru (Alt+Enter) & format dua bahasa
-                    // Ganti enter/spasi berlebih dengan satu spasi agar mudah dideteksi
+                    if (monthYearRegex.test(name) || monthYearRegex.test(id)) continue;
                     let cleanIdLow = idLow.replace(/\s+/g, ' ');
                     let cleanNameLow = nameLow.replace(/\s+/g, ' ');
-
-                    const summaryContains = [
-                        "hadir penuh", "full day", "mangkir", "absent w/o", 
-                        "sakit (sick)", "cuti tahunan", "annual leave", 
-                        "cuti lain", "other leave"
-                    ];
+                    const summaryContains = ["hadir penuh", "full day", "mangkir", "absent w/o", "sakit (sick)", "cuti tahunan", "annual leave", "cuti lain", "other leave"];
                     const summaryExact = ["sakit", "cuti", "total", "hadir"];
-                    
                     if (summaryExact.includes(cleanIdLow) || summaryExact.includes(cleanNameLow)) continue;
                     if (summaryContains.some(kw => cleanIdLow.includes(kw) || cleanNameLow.includes(kw))) continue;
-                    
                     const kodePerTanggal = {};
                     for(let [tgl, colIdx] of Object.entries(colTanggal)) {
                         let val = row[colIdx];
                         if(val !== undefined && val !== null && val !== "") kodePerTanggal[tgl] = String(val).trim();
                     }
                     const personal = {
-                        id: id,
-                        name: name,
-                        section: String(row[colMap.section]||"").trim(),
+                        id: id, name: name, section: String(row[colMap.section]||"").trim(),
                         position: String(row[colMap.position]||"").trim(),
                         joinDate: row[colMap.join] ? formatDateToString(row[colMap.join]) : "",
-                        status: forcedStatus,
-                        kodePerTanggal: kodePerTanggal
+                        status: forcedStatus, kodePerTanggal: kodePerTanggal
                     };
                     let key = id !== "" ? id.toUpperCase() : name.toUpperCase();
                     if(!karyawanMap.has(key)) karyawanMap.set(key, personal);
                 }
                 if(karyawanMap.size) resolve({ map: karyawanMap, fileName: file.name });
                 else resolve(null);
-            } catch(e) { 
-                console.warn(`File gagal dibaca: ${file.name}`, e); 
-                resolve(null); 
-            }
+            } catch(e) { console.warn(`File gagal: ${file.name}`, e); resolve(null); }
         });
     }
 
@@ -403,8 +476,7 @@
     async function prosesFileExcel(files) {
         if(!files.length) return;
         const valid = files.filter(f => isFileValid(f));
-        if(!valid.length) { showAlert("Peringatan","Tidak ada file .xlsb valid (harus Worker/Staff/Security)","warning"); return; }
-        
+        if(!valid.length) { showAlert("Peringatan","Tidak ada file .xlsb valid","warning"); return; }
         const allResults = [];
         for(let i=0;i<valid.length;i+=MAX_CONCURRENT) {
             const batch = valid.slice(i,i+MAX_CONCURRENT);
@@ -415,18 +487,16 @@
         const masterMap = new Map();
         for(const res of allResults) if(res && res.map.size) for(let [k,v] of res.map) if(!masterMap.has(k)) masterMap.set(k,v);
         if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file.","error"); return; }
-        
         databaseKaryawan = Array.from(masterMap.values());
         semuaTanggal = [];
         for(let i=26;i<=31;i++) semuaTanggal.push(i);
         for(let i=1;i<=25;i++) semuaTanggal.push(i);
-        
         localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan.map(k => ({ ...k, kodePerTanggal: k.kodePerTanggal }))));
         localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
         gabungkanDanRender();
     }
 
-    // ======================== BACA TIME CLOCK MANUAL ========================
+    // ======================== BACA TIME CLOCK ========================
     async function loadTimeFile(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -437,7 +507,6 @@
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
                     if(!rows.length) { resolve(new Map()); return; }
-                    
                     let idCol=-1, dateCol=-1, recordCol=-1;
                     for(let i=0;i<Math.min(rows.length,20);i++) {
                         const row = rows[i];
@@ -449,7 +518,6 @@
                         }
                         if(idCol!==-1 && dateCol!==-1 && recordCol!==-1) break;
                     }
-                    
                     if(idCol===-1 || dateCol===-1 || recordCol===-1) { resolve(new Map()); return; }
                     const timeMapLocal = new Map();
                     for(let r=1; r<rows.length; r++) {
@@ -462,7 +530,6 @@
                         else if(typeof dateRaw === 'number') dateStr = new Date((dateRaw-25569)*86400*1000).toISOString().slice(0,10);
                         else dateStr = String(dateRaw).trim();
                         let record = String(row[recordCol]||"").trim();
-                        
                         if(id && dateStr && record) {
                             let tgl = parseInt(dateStr.split('-')[2], 10);
                             if(!isNaN(tgl)) {
@@ -472,17 +539,14 @@
                         }
                     }
                     resolve(timeMapLocal);
-                } catch(err) {
-                    console.warn(`Gagal membaca time file: ${file.name}`, err);
-                    resolve(new Map());
-                }
+                } catch(err) { resolve(new Map()); }
             };
             reader.onerror = () => resolve(new Map());
             reader.readAsArrayBuffer(file);
         });
     }
 
-    // ======================== GABUNGKAN DATA ========================
+    // ======================== GABUNGKAN & RENDER ========================
     function gabungkanDanRender() {
         if(!databaseKaryawan.length) return;
         const finalData = databaseKaryawan.map(karyawan => {
@@ -492,83 +556,53 @@
                 const time = timeMap.get(`${karyawan.id}_${tgl}`) || "";
                 tanggalData[tgl] = { kode, time };
             }
-            return {
-                id: karyawan.id,
-                name: karyawan.name,
-                section: karyawan.section,
-                position: karyawan.position,
-                joinDate: karyawan.joinDate,
-                status: karyawan.status,
-                tanggalData: tanggalData
-            };
+            return { id: karyawan.id, name: karyawan.name, section: karyawan.section, position: karyawan.position, joinDate: karyawan.joinDate, status: karyawan.status, tanggalData };
         });
         databaseGlobal = finalData;
-        
         const optFrom = ['<option value="ALL">Dari</option>'];
         const optTo = ['<option value="ALL">Sampai</option>'];
-        for(let t of semuaTanggal) {
-            optFrom.push(`<option value="${t}">${t}</option>`);
-            optTo.push(`<option value="${t}">${t}</option>`);
-        }
+        for(let t of semuaTanggal) { optFrom.push(`<option value="${t}">${t}</option>`); optTo.push(`<option value="${t}">${t}</option>`); }
         dateFrom.innerHTML = optFrom.join('');
         dateTo.innerHTML = optTo.join('');
-        dateFrom.value = "ALL";
-        dateTo.value = "ALL";
-        
+        dateFrom.value = "ALL"; dateTo.value = "ALL";
         renderTableWithFilters();
         dbStatus.innerHTML = `✅ Karyawan: ${databaseKaryawan.length} | Absen: ${timeMap.size}`;
     }
 
-    // ======================== FILTER ========================
     function getTanggalRange() {
-        let from = dateFrom.value;
-        let to = dateTo.value;
+        let from = dateFrom.value, to = dateTo.value;
         if(from === "ALL" || to === "ALL") return semuaTanggal;
-        let fromIdx = semuaTanggal.indexOf(parseInt(from));
-        let toIdx = semuaTanggal.indexOf(parseInt(to));
+        let fromIdx = semuaTanggal.indexOf(parseInt(from)), toIdx = semuaTanggal.indexOf(parseInt(to));
         if(fromIdx === -1 || toIdx === -1) return semuaTanggal;
         if(fromIdx <= toIdx) return semuaTanggal.slice(fromIdx, toIdx+1);
         else return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
-
+    
     function getFilteredByColumn() {
         if(!databaseGlobal.length) return [];
         let filtered = [...databaseGlobal];
-        
-        // Filter Global (Pencarian Textbox Nama/ID)
         const searchKeyword = (globalSearch.value || "").toLowerCase().trim();
-        if(searchKeyword !== "") {
-            filtered = filtered.filter(r => 
-                r.id.toLowerCase().includes(searchKeyword) || 
-                r.name.toLowerCase().includes(searchKeyword)
-            );
-        }
-
-        // Filter Dropdown Header Tabel
+        if(searchKeyword !== "") filtered = filtered.filter(r => r.id.toLowerCase().includes(searchKeyword) || r.name.toLowerCase().includes(searchKeyword));
         const idFilter = document.getElementById('filter_id')?.value || "ALL";
         const nameFilter = document.getElementById('filter_name')?.value || "ALL";
         const sectionFilter = document.getElementById('filter_section')?.value || "ALL";
         const positionFilter = document.getElementById('filter_position')?.value || "ALL";
         const statusFilter = document.getElementById('filter_status')?.value || "ALL";
-        
         if(idFilter !== "ALL") filtered = filtered.filter(r => r.id === idFilter);
         if(nameFilter !== "ALL") filtered = filtered.filter(r => r.name === nameFilter);
         if(sectionFilter !== "ALL") filtered = filtered.filter(r => r.section === sectionFilter);
         if(positionFilter !== "ALL") filtered = filtered.filter(r => r.position === positionFilter);
         if(statusFilter !== "ALL") filtered = filtered.filter(r => r.status === statusFilter);
-        
         return filtered;
     }
-
+    
     function applyAttendanceDetailFilter(data, range) {
         const mode = filterAttendanceDetailSelect.value;
         if(mode === "ALL") return data;
-        
         return data.filter(row => {
             for(let tgl of range) {
                 const item = row.tanggalData[tgl] || { kode: "", time: "" };
                 const time = item.time;
-                
                 if(mode === "NO_TIME" && !time) return true;
                 if(mode === "ONE_TIME" && time && !time.includes('-')) return true;
                 if(mode === "FULL_TIME" && time && time.includes('-')) return true;
@@ -576,9 +610,9 @@
             return false;
         });
     }
-
+    
     function updateRekapUtama(dataList) {
-        let worker = 0, staff = 0, security = 0;
+        let worker=0,staff=0,security=0;
         for(let row of dataList) {
             if(row.status === "WORKER") worker++;
             else if(row.status === "STAFF") staff++;
@@ -590,145 +624,105 @@
         totalSemuaSpan.innerText = dataList.length;
     }
 
-    // ======================== RENDER TABEL ========================
+    // ======================== RENDER (DENGAN LEBAR KOLOM TETAP) ========================
     function renderTableWithFilters() {
         const fixedCols = [
-            { name: "NO", width: 40, filterKey: null },
-            { name: "ID", width: 70, filterKey: "id" },
-            { name: "NAMA", width: 120, filterKey: "name" },
-            { name: "SECTION", width: 100, filterKey: "section" },
-            { name: "POSISI", width: 100, filterKey: "position" },
-            { name: "JOIN DATE", width: 85, filterKey: null },
-            { name: "STATUS", width: 75, filterKey: "status" }
+            { name: "NO", width: 40, filterKey: null, styleClass: "sticky-no" },
+            { name: "ID", width: 70, filterKey: "id", styleClass: "sticky-id" },
+            { name: "NAMA", width: 120, filterKey: "name", styleClass: "sticky-name" },
+            { name: "SECTION", width: 100, filterKey: "section", styleClass: "col-section-fixed" },
+            { name: "POSISI", width: 100, filterKey: "position", styleClass: "col-posisi-fixed" },
+            { name: "JOIN DATE", width: 85, filterKey: null, styleClass: "col-join-fixed" },
+            { name: "STATUS", width: 75, filterKey: "status", styleClass: "col-status-fixed" }
         ];
-
         if(!databaseGlobal.length) {
-            tableHeader.innerHTML = ''; 
-            tableBody.innerHTML = '<tr><td colspan="7" class="p-4 text-center">Belum ada data</td></tr>';
-            updateRekapUtama([]);
-            return;
+            tableHeader.innerHTML = ''; tableBody.innerHTML = '<tr><td colspan="7" class="p-4 text-center">Belum ada data</td></tr>';
+            updateRekapUtama([]); return;
         }
-
-        const currentFilters = {};
-        for(let col of fixedCols) {
-            if(col.filterKey) {
-                const sel = document.getElementById(`filter_${col.filterKey}`);
-                currentFilters[col.filterKey] = sel ? sel.value : "ALL";
-            }
-        }
-
         let filteredByColumn = getFilteredByColumn();
         const range = getTanggalRange();
         let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
-        
-        updateRekapUtama(filteredData);  
-        
+        updateRekapUtama(filteredData);
         const tanggalCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: null }));
         const allCols = [...fixedCols, ...tanggalCols];
-        
-        // Header
+        // HEADER ROW 1
         let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i];
             let cls = "px-1 py-1 border-r";
+            let widthStyle = `width: ${col.width}px; min-width: ${col.width}px;`;
             if(i===0) cls += " sticky left-0 z-20 bg-slate-800";
             if(i===1) cls += " sticky left-[40px] z-20 bg-slate-800";
             if(i===2) cls += " sticky left-[110px] z-20 bg-slate-800";
-            th += `<th style="min-width:${col.width}px" class="${cls}">${col.name}</th>`;
+            th += `<th style="${widthStyle}" class="${cls}">${col.name}</th>`;
         }
         th += `</tr><tr class="bg-gray-100 text-[9px]">`;
-        
-        // Dropdown filter kolom
+        // HEADER ROW 2 (FILTER)
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i];
             let cls = "px-1 py-0.5 border-r border-slate-200";
-            if(i===0) cls += " sticky left-0 z-10 bg-gray-100";
-            if(i===1) cls += " sticky left-[40px] z-10 bg-gray-100";
-            if(i===2) cls += " sticky left-[110px] z-10 bg-gray-100";
-
+            let widthStyle = `width: ${col.width}px; min-width: ${col.width}px;`;
+            if(i===0) { cls += " sticky left-0 z-10 bg-gray-100"; widthStyle += "width:40px;"; }
+            if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; widthStyle += "width:70px;"; }
+            if(i===2) { cls += " sticky left-[110px] z-10 bg-gray-100"; widthStyle += "width:120px;"; }
             if(col.filterKey) {
-                // Saat ada globalSearch aktif, dropdown list di-update berdasarkan filter data saat ini
                 let baseDataForDropdown = (globalSearch.value.trim() !== "") ? filteredData : databaseGlobal;
                 let uniqueValues = [...new Set(baseDataForDropdown.map(r => r[col.filterKey]).filter(v => v && v !== ""))].sort();
-                let selectedVal = currentFilters[col.filterKey] || "ALL";
-                
+                let selectedVal = document.getElementById(`filter_${col.filterKey}`)?.value || "ALL";
                 let options = `<option value="ALL" ${selectedVal === "ALL" ? "selected" : ""}>Semua</option>`;
-                for(let val of uniqueValues) {
-                    let isSelected = (val === selectedVal) ? "selected" : "";
-                    options += `<option value="${val.replace(/"/g, '&quot;')}" ${isSelected}>${val}</option>`;
-                }
-                th += `<th class="${cls}"><select id="filter_${col.filterKey}" class="filter-select" style="width:${col.width-8}px">${options}</select></th>`;
+                for(let val of uniqueValues) options += `<option value="${val.replace(/"/g, '&quot;')}" ${val === selectedVal ? "selected" : ""}>${val}</option>`;
+                th += `<th style="${widthStyle}" class="${cls}"><select id="filter_${col.filterKey}" class="filter-select" style="width:100%">${options}</select></th>`;
             } else {
-                th += `<th class="${cls}"></th>`;
+                th += `<th style="${widthStyle}" class="${cls}"></th>`;
             }
         }
         th += `</tr>`;
         tableHeader.innerHTML = th;
-        
-        // Listener dropdown filter kolom
-        for(let col of fixedCols) {
-            if(col.filterKey) {
-                const sel = document.getElementById(`filter_${col.filterKey}`);
-                if(sel) sel.addEventListener('change', () => renderTableWithFilters());
-            }
+        for(let col of fixedCols) if(col.filterKey) {
+            const sel = document.getElementById(`filter_${col.filterKey}`);
+            if(sel) sel.addEventListener('change', () => renderTableWithFilters());
         }
-
-        // Body tabel
+        // BODY
         let tb = "";
         const max = Math.min(filteredData.length, 2000);
         for(let index=0; index<max; index++) {
             let row = filteredData[index];
             tb += `<tr class="hover:bg-blue-50 border-b">`;
-            
             const fixedVals = [index+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
+            const fixedStyles = ["width:40px;", "width:70px;", "width:120px;", "width:100px;", "width:100px;", "width:85px;", "width:75px;"];
+            const fixedClasses = ["sticky-no", "sticky-id", "sticky-name", "col-section-fixed", "col-posisi-fixed", "col-join-fixed", "col-status-fixed"];
             for(let i=0; i<fixedVals.length; i++) {
                 let val = fixedVals[i];
-                let extra = "px-1 py-0.5";
-                let style = "";
-                if(i===0) { extra = "sticky-no font-medium px-1 text-center"; style = "background:white; min-width:40px;"; }
-                if(i===1) { extra = "sticky-id font-medium px-1"; style = "background:white; min-width:70px;"; }
-                if(i===2) { extra = "sticky-name px-1"; style = "background:white; min-width:120px;"; }
+                let extra = fixedClasses[i];
+                let style = fixedStyles[i] + "background:white;";
                 if(i===6) {
                     if(val==="WORKER") val='<span class="bg-emerald-100 px-1 rounded">WORKER</span>';
                     else if(val==="STAFF") val='<span class="bg-purple-100 px-1 rounded">STAFF</span>';
                     else if(val==="SECURITY") val='<span class="bg-slate-700 text-white px-1 rounded">SECURITY</span>';
                 }
-                tb += `<td class="${extra}" style="${style}">${val}</td>`;
+                tb += `<td class="${extra} px-1 py-0.5" style="${style}">${val}</td>`;
             }
-            
             for(let tgl of range) {
                 const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
-                let kode = dataTgl.kode;
-                let time = dataTgl.time;
-                let display = "";
-                
-                if(time) {
-                    display = time;
-                } else if(kode) {
-                    display = kode;
-                } else {
-                    display = "—";
-                }
-
-                if(kode && !time) display = `<span class="text-orange-500 font-semibold">${display}</span>`;
-                else if(time && !time.includes('-')) display = `<span class="text-blue-600 font-bold">${display}</span>`;
-                else if(time && time.includes('-')) display = `<span class="text-green-600 font-bold">${display}</span>`;
-                
-                tb += `<td class="attendance-col px-1 py-0.5 text-center time-cell">${display}</td>`;
+                let kode = dataTgl.kode, time = dataTgl.time;
+                let display = time ? time : (kode ? kode : "—");
+                let colorClass = "";
+                if(kode && !time) colorClass = "text-orange-500 font-semibold";
+                else if(time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
+                else if(time && time.includes('-')) colorClass = "text-green-600 font-bold";
+                tb += `<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`;
             }
             tb += `</tr>`;
         }
-        if(filteredData.length > 2000) tb += `<tr><td colspan="${allCols.length}" class="p-1 text-center text-blue-500 text-[9px]">Hanya 2000 baris pertama</td></tr>`;
+        if(filteredData.length > 2000) tb += `<tr><td colspan="${allCols.length}" class="p-1 text-center text-blue-500">Hanya 2000 baris pertama</td></tr>`;
         tableBody.innerHTML = tb;
     }
 
-    // ======================== SUMMARY & EXPORT ========================
     function openSummary() {
         let filteredByColumn = getFilteredByColumn();
         const range = getTanggalRange();
         let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
-        if(!filteredData.length) { showAlert("Info","Tidak ada data untuk ditampilkan","info"); return; }
-        
+        if(!filteredData.length) { showAlert("Info","Tidak ada data","info"); return; }
         const summary = new Map();
         let gw=0,gs=0,gsec=0;
         for(const row of filteredData) {
@@ -741,47 +735,28 @@
             else if(stat==="SECURITY") { d.SECURITY++; gsec++; }
             d.TOTAL++;
         }
-        
-        let html = `<table class="w-full border text-[9px]"><thead><tr class="bg-slate-700 text-white"><th class="p-1">POSISI</th><th>WORKER</th><th>STAFF</th><th>SECURITY</th><th>TOTAL</th></table></thead><tbody>`;
-        for(let [pos,data] of [...summary.entries()].sort()) {
-            html += `<tr><td class="border p-1">${pos}</td><td class="border p-1 text-center">${data.WORKER}</td><td class="border p-1 text-center">${data.STAFF}</td><td class="border p-1 text-center">${data.SECURITY}</td><td class="border p-1 text-center font-bold">${data.TOTAL}</td></tr>`;
-        }
+        let html = `<table class="w-full border text-[9px]"><thead><tr class="bg-slate-700 text-white"><th class="p-1">POSISI</th><th>WORKER</th><th>STAFF</th><th>SECURITY</th><th>TOTAL</th></tr></thead><tbody>`;
+        for(let [pos,data] of [...summary.entries()].sort()) html += `<tr><td class="border p-1">${pos}</td><td class="border p-1 text-center">${data.WORKER}</td><td class="border p-1 text-center">${data.STAFF}</td><td class="border p-1 text-center">${data.SECURITY}</td><td class="border p-1 text-center font-bold">${data.TOTAL}</td></tr>`;
         html += `<tr class="bg-indigo-100 font-bold"><td class="p-1">GRAND TOTAL</td><td class="text-center">${gw}</td><td class="text-center">${gs}</td><td class="text-center">${gsec}</td><td class="text-center">${gw+gs+gsec}</td></tr></tbody>`;
-        
         document.getElementById('summaryContent').innerHTML = html;
-        document.getElementById('summaryModal').classList.remove('hidden');
-        document.getElementById('summaryModal').classList.add('flex');
+        document.getElementById('summaryModal').classList.remove('hidden'); document.getElementById('summaryModal').classList.add('flex');
     }
     function closeSummary() { document.getElementById('summaryModal').classList.add('hidden'); }
-
     function exportToExcel() {
         let filteredByColumn = getFilteredByColumn();
         const range = getTanggalRange();
         let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
         if(!filteredData.length) { showAlert("Tidak ada data","","warning"); return; }
-        
         const fixedCols = ["NO", "ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS"];
         const tanggalCols = range.map(t => `Tgl ${t}`);
         const headers = [...fixedCols, ...tanggalCols];
         const wsData = [headers];
-        
         let rowIndex = 1;
         for(const row of filteredData) {
             const rowArr = [rowIndex++, row.id, row.name, row.section, row.position, row.joinDate, row.status];
             for(let tgl of range) {
                 const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
-                let kode = dataTgl.kode;
-                let time = dataTgl.time;
-                let display = "";
-                
-                if(time) {
-                    display = time;
-                } else if(kode) {
-                    display = kode;
-                } else {
-                    display = "";
-                }
-                
+                let display = dataTgl.time ? dataTgl.time : (dataTgl.kode ? dataTgl.kode : "");
                 rowArr.push(display);
             }
             wsData.push(rowArr);
@@ -793,16 +768,14 @@
         showAlert("Berhasil","Data diekspor","success");
     }
 
-    // ======================== EVENT LISTENERS ========================
-    function readFileAsArrayBuffer(file) {
-        return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(); fr.readAsArrayBuffer(file); });
-    }
+    function readFileAsArrayBuffer(file) { return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(); fr.readAsArrayBuffer(file); }); }
     
-    // Event listener Upload File Manual (Fallback)
     fileUpload.addEventListener('change', async (e) => { 
         if(e.target.files.length) {
+            const filesArr = Array.from(e.target.files);
             showAlert("Memproses", "Memuat file .xlsb...", "info");
-            await prosesFileExcel(Array.from(e.target.files)); 
+            await prosesFileExcel(filesArr);
+            displayLastUpdate(filesArr.filter(f => isFileValid(f)));
             showAlert("Sukses",`${databaseKaryawan.length} karyawan dimuat.`,"success");
             e.target.value = "";
         }
@@ -811,13 +784,7 @@
     timeUpload.addEventListener('change', async (e) => {
         if(!e.target.files.length) return;
         const file = e.target.files[0];
-        
-        if (!isTimeFileValid(file)) {
-            showAlert("Error", "File time tidak valid atau merupakan file temporary.", "error");
-            e.target.value = "";
-            return;
-        }
-
+        if (!isTimeFileValid(file)) { showAlert("Error","File time tidak valid","error"); e.target.value=""; return; }
         const newTimeMap = await loadTimeFile(file);
         if(newTimeMap.size) {
             timeMap = newTimeMap;
@@ -828,17 +795,15 @@
         e.target.value = "";
     });
     
-    // Event listener Pencarian Textbox & Filter
     globalSearch.addEventListener('input', () => renderTableWithFilters());
     dateFrom.addEventListener('change', () => renderTableWithFilters());
     dateTo.addEventListener('change', () => renderTableWithFilters());
     filterAttendanceDetailSelect.addEventListener('change', () => renderTableWithFilters());
     btnExport.addEventListener('click', exportToExcel);
     resetDataBtn.addEventListener('click', () => {
-        if(confirm("Hapus semua data?")) { localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; renderTableWithFilters(); dbStatus.innerHTML="Kosong"; showAlert("Reset","Data dihapus","success"); }
+        if(confirm("Hapus semua data?")) { localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; renderTableWithFilters(); dbStatus.innerHTML="Kosong"; clearLastUpdate(); showAlert("Reset","Data dihapus","success"); }
     });
     
-    // Load dari localStorage
     (function loadStored() {
         const karyawan = localStorage.getItem('hoplun_karyawan');
         const tanggal = localStorage.getItem('hoplun_tanggal');
@@ -849,6 +814,7 @@
             if(timeObj) timeMap = new Map(Object.entries(JSON.parse(timeObj)));
             if(databaseKaryawan.length) gabungkanDanRender();
         }
+        clearLastUpdate();
     })();
 </script>
 </body>
