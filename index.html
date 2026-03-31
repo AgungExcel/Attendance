@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIO - Attendance Dashboard (Time Clock Integration)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .table-container { max-height: 55vh; overflow: auto; }
+        th { position: sticky; top: 0; background-color: #1e293b; color: white; z-index: 10; }
+        .attendance-col { width: 80px; text-align: center; } /* Lebar cukup untuk time */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .btn-export { background: #059669; transition: all 0.2s; }
+        .btn-export:hover { background: #047857; transform: scale(1.02); }
+        .time-cell { font-family: monospace; font-size: 10px; white-space: pre-line; }
+    </style>
+</head>
+<body class="p-4 text-sm">
+
+<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
+    <!-- HEADER -->
+    <div class="bg-slate-800 text-white p-4 flex justify-between items-center flex-wrap gap-3">
+        <div>
+            <h1 class="text-xl font-bold tracking-wider">ATTENDANCE DASHBOARD</h1>
+            <p class="text-xs text-emerald-400 mt-1">⚡ Time Clock Integration | Hanya .xlsb + Filter Footer | Export XLSX</p>
+        </div>
+        <div class="flex items-center gap-3 bg-slate-700 p-2 rounded-lg flex-wrap">
+            <div class="flex items-center gap-2 bg-slate-600 px-2 py-1 rounded">
+                <label class="text-xs font-semibold">Header Baris:</label>
+                <input type="number" id="headerRow" value="6" class="w-12 px-1 py-1 text-black font-bold rounded text-xs text-center">
+            </div>
+            <label for="fileUpload" class="text-xs font-semibold cursor-pointer flex items-center gap-2 hover:text-blue-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                .xlsb (Data Karyawan)
+            </label>
+            <input type="file" id="fileUpload" class="hidden" multiple accept=".xlsb">
+            <label for="timeUpload" class="text-xs font-semibold cursor-pointer flex items-center gap-2 hover:text-yellow-300 bg-slate-600 px-2 py-1 rounded">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Upload Time Clock (CSV/Excel)
+            </label>
+            <input type="file" id="timeUpload" class="hidden" accept=".csv,.xlsx,.xls">
+        </div>
+    </div>
+
+    <!-- PANEL KONTROL -->
+    <div class="p-4 bg-slate-50 border-b border-gray-200 grid grid-cols-1 md:grid-cols-12 gap-4 relative">
+        <div id="loadingOverlay" class="absolute inset-0 bg-white/95 z-20 hidden flex-col items-center justify-center backdrop-blur-sm">
+            <div class="relative w-20 h-20 mb-4"><div class="absolute inset-0 rounded-full border-t-4 border-blue-600 animate-spin"></div><div class="absolute inset-2 rounded-full border-r-4 border-indigo-400 animate-spin" style="animation-direction: reverse;"></div></div>
+            <h2 class="text-2xl font-extrabold text-slate-800">Memproses Data</h2>
+            <p class="text-base font-bold text-blue-600 mt-2" id="loadingSubText"></p>
+            <div class="mt-4 w-full max-w-2xl bg-slate-900 rounded-lg p-3"><ul id="loadingLog" class="text-xs text-green-400 font-mono h-32 overflow-y-auto"></ul></div>
+        </div>
+
+        <div class="md:col-span-9 flex flex-col gap-2">
+            <div class="bg-yellow-100 p-2 rounded text-center text-xs font-bold">Kosongkan kolom kuning untuk menampilkan semua data</div>
+            <div class="flex gap-2"><input type="text" id="searchInput" placeholder="Nama / ID" class="w-full bg-yellow-200 border border-yellow-400 px-4 py-2 rounded"><button id="btnSearch" class="bg-white px-6 rounded border">Cari</button></div>
+            <div class="flex flex-wrap gap-2">
+                <select id="filterStatus" class="bg-white border rounded px-3 py-2 text-xs"><option value="ALL">Semua Status</option><option value="WORKER">WORKER</option><option value="STAFF">STAFF</option><option value="SECURITY">SECURITY</option></select>
+                <select id="filterSection" class="bg-white border rounded px-3 py-2 text-xs"><option value="ALL">Semua Section</option></select>
+                <select id="filterPosition" class="bg-white border rounded px-3 py-2 text-xs"><option value="ALL">Semua Posisi</option></select>
+            </div>
+        </div>
+        <div class="md:col-span-3 flex flex-col gap-2">
+            <div class="grid grid-cols-2 gap-2 text-center">
+                <div class="bg-green-100 p-2 rounded"><div class="text-[10px] font-bold">Total Ditampilkan</div><div class="text-xl font-black" id="totalDataCount">0</div></div>
+                <div class="bg-blue-100 p-2 rounded"><div class="text-[10px] font-bold">Status DB</div><span id="dbStatus" class="inline-block px-2 py-1 rounded-full text-[9px] font-semibold bg-red-100">Belum ada Data</span></div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openSummary()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded text-xs">Summary</button>
+                <button id="btnExport" class="w-1/2 btn-export text-white font-bold py-2 rounded text-xs">Export XLSX</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABEL -->
+    <div class="table-container bg-white relative">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+            <thead id="tableHeader"></thead>
+            <tbody id="tableBody"><tr><td colspan="6" class="p-10 text-center text-gray-500">Silakan upload file .xlsb karyawan dan file time clock.</td></tr></tbody>
+        </table>
+    </div>
+
+    <!-- Modal Summary -->
+    <div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+            <div class="p-4 border-b bg-slate-800 text-white rounded-t-lg flex justify-between"><h2 class="text-lg font-bold">Summary per Posisi & Status</h2><button onclick="closeSummary()" class="text-gray-300">&times;</button></div>
+            <div class="p-4 overflow-auto" id="summaryContent"></div>
+        </div>
+    </div>
+    <div id="modernAlert" class="hidden fixed inset-0 bg-black/60 z-50 items-center justify-center"><div class="bg-white rounded-2xl p-6 max-w-sm text-center"><div id="alertIcon"></div><h3 id="alertTitle" class="text-xl font-bold mb-2"></h3><p id="alertMessage" class="text-sm mb-6"></p><button onclick="closeAlert()" class="w-full bg-blue-600 text-white py-2 rounded-xl">Mengerti</button></div></div>
+</div>
+
+<script>
+    // ======================== GLOBAL VARIABLES ========================
+    let databaseKaryawan = [];       // data karyawan tanpa kolom tanggal (hanya personal)
+    let timeMap = new Map();         // key = `${id}_${date}` -> value = record time (misal "05:42;14:40")
+    let tanggalHeaders = [];          // array kolom tanggal (angka 1-31, 26-31)
+    let currentHeaders = [];          // semua header (ID, NAME, SECTION, ..., plus tanggal)
+    let fileBerhasilList = [];
+    const MAX_CONCURRENT = 4;
+
+    // DOM elements
+    const fileUpload = document.getElementById('fileUpload');
+    const timeUpload = document.getElementById('timeUpload');
+    const headerRowInput = document.getElementById('headerRow');
+    const searchInput = document.getElementById('searchInput');
+    const btnSearch = document.getElementById('btnSearch');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterSection = document.getElementById('filterSection');
+    const filterPosition = document.getElementById('filterPosition');
+    const btnExport = document.getElementById('btnExport');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingSubText = document.getElementById('loadingSubText');
+    const loadingLog = document.getElementById('loadingLog');
+    const tableHeader = document.getElementById('tableHeader');
+    const tableBody = document.getElementById('tableBody');
+    const totalDataCount = document.getElementById('totalDataCount');
+    const dbStatus = document.getElementById('dbStatus');
+
+    // Helper functions
+    function addLog(msg, type="info") {
+        if(!loadingLog) return;
+        const li = document.createElement('li');
+        li.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        li.className = type==="error"?"text-red-400":type==="success"?"text-emerald-400":type==="warning"?"text-yellow-400":"text-green-400";
+        loadingLog.appendChild(li);
+        loadingLog.scrollTop = loadingLog.scrollHeight;
+    }
+    function showAlert(title, msg, type='info') {
+        const modal = document.getElementById('modernAlert');
+        document.getElementById('alertTitle').innerText = title;
+        document.getElementById('alertMessage').innerText = msg;
+        const icon = document.getElementById('alertIcon');
+        if(type==='success') icon.innerHTML = '<div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-500"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>';
+        else if(type==='error') icon.innerHTML = '<div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center text-red-500"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></div>';
+        else icon.innerHTML = '<div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-500"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    function closeAlert() { document.getElementById('modernAlert').classList.add('hidden'); }
+    function formatDateToString(dateValue) { ... } // sama seperti sebelumnya
+
+    // ======================== BACA FILE TIME CLOCK ========================
+    async function loadTimeFile(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+                if(!rows.length) { resolve(new Map()); return; }
+                // cari baris header: mengandung "ID" dan "Date" dan "Records"
+                let headerRowIdx = -1;
+                for(let i=0; i<Math.min(rows.length,20); i++) {
+                    const row = rows[i];
+                    if(row.some(cell => String(cell||"").toUpperCase().includes("ID")) &&
+                       row.some(cell => String(cell||"").toUpperCase().includes("DATE")) &&
+                       row.some(cell => String(cell||"").toUpperCase().includes("RECORD"))) {
+                        headerRowIdx = i;
+                        break;
+                    }
+                }
+                if(headerRowIdx === -1) { resolve(new Map()); return; }
+                const headers = rows[headerRowIdx].map(h => String(h||"").toUpperCase());
+                const idxID = headers.findIndex(h => h.includes("ID"));
+                const idxDate = headers.findIndex(h => h.includes("DATE"));
+                const idxRecord = headers.findIndex(h => h.includes("RECORD"));
+                if(idxID === -1 || idxDate === -1 || idxRecord === -1) { resolve(new Map()); return; }
+                const timeMapLocal = new Map();
+                for(let r=headerRowIdx+1; r<rows.length; r++) {
+                    const row = rows[r];
+                    if(!row || row.length===0) continue;
+                    let id = String(row[idxID]||"").trim();
+                    let dateRaw = row[idxDate];
+                    let dateStr = "";
+                    if(dateRaw instanceof Date) dateStr = dateRaw.toISOString().slice(0,10);
+                    else if(typeof dateRaw === 'number') dateStr = new Date((dateRaw-25569)*86400*1000).toISOString().slice(0,10);
+                    else dateStr = String(dateRaw).trim();
+                    let record = String(row[idxRecord]||"").trim();
+                    if(id && dateStr && record) {
+                        const key = `${id}_${dateStr}`;
+                        timeMapLocal.set(key, record);
+                    }
+                }
+                resolve(timeMapLocal);
+            };
+            reader.onerror = () => resolve(new Map());
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // ======================== BACA FILE .XLSB (HANYA DATA PERSONAL) ========================
+    async function prosesSatuFile(file, forcedStatus, targetPersonalHeaders, vbaColMap) {
+        return new Promise(async (resolve) => {
+            try {
+                const data = await readFileAsArrayBuffer(file);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                let sheetName = workbook.SheetNames.find(s => s.toUpperCase().includes('ATTEND')) || workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                let ref = worksheet['!ref'] || "A1:AK1000";
+                let range = XLSX.utils.decode_range(ref);
+                if(range.e.r > 4000) range.e.r = 4000;
+                const rawData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", blankrows:false, range: XLSX.utils.encode_range(range) });
+                // deteksi header
+                let headerRowIdx = -1, colMap = {};
+                for(let r=0; r<Math.min(rawData.length,10); r++) {
+                    const row = rawData[r];
+                    if(!row) continue;
+                    let hasID=false, hasName=false;
+                    for(let c=0;c<row.length;c++) {
+                        let val = String(row[c]||"").toUpperCase().replace(/\s/g,'');
+                        if(val.includes("NEWID")||val==="IDNO"||val==="ID") hasID=true;
+                        if(val==="NAME"||val==="NAMA") hasName=true;
+                    }
+                    if(hasID && hasName) {
+                        headerRowIdx = r;
+                        for(let c=0;c<row.length;c++) {
+                            let val = String(row[c]||"").toUpperCase().replace(/\s/g,'');
+                            let exact = String(row[c]||"").trim();
+                            if(val.includes("NEWID")||val==="IDNO"||val==="ID") colMap["New ID No"] = c;
+                            else if(val==="NAME"||val==="NAMA") colMap["NAME"] = c;
+                            else if(val.includes("SECT")) colMap["SECTION"] = c;
+                            else if(val.includes("POSITI")||val.includes("TITLE")) colMap["NEW POSITION / TITLE"] = c;
+                            else if(val.includes("JOIN")) colMap["JOIN DATE"] = c;
+                        }
+                        break;
+                    }
+                }
+                if(headerRowIdx === -1) {
+                    headerRowIdx = parseInt(headerRowInput.value)-1 || 5;
+                    colMap = vbaColMap;
+                }
+                const karyawanMap = new Map();
+                for(let r=headerRowIdx+1; r<rawData.length; r++) {
+                    const row = rawData[r];
+                    if(!row) continue;
+                    let name = String(row[colMap["NAME"]]||"").trim();
+                    let id = String(row[colMap["New ID No"]]||"").trim();
+                    if(name === "" && id === "") continue;
+                    // SKIP baris yang mengandung teks footer
+                    const lowerRow = JSON.stringify(row).toLowerCase();
+                    if(lowerRow.includes("hadir penuh") || lowerRow.includes("mangkir") || lowerRow.includes("sakit") || 
+                       lowerRow.includes("cuti tahunan") || lowerRow.includes("cuti lain-lain")) {
+                        continue;
+                    }
+                    const personal = {
+                        "New ID No": id,
+                        "NAME": name,
+                        "SECTION": String(row[colMap["SECTION"]]||"").trim(),
+                        "NEW POSITION / TITLE": String(row[colMap["NEW POSITION / TITLE"]]||"").trim(),
+                        "JOIN DATE": row[colMap["JOIN DATE"]] ? formatDateToString(row[colMap["JOIN DATE"]]) : "",
+                        "STATUS": forcedStatus
+                    };
+                    let key = id !== "" ? id.toUpperCase() : name.toUpperCase();
+                    if(!karyawanMap.has(key)) karyawanMap.set(key, personal);
+                }
+                if(karyawanMap.size) resolve({ map: karyawanMap, fileName: file.name });
+                else resolve(null);
+            } catch(e) { addLog(`Error ${file.name}: ${e.message}`,"error"); resolve(null); }
+        });
+    }
+
+    function isFileValid(file) {
+        return file.name.toLowerCase().endsWith('.xlsb') && 
+               /WORKER|STAFF|SECURITY/i.test(file.name);
+    }
+    function getForcedStatus(fileName) {
+        if(/STAFF/i.test(fileName)) return "STAFF";
+        if(/SECURITY/i.test(fileName)) return "SECURITY";
+        return "WORKER";
+    }
+    async function prosesFileExcel(files) {
+        if(!files.length) return;
+        loadingOverlay.classList.remove('hidden');
+        loadingOverlay.classList.add('flex');
+        loadingLog.innerHTML = '<li>[SYSTEM] Memuat data karyawan dari .xlsb...</li>';
+        const valid = [];
+        for(let f of files) if(isFileValid(f)) valid.push(f);
+        if(!valid.length) { showAlert("Peringatan","Tidak ada file .xlsb valid (nama harus mengandung WORKER/STAFF/SECURITY)","warning"); loadingOverlay.classList.add('hidden'); return; }
+        loadingSubText.innerText = `Memproses ${valid.length} file .xlsb...`;
+        const targetPersonal = ["New ID No","NAME","SECTION","NEW POSITION / TITLE","JOIN DATE","STATUS"];
+        const vbaColMap = { "New ID No":1,"NAME":2,"SECTION":3,"NEW POSITION / TITLE":4,"JOIN DATE":5 };
+        const statuses = valid.map(f=>getForcedStatus(f.name));
+        const allResults = [];
+        for(let i=0;i<valid.length;i+=MAX_CONCURRENT) {
+            const batch = valid.slice(i,i+MAX_CONCURRENT);
+            const batchStatus = statuses.slice(i,i+MAX_CONCURRENT);
+            const promises = batch.map((f,idx)=>prosesSatuFile(f,batchStatus[idx],targetPersonal,vbaColMap));
+            const res = await Promise.all(promises);
+            allResults.push(...res);
+            loadingSubText.innerText = `Proses ${Math.min(i+MAX_CONCURRENT,valid.length)}/${valid.length} file .xlsb...`;
+        }
+        const masterMap = new Map();
+        const berhasil = [];
+        for(const res of allResults) {
+            if(res && res.map.size) {
+                for(let [k,v] of res.map) if(!masterMap.has(k)) masterMap.set(k,v);
+                berhasil.push(res.fileName);
+            }
+        }
+        if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan yang valid","error"); loadingOverlay.classList.add('hidden'); return; }
+        databaseKaryawan = Array.from(masterMap.values());
+        fileBerhasilList = berhasil;
+        // Gabungkan dengan data time jika sudah ada
+        gabungkanDanRender();
+        loadingOverlay.classList.add('hidden');
+        showAlert("Sukses",`${databaseKaryawan.length} karyawan berhasil dimuat. Upload file time clock untuk mengisi waktu.`,"success");
+    }
+
+    // ======================== GABUNGKAN DENGAN TIME MAP & RENDER ========================
+    function gabungkanDanRender() {
+        if(!databaseKaryawan.length) return;
+        // Tentukan header tanggal (1-31 dan 26-31)
+        const allDates = [];
+        for(let i=1;i<=31;i++) allDates.push(String(i));
+        for(let i=26;i<=31;i++) if(!allDates.includes(String(i))) allDates.push(String(i));
+        tanggalHeaders = [...new Set(allDates)].sort((a,b)=>Number(a)-Number(b));
+        currentHeaders = ["New ID No","NAME","SECTION","NEW POSITION / TITLE","JOIN DATE","STATUS", ...tanggalHeaders];
+        
+        // Bangun data lengkap untuk tabel
+        const finalData = databaseKaryawan.map(karyawan => {
+            const row = { ...karyawan };
+            for(let tgl of tanggalHeaders) {
+                // cari data time berdasarkan ID dan tanggal (YYYY-MM-DD)
+                // Kita perlu tahu bulan & tahun. Asumsikan dari data time yang ada (ambil tanggal pertama)
+                // Atau biarkan kosong jika tidak ada. Kita akan coba semua kemungkinan tahun-bulan dari timeMap.
+                // Solusi sederhana: kita cari key yang berakhiran `-${String(tgl).padStart(2,'0')}`
+                let found = null;
+                for(let [key, val] of timeMap.entries()) {
+                    if(key.startsWith(karyawan["New ID No"]+"_") && key.endsWith(`-${String(tgl).padStart(2,'0')}`)) {
+                        found = val;
+                        break;
+                    }
+                }
+                row[tgl] = found || "";
+            }
+            return row;
+        });
+        databaseGlobal = finalData; // untuk keperluan filter, export, dll
+        updateDropdowns();
+        jalankanPencarian();
+        dbStatus.className = "inline-block px-2 py-1 rounded-full text-[9px] font-semibold bg-green-100 text-green-800";
+        dbStatus.innerHTML = `✅ ${fileBerhasilList.length} file .xlsb | Time: ${timeMap.size} record`;
+    }
+
+    // ======================== UPDATE DROPDOWN ========================
+    function updateDropdowns() {
+        if(!databaseGlobal.length) return;
+        const sections = [...new Set(databaseGlobal.map(r=>r["SECTION"]).filter(x=>x))].sort();
+        const positions = [...new Set(databaseGlobal.map(r=>r["NEW POSITION / TITLE"]).filter(x=>x))].sort();
+        filterSection.innerHTML = '<option value="ALL">Semua Section</option>' + sections.map(s=>`<option value="${s}">${s}</option>`).join('');
+        filterPosition.innerHTML = '<option value="ALL">Semua Posisi</option>' + positions.map(p=>`<option value="${p}">${p}</option>`).join('');
+    }
+
+    // ======================== FILTER & RENDER TABEL ========================
+    function jalankanPencarian() {
+        if(!databaseGlobal.length) return;
+        let filtered = databaseGlobal;
+        const keyword = searchInput.value.trim().toUpperCase();
+        const status = filterStatus.value;
+        const section = filterSection.value;
+        const pos = filterPosition.value;
+        if(status !== "ALL") filtered = filtered.filter(r=>r["STATUS"]===status);
+        if(section !== "ALL") filtered = filtered.filter(r=>r["SECTION"]===section);
+        if(pos !== "ALL") filtered = filtered.filter(r=>r["NEW POSITION / TITLE"]===pos);
+        if(keyword) {
+            const isNum = /^\d+$/.test(keyword);
+            filtered = filtered.filter(r=> isNum ? String(r["New ID No"]).toUpperCase().includes(keyword) : String(r["NAME"]).toUpperCase().includes(keyword) || String(r["New ID No"]).toUpperCase().includes(keyword));
+        }
+        renderTabel(filtered);
+    }
+
+    function renderTabel(data) {
+        totalDataCount.innerText = data.length;
+        if(!data.length) { tableHeader.innerHTML=''; tableBody.innerHTML='<tr><td colspan="6" class="p-10 text-center">Tidak ada data</td></tr>'; return; }
+        // Header
+        let th = `<tr class="bg-slate-800 text-white text-[11px] uppercase">`;
+        currentHeaders.forEach(col => {
+            let cls = "px-4 py-2 border-r";
+            if(col==="New ID No") cls += " sticky left-0 z-20 bg-slate-800";
+            if(col==="NAME") cls += " sticky left-[100px] z-20 bg-slate-800";
+            if(tanggalHeaders.includes(col)) cls += " attendance-col px-1 text-center";
+            th += `<th class="${cls}">${col}</th>`;
+        });
+        th += `</tr>`;
+        tableHeader.innerHTML = th;
+        // Body
+        let tb = "";
+        const max = Math.min(data.length, 1500);
+        for(let i=0;i<max;i++) {
+            const row = data[i];
+            tb += `<tr class="hover:bg-blue-50 border-b">`;
+            for(let col of currentHeaders) {
+                let val = row[col] ?? "";
+                let extra = "px-4 py-2";
+                let style = "";
+                if(col==="New ID No") { extra = "sticky left-0 z-10 bg-white font-medium px-4"; style="min-width:100px; box-shadow:2px 0 5px -2px rgba(0,0,0,0.1)"; }
+                else if(col==="NAME") { extra = "sticky left-[100px] z-10 bg-white px-4"; style="min-width:200px; box-shadow:2px 0 5px -2px rgba(0,0,0,0.1)"; }
+                else if(tanggalHeaders.includes(col)) { extra = "attendance-col px-1 text-center time-cell"; }
+                if(col==="STATUS") {
+                    if(val==="WORKER") val='<span class="bg-emerald-100 px-2 py-0.5 rounded">WORKER</span>';
+                    else if(val==="STAFF") val='<span class="bg-purple-100 px-2 py-0.5 rounded">STAFF</span>';
+                    else if(val==="SECURITY") val='<span class="bg-slate-700 text-white px-2 py-0.5 rounded">SECURITY</span>';
+                }
+                tb += `<td class="${extra}" style="${style}">${val}</td>`;
+            }
+            tb += `</tr>`;
+        }
+        if(data.length>1500) tb += `<tr><td colspan="${currentHeaders.length}" class="p-2 text-center text-blue-600">Hanya 1500 baris pertama</td></tr>`;
+        tableBody.innerHTML = tb;
+    }
+
+    // ======================== SUMMARY (POSISI + STATUS) ========================
+    function openSummary() {
+        if(!databaseGlobal.length) { showAlert("Peringatan","Tidak ada data","warning"); return; }
+        const summary = new Map();
+        let gw=0,gs=0,gsec=0;
+        for(const row of databaseGlobal) {
+            let pos = row["NEW POSITION / TITLE"] || "UNKNOWN";
+            let stat = row["STATUS"];
+            if(!summary.has(pos)) summary.set(pos,{WORKER:0,STAFF:0,SECURITY:0,TOTAL:0});
+            const d = summary.get(pos);
+            if(stat==="WORKER") { d.WORKER++; gw++; }
+            else if(stat==="STAFF") { d.STAFF++; gs++; }
+            else if(stat==="SECURITY") { d.SECURITY++; gsec++; }
+            d.TOTAL++;
+        }
+        let html = `<table class="w-full border"><thead><tr class="bg-slate-700 text-white"><th class="p-2">POSISI</th><th>WORKER</th><th>STAFF</th><th>SECURITY</th><th>TOTAL</th></tr></thead><tbody>`;
+        for(let [pos,data] of [...summary.entries()].sort()) {
+            html += `<tr><td class="border p-2">${pos}</td><td class="border p-2 text-center">${data.WORKER}</td><td class="border p-2 text-center">${data.STAFF}</td><td class="border p-2 text-center">${data.SECURITY}</td><td class="border p-2 text-center font-bold">${data.TOTAL}</td></tr>`;
+        }
+        html += `<tr class="bg-indigo-100 font-bold"><td class="p-2">GRAND TOTAL</td><td class="text-center">${gw}</td><td class="text-center">${gs}</td><td class="text-center">${gsec}</td><td class="text-center">${gw+gs+gsec}</td></tr></tbody></table>`;
+        document.getElementById('summaryContent').innerHTML = html;
+        document.getElementById('summaryModal').classList.remove('hidden');
+        document.getElementById('summaryModal').classList.add('flex');
+    }
+    function closeSummary() { document.getElementById('summaryModal').classList.add('hidden'); }
+
+    // ======================== EXPORT ========================
+    function exportToExcel() {
+        if(!databaseGlobal.length) { showAlert("Tidak ada data","","warning"); return; }
+        const dataToExport = databaseGlobal; // bisa pakai hasil filter? biar simpel export semua
+        const wsData = [currentHeaders];
+        for(const row of dataToExport) {
+            const rowArr = currentHeaders.map(h => row[h] !== undefined ? row[h] : "");
+            wsData.push(rowArr);
+        }
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+        XLSX.writeFile(wb, `attendance_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
+        showAlert("Berhasil","Data diekspor","success");
+    }
+
+    // ======================== EVENT LISTENERS ========================
+    fileUpload.addEventListener('change', (e) => { if(e.target.files.length) prosesFileExcel(Array.from(e.target.files)); });
+    timeUpload.addEventListener('change', async (e) => {
+        if(!e.target.files.length) return;
+        const file = e.target.files[0];
+        loadingOverlay.classList.remove('hidden');
+        loadingOverlay.classList.add('flex');
+        loadingLog.innerHTML = '<li>[TIME] Memuat data time clock...</li>';
+        const newTimeMap = await loadTimeFile(file);
+        if(newTimeMap.size) {
+            timeMap = newTimeMap;
+            addLog(`Berhasil memuat ${timeMap.size} record time clock`,"success");
+            if(databaseKaryawan.length) gabungkanDanRender();
+            else showAlert("Info","Data time tersimpan. Upload file .xlsb karyawan terlebih dahulu.","info");
+        } else {
+            showAlert("Gagal","Tidak ada data time yang valid. Pastikan file memiliki kolom ID, Date, Records.","error");
+        }
+        loadingOverlay.classList.add('hidden');
+        e.target.value = "";
+    });
+    btnSearch.addEventListener('click', jalankanPencarian);
+    searchInput.addEventListener('keypress', e=>{if(e.key==='Enter') jalankanPencarian();});
+    filterStatus.addEventListener('change', jalankanPencarian);
+    filterSection.addEventListener('change', jalankanPencarian);
+    filterPosition.addEventListener('change', jalankanPencarian);
+    btnExport.addEventListener('click', exportToExcel);
+    function readFileAsArrayBuffer(file) {
+        return new Promise((resolve,reject)=>{
+            const fr = new FileReader();
+            fr.onload = e=>resolve(e.target.result);
+            fr.onerror = ()=>reject();
+            fr.readAsArrayBuffer(file);
+        });
+    }
+    function formatDateToString(d) {
+        if(!d) return "";
+        let date;
+        if(d instanceof Date) date=d;
+        else if(typeof d==='number') date=new Date((d-25569)*86400*1000);
+        else date=new Date(d);
+        if(isNaN(date.getTime())) return String(d);
+        const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        return `${String(date.getDate()).padStart(2,'0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
+    }
+    let databaseGlobal = []; // untuk keperluan filter & export setelah digabung
+</script>
+</body>
+</html>
