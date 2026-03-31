@@ -49,6 +49,27 @@
                 <p class="text-[9px] text-emerald-400">Time Clock Overrides Code | Filter Time Aktif</p>
             </div>
         </div>
+
+        <!-- FITUR BARU: UPDATE ABSEN (FOLDER) & TIME (FILE) TERPISAH -->
+        <div class="flex items-center gap-1 bg-slate-700 p-1 rounded-lg border border-slate-600 flex-wrap">
+            <!-- Hidden inputs untuk fallback picker -->
+            <input type="file" id="hiddenFolderInput" webkitdirectory directory multiple class="hidden">
+            <input type="file" id="hiddenTimeInput" accept=".csv,.xlsx,.xls" class="hidden">
+
+            <div class="flex items-center gap-1">
+                <span class="text-[9px] font-bold text-blue-300">📂 Folder Absen:</span>
+                <input type="text" id="folderXlsbDisplay" readonly placeholder="Pilih folder .xlsb..." class="text-[9px] px-1.5 py-1 rounded w-28 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenFolderInput').click()" title="Klik untuk memilih folder absen">
+                <button id="btnUpdateXlsb" onclick="document.getElementById('hiddenFolderInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Absen</button>
+            </div>
+            <div class="w-px h-5 bg-slate-500 mx-1"></div>
+            <div class="flex items-center gap-1">
+                <span class="text-[9px] font-bold text-yellow-400">📄 File Time:</span>
+                <input type="text" id="fileTimeDisplay" readonly placeholder="Pilih file time..." class="text-[9px] px-1.5 py-1 rounded w-28 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenTimeInput').click()" title="Klik untuk memilih file time">
+                <button id="btnUpdateTime" onclick="document.getElementById('hiddenTimeInput').click()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Time</button>
+            </div>
+        </div>
+
+        <!-- UPLOAD MANUAL -->
         <div class="flex items-center gap-1 bg-slate-700 p-1 rounded-lg flex-wrap">
             <div class="flex items-center gap-1 bg-slate-600 px-1 py-0.5 rounded">
                 <label class="text-[9px] font-semibold">Header:</label>
@@ -70,14 +91,20 @@
             <div class="rekap-box"><span class="rekap-label">Total Security:</span><span id="totalSecurity" class="rekap-value">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Semua:</span><span id="totalSemua" class="rekap-value">0</span></div>
         </div>
-        <div class="flex gap-2 items-center">
+        <div class="flex gap-2 items-center flex-wrap">
+            <!-- FITUR BARU: SEARCH BY NAME / ID -->
+            <div class="flex items-center gap-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-sm">
+                <span class="text-[10px]">🔍</span>
+                <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[9px] border-none outline-none w-32 bg-transparent">
+            </div>
+
             <div class="flex items-center gap-1 bg-white border rounded px-1 py-0.5">
                 <span class="text-[9px] font-semibold">Tgl:</span>
-                <select id="dateFrom" class="text-[9px] border-none bg-transparent"><option value="ALL">Dari</option></select>
+                <select id="dateFrom" class="text-[9px] border-none bg-transparent outline-none"><option value="ALL">Dari</option></select>
                 <span class="text-[9px]">-</span>
-                <select id="dateTo" class="text-[9px] border-none bg-transparent"><option value="ALL">Sampai</option></select>
+                <select id="dateTo" class="text-[9px] border-none bg-transparent outline-none"><option value="ALL">Sampai</option></select>
             </div>
-            <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px]">
+            <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none">
                 <option value="ALL">Semua Kehadiran</option>
                 <option value="NO_TIME">Tidak ada clock in dan out (kosong / "-")</option>
                 <option value="ONE_TIME">Tidak ada in atau out (hanya satu waktu)</option>
@@ -85,7 +112,7 @@
             </select>
             <button id="btnExport" class="btn-export text-white font-bold py-0.5 px-2 rounded text-[9px]">Export XLSX</button>
             <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-0.5 px-2 rounded text-[9px]">Summary</button>
-            <span id="dbStatus" class="text-[9px] font-semibold bg-blue-100 px-1 py-0.5 rounded">Kosong</span>
+            <span id="dbStatus" class="text-[9px] font-semibold bg-blue-100 px-1 py-0.5 rounded border border-blue-200">Kosong</span>
         </div>
     </div>
 
@@ -127,6 +154,13 @@
     const totalStaffSpan = document.getElementById('totalStaff');
     const totalSecuritySpan = document.getElementById('totalSecurity');
     const totalSemuaSpan = document.getElementById('totalSemua');
+    const globalSearch = document.getElementById('globalSearch');
+    
+    // Elements for folder/file update
+    const hiddenFolderInput = document.getElementById('hiddenFolderInput');
+    const folderXlsbDisplay = document.getElementById('folderXlsbDisplay');
+    const hiddenTimeInput = document.getElementById('hiddenTimeInput');
+    const fileTimeDisplay = document.getElementById('fileTimeDisplay');
 
     function showAlert(title, msg, type='info') {
         const modal = document.getElementById('modernAlert');
@@ -134,7 +168,7 @@
         document.getElementById('alertMessage').innerText = msg;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        setTimeout(() => { if(modal) modal.classList.add('hidden'); }, 2000);
+        setTimeout(() => { if(modal) modal.classList.add('hidden'); }, 3000);
     }
     function closeAlert() { document.getElementById('modernAlert').classList.add('hidden'); }
     
@@ -157,7 +191,101 @@
         return `${parts[0]}-${parts[parts.length-1]}`;
     }
 
-    // ======================== BACA FILE .XLSB ========================
+    // ======================== VALIDASI FILE (MENCEGAH ERROR SHEETJS) ========================
+    function isFileValid(file) { 
+        if (!file || file.size === 0) return false;
+        // Abaikan file hidden dan sistem seperti resource fork dari macOS
+        if (file.name.startsWith('~$') || file.name.startsWith('._') || file.name.startsWith('.')) return false;
+        
+        // Filter berdasarkan path folder (sangat penting untuk upload folder)
+        const path = file.webkitRelativePath || "";
+        if (path.includes('__MACOSX') || path.includes('/.')) return false;
+
+        return file.name.toLowerCase().endsWith('.xlsb') && /WORKER|STAFF|SECURITY/i.test(file.name); 
+    }
+    
+    function isTimeFileValid(file) {
+        if (!file || file.size === 0) return false;
+        if (file.name.startsWith('~$') || file.name.startsWith('._') || file.name.startsWith('.')) return false;
+        
+        const path = file.webkitRelativePath || "";
+        if (path.includes('__MACOSX') || path.includes('/.')) return false;
+        
+        return true;
+    }
+
+    // ======================== UPDATE ABSEN VIA FOLDER ========================
+    hiddenFolderInput.addEventListener('change', async (e) => {
+        try {
+            const files = Array.from(e.target.files);
+            if(files.length === 0) return;
+
+            // Mendapatkan nama folder secara kasar dari path file
+            const firstPath = files[0].webkitRelativePath;
+            const folderName = firstPath ? firstPath.split('/')[0] : "Folder terpilih";
+            folderXlsbDisplay.value = folderName;
+
+            showAlert("Memproses", `Membaca isi folder: ${folderName}...`, "info");
+            
+            // Filter hanya file .xlsb yang berkaitan dengan absen dan mengabaikan file temporary/hidden/__MACOSX
+            const xlsbFiles = files.filter(file => isFileValid(file));
+
+            if (xlsbFiles.length === 0) {
+                showAlert("Peringatan", "Tidak ditemukan file .xlsb valid (Worker/Staff/Security) di folder tersebut.", "warning");
+                return;
+            }
+
+            await prosesFileExcel(xlsbFiles);
+            showAlert("Update Berhasil", `Data Absen berhasil di-load dari folder.`, "success");
+
+        } catch (error) {
+            console.error(error);
+            showAlert("Error", "Gagal membaca folder: " + error.message, "error");
+        } finally {
+            e.target.value = ""; // Reset input
+        }
+    });
+
+    // ======================== UPDATE TIME VIA FILE ========================
+    hiddenTimeInput.addEventListener('change', async (e) => {
+        try {
+            if(!e.target.files.length) return;
+            const file = e.target.files[0];
+            
+            if (!isTimeFileValid(file)) {
+                showAlert("Error", "File time tidak valid atau merupakan file temporary sistem.", "error");
+                e.target.value = "";
+                return;
+            }
+
+            fileTimeDisplay.value = file.name;
+            showAlert("Memproses", `Membaca file time: ${file.name}...`, "info");
+
+            const newTimeMap = await loadTimeFile(file);
+            
+            if (newTimeMap.size) {
+                timeMap = newTimeMap;
+                localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
+                
+                if (databaseKaryawan.length) {
+                    gabungkanDanRender();
+                    showAlert("Update Berhasil", `Data Time (${file.name}) berhasil di-load.`, "success");
+                } else {
+                    showAlert("Info", `Data Time (${file.name}) tersimpan. Silakan Update Absen (Folder) dulu.`, "info");
+                }
+            } else {
+                showAlert("Gagal", `File Time (${file.name}) kosong atau format tidak valid.`, "error");
+            }
+
+        } catch (error) {
+            console.error(error);
+            showAlert("Error", "Gagal membaca file: " + error.message, "error");
+        } finally {
+            e.target.value = ""; // Reset input
+        }
+    });
+
+    // ======================== BACA FILE .XLSB MANUAL ========================
     async function bacaFileXLSB(file, forcedStatus) {
         return new Promise(async (resolve) => {
             try {
@@ -232,19 +360,20 @@
                 }
                 if(karyawanMap.size) resolve({ map: karyawanMap, fileName: file.name });
                 else resolve(null);
-            } catch(e) { console.error(e); resolve(null); }
+            } catch(e) { 
+                console.warn(`File gagal dibaca: ${file.name}`, e); 
+                resolve(null); 
+            }
         });
     }
 
-    function isFileValid(file) { return file.name.toLowerCase().endsWith('.xlsb') && /WORKER|STAFF|SECURITY/i.test(file.name); }
     function getForcedStatus(fileName) { if(/STAFF/i.test(fileName)) return "STAFF"; if(/SECURITY/i.test(fileName)) return "SECURITY"; return "WORKER"; }
 
     async function prosesFileExcel(files) {
         if(!files.length) return;
-        showAlert("Memproses", "Memuat file .xlsb...", "info");
-        const valid = [];
-        for(let f of files) if(isFileValid(f)) valid.push(f);
-        if(!valid.length) { showAlert("Peringatan","Tidak ada file .xlsb valid","warning"); return; }
+        const valid = files.filter(f => isFileValid(f));
+        if(!valid.length) { showAlert("Peringatan","Tidak ada file .xlsb valid (harus Worker/Staff/Security)","warning"); return; }
+        
         const allResults = [];
         for(let i=0;i<valid.length;i+=MAX_CONCURRENT) {
             const batch = valid.slice(i,i+MAX_CONCURRENT);
@@ -254,7 +383,7 @@
         }
         const masterMap = new Map();
         for(const res of allResults) if(res && res.map.size) for(let [k,v] of res.map) if(!masterMap.has(k)) masterMap.set(k,v);
-        if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan","error"); return; }
+        if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file.","error"); return; }
         
         databaseKaryawan = Array.from(masterMap.values());
         semuaTanggal = [];
@@ -264,54 +393,58 @@
         localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan.map(k => ({ ...k, kodePerTanggal: k.kodePerTanggal }))));
         localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
         gabungkanDanRender();
-        showAlert("Sukses",`${databaseKaryawan.length} karyawan dimuat. Upload time clock untuk menambah jam.`,"success");
     }
 
-    // ======================== BACA TIME CLOCK ========================
+    // ======================== BACA TIME CLOCK MANUAL ========================
     async function loadTimeFile(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-                if(!rows.length) { resolve(new Map()); return; }
-                
-                let idCol=-1, dateCol=-1, recordCol=-1;
-                for(let i=0;i<Math.min(rows.length,20);i++) {
-                    const row = rows[i];
-                    for(let c=0;c<row.length;c++) {
-                        let cell = String(row[c]||"").toUpperCase();
-                        if(cell.includes("ID")) idCol = c;
-                        if(cell.includes("DATE")) dateCol = c;
-                        if(cell.includes("RECORD")) recordCol = c;
-                    }
-                    if(idCol!==-1 && dateCol!==-1 && recordCol!==-1) break;
-                }
-                
-                if(idCol===-1 || dateCol===-1 || recordCol===-1) { resolve(new Map()); return; }
-                const timeMapLocal = new Map();
-                for(let r=1; r<rows.length; r++) {
-                    const row = rows[r];
-                    if(!row) continue;
-                    let id = String(row[idCol]||"").trim();
-                    let dateRaw = row[dateCol];
-                    let dateStr = "";
-                    if(dateRaw instanceof Date) dateStr = dateRaw.toISOString().slice(0,10);
-                    else if(typeof dateRaw === 'number') dateStr = new Date((dateRaw-25569)*86400*1000).toISOString().slice(0,10);
-                    else dateStr = String(dateRaw).trim();
-                    let record = String(row[recordCol]||"").trim();
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+                    if(!rows.length) { resolve(new Map()); return; }
                     
-                    if(id && dateStr && record) {
-                        let tgl = parseInt(dateStr.split('-')[2], 10);
-                        if(!isNaN(tgl)) {
-                            const formattedTime = formatTimeRange(record);
-                            if(formattedTime) timeMapLocal.set(`${id}_${tgl}`, formattedTime);
+                    let idCol=-1, dateCol=-1, recordCol=-1;
+                    for(let i=0;i<Math.min(rows.length,20);i++) {
+                        const row = rows[i];
+                        for(let c=0;c<row.length;c++) {
+                            let cell = String(row[c]||"").toUpperCase();
+                            if(cell.includes("ID")) idCol = c;
+                            if(cell.includes("DATE")) dateCol = c;
+                            if(cell.includes("RECORD")) recordCol = c;
+                        }
+                        if(idCol!==-1 && dateCol!==-1 && recordCol!==-1) break;
+                    }
+                    
+                    if(idCol===-1 || dateCol===-1 || recordCol===-1) { resolve(new Map()); return; }
+                    const timeMapLocal = new Map();
+                    for(let r=1; r<rows.length; r++) {
+                        const row = rows[r];
+                        if(!row) continue;
+                        let id = String(row[idCol]||"").trim();
+                        let dateRaw = row[dateCol];
+                        let dateStr = "";
+                        if(dateRaw instanceof Date) dateStr = dateRaw.toISOString().slice(0,10);
+                        else if(typeof dateRaw === 'number') dateStr = new Date((dateRaw-25569)*86400*1000).toISOString().slice(0,10);
+                        else dateStr = String(dateRaw).trim();
+                        let record = String(row[recordCol]||"").trim();
+                        
+                        if(id && dateStr && record) {
+                            let tgl = parseInt(dateStr.split('-')[2], 10);
+                            if(!isNaN(tgl)) {
+                                const formattedTime = formatTimeRange(record);
+                                if(formattedTime) timeMapLocal.set(`${id}_${tgl}`, formattedTime);
+                            }
                         }
                     }
+                    resolve(timeMapLocal);
+                } catch(err) {
+                    console.warn(`Gagal membaca time file: ${file.name}`, err);
+                    resolve(new Map());
                 }
-                resolve(timeMapLocal);
             };
             reader.onerror = () => resolve(new Map());
             reader.readAsArrayBuffer(file);
@@ -371,7 +504,16 @@
         if(!databaseGlobal.length) return [];
         let filtered = [...databaseGlobal];
         
-        // Membaca nilai dari DOM dengan fallback "ALL"
+        // Filter Global (Pencarian Textbox Nama/ID)
+        const searchKeyword = (globalSearch.value || "").toLowerCase().trim();
+        if(searchKeyword !== "") {
+            filtered = filtered.filter(r => 
+                r.id.toLowerCase().includes(searchKeyword) || 
+                r.name.toLowerCase().includes(searchKeyword)
+            );
+        }
+
+        // Filter Dropdown Header Tabel
         const idFilter = document.getElementById('filter_id')?.value || "ALL";
         const nameFilter = document.getElementById('filter_name')?.value || "ALL";
         const sectionFilter = document.getElementById('filter_section')?.value || "ALL";
@@ -435,7 +577,6 @@
             return;
         }
 
-        // Ambil filter saat ini sebelum DOM ditulis ulang
         const currentFilters = {};
         for(let col of fixedCols) {
             if(col.filterKey) {
@@ -448,7 +589,6 @@
         const range = getTanggalRange();
         let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
         
-        // Update angka rekapitulasi berdasarkan data final yang TAMPIL
         updateRekapUtama(filteredData);  
         
         const tanggalCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: null }));
@@ -469,7 +609,9 @@
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i];
             if(col.filterKey) {
-                let uniqueValues = [...new Set(databaseGlobal.map(r => r[col.filterKey]).filter(v => v && v !== ""))].sort();
+                // Saat ada globalSearch aktif, dropdown list di-update berdasarkan filter data saat ini
+                let baseDataForDropdown = (globalSearch.value.trim() !== "") ? filteredData : databaseGlobal;
+                let uniqueValues = [...new Set(baseDataForDropdown.map(r => r[col.filterKey]).filter(v => v && v !== ""))].sort();
                 let selectedVal = currentFilters[col.filterKey] || "ALL";
                 
                 let options = `<option value="ALL" ${selectedVal === "ALL" ? "selected" : ""}>Semua</option>`;
@@ -485,7 +627,7 @@
         th += `</tr>`;
         tableHeader.innerHTML = th;
         
-        // Listener baru untuk filter kolom
+        // Listener dropdown filter kolom
         for(let col of fixedCols) {
             if(col.filterKey) {
                 const sel = document.getElementById(`filter_${col.filterKey}`);
@@ -520,7 +662,6 @@
                 let time = dataTgl.time;
                 let display = "";
                 
-                // PRIORITAS WAKTU: Jika ada time, ganti kode menjadi time
                 if(time) {
                     display = time;
                 } else if(kode) {
@@ -592,7 +733,6 @@
                 let time = dataTgl.time;
                 let display = "";
                 
-                // PRIORITAS WAKTU EXCEL
                 if(time) {
                     display = time;
                 } else if(kode) {
@@ -616,10 +756,27 @@
     function readFileAsArrayBuffer(file) {
         return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(); fr.readAsArrayBuffer(file); });
     }
-    fileUpload.addEventListener('change', (e) => { if(e.target.files.length) prosesFileExcel(Array.from(e.target.files)); });
+    
+    // Event listener Upload File Manual (Fallback)
+    fileUpload.addEventListener('change', async (e) => { 
+        if(e.target.files.length) {
+            showAlert("Memproses", "Memuat file .xlsb...", "info");
+            await prosesFileExcel(Array.from(e.target.files)); 
+            showAlert("Sukses",`${databaseKaryawan.length} karyawan dimuat.`,"success");
+            e.target.value = "";
+        }
+    });
+    
     timeUpload.addEventListener('change', async (e) => {
         if(!e.target.files.length) return;
         const file = e.target.files[0];
+        
+        if (!isTimeFileValid(file)) {
+            showAlert("Error", "File time tidak valid atau merupakan file temporary.", "error");
+            e.target.value = "";
+            return;
+        }
+
         const newTimeMap = await loadTimeFile(file);
         if(newTimeMap.size) {
             timeMap = newTimeMap;
@@ -630,6 +787,8 @@
         e.target.value = "";
     });
     
+    // Event listener Pencarian Textbox & Filter
+    globalSearch.addEventListener('input', () => renderTableWithFilters());
     dateFrom.addEventListener('change', () => renderTableWithFilters());
     dateTo.addEventListener('change', () => renderTableWithFilters());
     filterAttendanceDetailSelect.addEventListener('change', () => renderTableWithFilters());
