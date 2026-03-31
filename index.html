@@ -43,10 +43,10 @@
     <!-- HEADER -->
     <div class="bg-slate-800 text-white p-2 flex justify-between items-center flex-wrap gap-2">
         <div class="flex items-center gap-2">
-            <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5">
+            <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
                 <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
-                <p class="text-[9px] text-emerald-400">Kode Absen + Time | Filter Time (Kosong/1 Waktu/Lengkap)</p>
+                <p class="text-[9px] text-emerald-400">Time Clock Overrides Code | Filter Time Aktif</p>
             </div>
         </div>
         <div class="flex items-center gap-1 bg-slate-700 p-1 rounded-lg flex-wrap">
@@ -69,9 +69,6 @@
             <div class="rekap-box"><span class="rekap-label">Total Staff:</span><span id="totalStaff" class="rekap-value">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Security:</span><span id="totalSecurity" class="rekap-value">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Semua:</span><span id="totalSemua" class="rekap-value">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">⏱️ Tanpa Time:</span><span id="rekapNoTime" class="rekap-value">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">⏱️ 1 Waktu:</span><span id="rekapOneTime" class="rekap-value">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">⏱️ In-Out:</span><span id="rekapFullTime" class="rekap-value">0</span></div>
         </div>
         <div class="flex gap-2 items-center">
             <div class="flex items-center gap-1 bg-white border rounded px-1 py-0.5">
@@ -82,11 +79,9 @@
             </div>
             <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px]">
                 <option value="ALL">Semua Kehadiran</option>
-                <option value="HADIR_KODE">Hadir (PR,PRP,PRS,PRM)</option>
-                <option value="TIDAK_HADIR_KODE">Tidak Hadir (AB,LWP,AL,SK,ML,DL,OL)</option>
-                <option value="NO_TIME">Tidak ada Time (kosong)</option>
-                <option value="ONE_TIME">Hanya satu waktu (in/out saja)</option>
-                <option value="FULL_TIME">Lengkap (in dan out)</option>
+                <option value="NO_TIME">Tidak ada clock in dan out (kosong / "-")</option>
+                <option value="ONE_TIME">Tidak ada in atau out (hanya satu waktu)</option>
+                <option value="FULL_TIME">Ada time in dan time out (format "HH:MM-HH:MM")</option>
             </select>
             <button id="btnExport" class="btn-export text-white font-bold py-0.5 px-2 rounded text-[9px]">Export XLSX</button>
             <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-0.5 px-2 rounded text-[9px]">Summary</button>
@@ -109,11 +104,10 @@
 
 <script>
     // ======================== GLOBAL ========================
-    let databaseKaryawan = [];      // array of { id, name, section, position, joinDate, status, kodePerTanggal: { "1":"PRP", ... } }
-    let timeMap = new Map();         // key = `${id}_${tanggal}` -> string "08:00-17:00" atau "08:00" (jika hanya satu)
+    let databaseKaryawan = [];      
+    let timeMap = new Map();         
     let semuaTanggal = [];
     let databaseGlobal = [];
-    let filterAttendanceDetail = "ALL";
     const MAX_CONCURRENT = 6;
     const MAX_BARIS_PER_FILE = 2500;
 
@@ -133,9 +127,6 @@
     const totalStaffSpan = document.getElementById('totalStaff');
     const totalSecuritySpan = document.getElementById('totalSecurity');
     const totalSemuaSpan = document.getElementById('totalSemua');
-    const rekapNoTimeSpan = document.getElementById('rekapNoTime');
-    const rekapOneTimeSpan = document.getElementById('rekapOneTime');
-    const rekapFullTimeSpan = document.getElementById('rekapFullTime');
 
     function showAlert(title, msg, type='info') {
         const modal = document.getElementById('modernAlert');
@@ -146,6 +137,7 @@
         setTimeout(() => { if(modal) modal.classList.add('hidden'); }, 2000);
     }
     function closeAlert() { document.getElementById('modernAlert').classList.add('hidden'); }
+    
     function formatDateToString(d) {
         if(!d) return "";
         let date;
@@ -156,7 +148,7 @@
         const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         return `${String(date.getDate()).padStart(2,'0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
     }
-    // Format time: ambil time in (pertama) dan time out (terakhir) -> "08:00-17:00" atau "08:00" jika hanya satu
+
     function formatTimeRange(record) {
         if(!record) return "";
         const parts = record.split(';').map(p=>p.trim()).filter(p=>p);
@@ -177,7 +169,7 @@
                 if(range.e.r > MAX_BARIS_PER_FILE) range.e.r = MAX_BARIS_PER_FILE;
                 const rawData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", blankrows:false, range: XLSX.utils.encode_range(range) });
                 if(!rawData.length) { resolve(null); return; }
-                // Deteksi header
+                
                 let headerRowIdx = -1, colMap = { id:-1, name:-1, section:-1, position:-1, join:-1 };
                 for(let r=0; r<Math.min(rawData.length,15); r++) {
                     const row = rawData[r];
@@ -220,6 +212,7 @@
                     if(id==="" && name==="") continue;
                     const rowStr = JSON.stringify(row).toLowerCase();
                     if(rowStr.includes("hadir penuh")||rowStr.includes("mangkir")||rowStr.includes("sakit")||rowStr.includes("cuti tahunan")||rowStr.includes("cuti lain-lain")) continue;
+                    
                     const kodePerTanggal = {};
                     for(let [tgl, colIdx] of Object.entries(colTanggal)) {
                         let val = row[colIdx];
@@ -262,17 +255,19 @@
         const masterMap = new Map();
         for(const res of allResults) if(res && res.map.size) for(let [k,v] of res.map) if(!masterMap.has(k)) masterMap.set(k,v);
         if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan","error"); return; }
+        
         databaseKaryawan = Array.from(masterMap.values());
         semuaTanggal = [];
         for(let i=26;i<=31;i++) semuaTanggal.push(i);
         for(let i=1;i<=25;i++) semuaTanggal.push(i);
+        
         localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan.map(k => ({ ...k, kodePerTanggal: k.kodePerTanggal }))));
         localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
         gabungkanDanRender();
         showAlert("Sukses",`${databaseKaryawan.length} karyawan dimuat. Upload time clock untuk menambah jam.`,"success");
     }
 
-    // ======================== BACA TIME CLOCK (hanya time in-out) ========================
+    // ======================== BACA TIME CLOCK ========================
     async function loadTimeFile(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -282,6 +277,7 @@
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
                 if(!rows.length) { resolve(new Map()); return; }
+                
                 let idCol=-1, dateCol=-1, recordCol=-1;
                 for(let i=0;i<Math.min(rows.length,20);i++) {
                     const row = rows[i];
@@ -293,6 +289,7 @@
                     }
                     if(idCol!==-1 && dateCol!==-1 && recordCol!==-1) break;
                 }
+                
                 if(idCol===-1 || dateCol===-1 || recordCol===-1) { resolve(new Map()); return; }
                 const timeMapLocal = new Map();
                 for(let r=1; r<rows.length; r++) {
@@ -305,6 +302,7 @@
                     else if(typeof dateRaw === 'number') dateStr = new Date((dateRaw-25569)*86400*1000).toISOString().slice(0,10);
                     else dateStr = String(dateRaw).trim();
                     let record = String(row[recordCol]||"").trim();
+                    
                     if(id && dateStr && record) {
                         let tgl = parseInt(dateStr.split('-')[2], 10);
                         if(!isNaN(tgl)) {
@@ -320,7 +318,7 @@
         });
     }
 
-    // ======================== GABUNGKAN DATA (kode absen tetap, time dari timeMap) ========================
+    // ======================== GABUNGKAN DATA ========================
     function gabungkanDanRender() {
         if(!databaseKaryawan.length) return;
         const finalData = databaseKaryawan.map(karyawan => {
@@ -341,7 +339,7 @@
             };
         });
         databaseGlobal = finalData;
-        // Dropdown tanggal custom
+        
         const optFrom = ['<option value="ALL">Dari</option>'];
         const optTo = ['<option value="ALL">Sampai</option>'];
         for(let t of semuaTanggal) {
@@ -352,11 +350,12 @@
         dateTo.innerHTML = optTo.join('');
         dateFrom.value = "ALL";
         dateTo.value = "ALL";
+        
         renderTableWithFilters();
         dbStatus.innerHTML = `✅ Karyawan: ${databaseKaryawan.length} | Absen: ${timeMap.size}`;
     }
 
-    // ======================== FILTER PER KOLOM (DROPDOWN) ========================
+    // ======================== FILTER ========================
     function getTanggalRange() {
         let from = dateFrom.value;
         let to = dateTo.value;
@@ -368,36 +367,35 @@
         else return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
 
-    // Filter berdasarkan kolom (ID, Nama, Section, Posisi, Status)
     function getFilteredByColumn() {
         if(!databaseGlobal.length) return [];
         let filtered = [...databaseGlobal];
-        const idFilter = document.getElementById('filter_id')?.value || "";
-        const nameFilter = document.getElementById('filter_name')?.value || "";
-        const sectionFilter = document.getElementById('filter_section')?.value || "";
-        const positionFilter = document.getElementById('filter_position')?.value || "";
-        const statusFilter = document.getElementById('filter_status')?.value || "";
-        if(idFilter && idFilter !== "ALL") filtered = filtered.filter(r => r.id === idFilter);
-        if(nameFilter && nameFilter !== "ALL") filtered = filtered.filter(r => r.name === nameFilter);
-        if(sectionFilter && sectionFilter !== "ALL") filtered = filtered.filter(r => r.section === sectionFilter);
-        if(positionFilter && positionFilter !== "ALL") filtered = filtered.filter(r => r.position === positionFilter);
-        if(statusFilter && statusFilter !== "ALL") filtered = filtered.filter(r => r.status === statusFilter);
+        
+        // Membaca nilai dari DOM dengan fallback "ALL"
+        const idFilter = document.getElementById('filter_id')?.value || "ALL";
+        const nameFilter = document.getElementById('filter_name')?.value || "ALL";
+        const sectionFilter = document.getElementById('filter_section')?.value || "ALL";
+        const positionFilter = document.getElementById('filter_position')?.value || "ALL";
+        const statusFilter = document.getElementById('filter_status')?.value || "ALL";
+        
+        if(idFilter !== "ALL") filtered = filtered.filter(r => r.id === idFilter);
+        if(nameFilter !== "ALL") filtered = filtered.filter(r => r.name === nameFilter);
+        if(sectionFilter !== "ALL") filtered = filtered.filter(r => r.section === sectionFilter);
+        if(positionFilter !== "ALL") filtered = filtered.filter(r => r.position === positionFilter);
+        if(statusFilter !== "ALL") filtered = filtered.filter(r => r.status === statusFilter);
+        
         return filtered;
     }
 
-    // Filter kehadiran detail (berdasarkan time)
     function applyAttendanceDetailFilter(data, range) {
         const mode = filterAttendanceDetailSelect.value;
         if(mode === "ALL") return data;
-        const hadirKodes = ['PR', 'PRP', 'PRS', 'PRM'];
-        const tidakHadirKodes = ['AB', 'LWP', 'AL', 'SK', 'ML', 'DL', 'OL'];
+        
         return data.filter(row => {
             for(let tgl of range) {
                 const item = row.tanggalData[tgl] || { kode: "", time: "" };
-                const kode = item.kode.toUpperCase();
                 const time = item.time;
-                if(mode === "HADIR_KODE" && hadirKodes.includes(kode)) return true;
-                if(mode === "TIDAK_HADIR_KODE" && tidakHadirKodes.includes(kode)) return true;
+                
                 if(mode === "NO_TIME" && !time) return true;
                 if(mode === "ONE_TIME" && time && !time.includes('-')) return true;
                 if(mode === "FULL_TIME" && time && time.includes('-')) return true;
@@ -406,24 +404,9 @@
         });
     }
 
-    // Hitung rekap time (untuk ditampilkan di header)
-    function hitungRekapTime(data, range) {
-        let noTime = 0, oneTime = 0, fullTime = 0;
-        for(let row of data) {
-            for(let tgl of range) {
-                const time = row.tanggalData[tgl]?.time || "";
-                if(!time) noTime++;
-                else if(!time.includes('-')) oneTime++;
-                else fullTime++;
-            }
-        }
-        return { noTime, oneTime, fullTime };
-    }
-
-    // Update rekap utama (berdasarkan filter kolom, bukan filter tanggal/kehadiran)
-    function updateRekapUtama(filteredByColumn) {
+    function updateRekapUtama(dataList) {
         let worker = 0, staff = 0, security = 0;
-        for(let row of filteredByColumn) {
+        for(let row of dataList) {
             if(row.status === "WORKER") worker++;
             else if(row.status === "STAFF") staff++;
             else if(row.status === "SECURITY") security++;
@@ -431,32 +414,11 @@
         totalWorkerSpan.innerText = worker;
         totalStaffSpan.innerText = staff;
         totalSecuritySpan.innerText = security;
-        totalSemuaSpan.innerText = filteredByColumn.length;
+        totalSemuaSpan.innerText = dataList.length;
     }
 
-    // Render tabel utama
+    // ======================== RENDER TABEL ========================
     function renderTableWithFilters() {
-        if(!databaseGlobal.length) {
-            tableHeader.innerHTML = ''; tableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Belum ada data</td></tr>';
-            updateRekapUtama([]);
-            rekapNoTimeSpan.innerText = '0';
-            rekapOneTimeSpan.innerText = '0';
-            rekapFullTimeSpan.innerText = '0';
-            return;
-        }
-        let filteredByColumn = getFilteredByColumn();
-        updateRekapUtama(filteredByColumn);  // rekap utama selalu berdasarkan filter kolom
-        
-        const range = getTanggalRange();
-        let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
-        
-        // Hitung rekap time dari filteredData (setelah filter kehadiran) untuk ditampilkan di header
-        const timeStats = hitungRekapTime(filteredData, range);
-        rekapNoTimeSpan.innerText = timeStats.noTime;
-        rekapOneTimeSpan.innerText = timeStats.oneTime;
-        rekapFullTimeSpan.innerText = timeStats.fullTime;
-        
-        // Kolom tetap
         const fixedCols = [
             { name: "ID", width: 70, filterKey: "id" },
             { name: "NAMA", width: 120, filterKey: "name" },
@@ -465,10 +427,34 @@
             { name: "JOIN DATE", width: 85, filterKey: null },
             { name: "STATUS", width: 75, filterKey: "status" }
         ];
+
+        if(!databaseGlobal.length) {
+            tableHeader.innerHTML = ''; 
+            tableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Belum ada data</td></tr>';
+            updateRekapUtama([]);
+            return;
+        }
+
+        // Ambil filter saat ini sebelum DOM ditulis ulang
+        const currentFilters = {};
+        for(let col of fixedCols) {
+            if(col.filterKey) {
+                const sel = document.getElementById(`filter_${col.filterKey}`);
+                currentFilters[col.filterKey] = sel ? sel.value : "ALL";
+            }
+        }
+
+        let filteredByColumn = getFilteredByColumn();
+        const range = getTanggalRange();
+        let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
+        
+        // Update angka rekapitulasi berdasarkan data final yang TAMPIL
+        updateRekapUtama(filteredData);  
+        
         const tanggalCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: null }));
         const allCols = [...fixedCols, ...tanggalCols];
         
-        // Header baris 1
+        // Header
         let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i];
@@ -477,16 +463,19 @@
             if(i===1) cls += " sticky left-[70px] z-20 bg-slate-800";
             th += `<th style="min-width:${col.width}px" class="${cls}">${col.name}</th>`;
         }
-        th += `</tr>`;
-        // Header baris 2: dropdown filter
-        th += `<tr class="bg-gray-100 text-[9px]">`;
+        th += `</tr><tr class="bg-gray-100 text-[9px]">`;
+        
+        // Dropdown filter kolom
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i];
             if(col.filterKey) {
                 let uniqueValues = [...new Set(databaseGlobal.map(r => r[col.filterKey]).filter(v => v && v !== ""))].sort();
-                let options = `<option value="ALL">Semua</option>`;
+                let selectedVal = currentFilters[col.filterKey] || "ALL";
+                
+                let options = `<option value="ALL" ${selectedVal === "ALL" ? "selected" : ""}>Semua</option>`;
                 for(let val of uniqueValues) {
-                    options += `<option value="${val.replace(/"/g, '&quot;')}">${val}</option>`;
+                    let isSelected = (val === selectedVal) ? "selected" : "";
+                    options += `<option value="${val.replace(/"/g, '&quot;')}" ${isSelected}>${val}</option>`;
                 }
                 th += `<th class="px-1 py-0.5"><select id="filter_${col.filterKey}" class="filter-select" style="width:${col.width-8}px">${options}</select></th>`;
             } else {
@@ -495,19 +484,21 @@
         }
         th += `</tr>`;
         tableHeader.innerHTML = th;
-        // Pasang event listener untuk dropdown filter kolom
+        
+        // Listener baru untuk filter kolom
         for(let col of fixedCols) {
             if(col.filterKey) {
                 const sel = document.getElementById(`filter_${col.filterKey}`);
                 if(sel) sel.addEventListener('change', () => renderTableWithFilters());
             }
         }
+
         // Body tabel
         let tb = "";
         const max = Math.min(filteredData.length, 2000);
         for(let row of filteredData.slice(0,max)) {
             tb += `<tr class="hover:bg-blue-50 border-b">`;
-            // Kolom tetap
+            
             const fixedVals = [row.id, row.name, row.section, row.position, row.joinDate, row.status];
             for(let i=0; i<fixedVals.length; i++) {
                 let val = fixedVals[i];
@@ -522,19 +513,26 @@
                 }
                 tb += `<td class="${extra}" style="${style}">${val}</td>`;
             }
-            // Kolom tanggal
+            
             for(let tgl of range) {
                 const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
                 let kode = dataTgl.kode;
                 let time = dataTgl.time;
                 let display = "";
-                if(kode && time) display = `${kode}|${time}`;
-                else if(kode) display = kode;
-                else if(time) display = time;
-                else display = "—";
-                if(kode && !time) display = `<span class="text-orange-500">${display}</span>`;
-                else if(time && !time.includes('-')) display = `<span class="text-blue-600">${display}</span>`;
-                else if(time && time.includes('-')) display = `<span class="text-green-600">${display}</span>`;
+                
+                // PRIORITAS WAKTU: Jika ada time, ganti kode menjadi time
+                if(time) {
+                    display = time;
+                } else if(kode) {
+                    display = kode;
+                } else {
+                    display = "—";
+                }
+
+                if(kode && !time) display = `<span class="text-orange-500 font-semibold">${display}</span>`;
+                else if(time && !time.includes('-')) display = `<span class="text-blue-600 font-bold">${display}</span>`;
+                else if(time && time.includes('-')) display = `<span class="text-green-600 font-bold">${display}</span>`;
+                
                 tb += `<td class="attendance-col px-1 py-0.5 text-center time-cell">${display}</td>`;
             }
             tb += `</tr>`;
@@ -543,12 +541,13 @@
         tableBody.innerHTML = tb;
     }
 
-    // Summary berdasarkan data yang sedang difilter (filter kolom + tanggal + kehadiran)
+    // ======================== SUMMARY & EXPORT ========================
     function openSummary() {
         let filteredByColumn = getFilteredByColumn();
         const range = getTanggalRange();
         let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
         if(!filteredData.length) { showAlert("Info","Tidak ada data untuk ditampilkan","info"); return; }
+        
         const summary = new Map();
         let gw=0,gs=0,gsec=0;
         for(const row of filteredData) {
@@ -561,27 +560,30 @@
             else if(stat==="SECURITY") { d.SECURITY++; gsec++; }
             d.TOTAL++;
         }
+        
         let html = `<table class="w-full border text-[9px]"><thead><tr class="bg-slate-700 text-white"><th class="p-1">POSISI</th><th>WORKER</th><th>STAFF</th><th>SECURITY</th><th>TOTAL</th></table></thead><tbody>`;
         for(let [pos,data] of [...summary.entries()].sort()) {
             html += `<tr><td class="border p-1">${pos}</td><td class="border p-1 text-center">${data.WORKER}</td><td class="border p-1 text-center">${data.STAFF}</td><td class="border p-1 text-center">${data.SECURITY}</td><td class="border p-1 text-center font-bold">${data.TOTAL}</td></tr>`;
         }
         html += `<tr class="bg-indigo-100 font-bold"><td class="p-1">GRAND TOTAL</td><td class="text-center">${gw}</td><td class="text-center">${gs}</td><td class="text-center">${gsec}</td><td class="text-center">${gw+gs+gsec}</td></tr></tbody>`;
+        
         document.getElementById('summaryContent').innerHTML = html;
         document.getElementById('summaryModal').classList.remove('hidden');
         document.getElementById('summaryModal').classList.add('flex');
     }
     function closeSummary() { document.getElementById('summaryModal').classList.add('hidden'); }
 
-    // Export ke Excel
     function exportToExcel() {
         let filteredByColumn = getFilteredByColumn();
         const range = getTanggalRange();
         let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
         if(!filteredData.length) { showAlert("Tidak ada data","","warning"); return; }
+        
         const fixedCols = ["ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS"];
         const tanggalCols = range.map(t => `Tgl ${t}`);
         const headers = [...fixedCols, ...tanggalCols];
         const wsData = [headers];
+        
         for(const row of filteredData) {
             const rowArr = [row.id, row.name, row.section, row.position, row.joinDate, row.status];
             for(let tgl of range) {
@@ -589,10 +591,16 @@
                 let kode = dataTgl.kode;
                 let time = dataTgl.time;
                 let display = "";
-                if(kode && time) display = `${kode}|${time}`;
-                else if(kode) display = kode;
-                else if(time) display = time;
-                else display = "";
+                
+                // PRIORITAS WAKTU EXCEL
+                if(time) {
+                    display = time;
+                } else if(kode) {
+                    display = kode;
+                } else {
+                    display = "";
+                }
+                
                 rowArr.push(display);
             }
             wsData.push(rowArr);
@@ -621,6 +629,7 @@
         } else { showAlert("Gagal","Tidak ada data time valid","error"); }
         e.target.value = "";
     });
+    
     dateFrom.addEventListener('change', () => renderTableWithFilters());
     dateTo.addEventListener('change', () => renderTableWithFilters());
     filterAttendanceDetailSelect.addEventListener('change', () => renderTableWithFilters());
@@ -628,6 +637,7 @@
     resetDataBtn.addEventListener('click', () => {
         if(confirm("Hapus semua data?")) { localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; renderTableWithFilters(); dbStatus.innerHTML="Kosong"; showAlert("Reset","Data dihapus","success"); }
     });
+    
     // Load dari localStorage
     (function loadStored() {
         const karyawan = localStorage.getItem('hoplun_karyawan');
