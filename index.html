@@ -10,13 +10,10 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .table-container { max-height: 55vh; overflow: auto; }
         th { position: sticky; top: 0; background-color: #1e293b; color: white; z-index: 10; }
-        .attendance-col { width: 80px; text-align: center; } /* Lebar cukup untuk time */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .btn-export { background: #059669; transition: all 0.2s; }
-        .btn-export:hover { background: #047857; transform: scale(1.02); }
+        .attendance-col { width: 90px; text-align: center; }
         .time-cell { font-family: monospace; font-size: 10px; white-space: pre-line; }
+        .btn-export { background: #059669; transition: all 0.2s; }
+        .btn-export:hover { background: #047857; }
     </style>
 </head>
 <body class="p-4 text-sm">
@@ -26,7 +23,7 @@
     <div class="bg-slate-800 text-white p-4 flex justify-between items-center flex-wrap gap-3">
         <div>
             <h1 class="text-xl font-bold tracking-wider">ATTENDANCE DASHBOARD</h1>
-            <p class="text-xs text-emerald-400 mt-1">⚡ Time Clock Integration | Hanya .xlsb + Filter Footer | Export XLSX</p>
+            <p class="text-xs text-emerald-400 mt-1">⚡ Absensi per Tanggal | Upload .xlsb ➜ Upload Time Clock ➜ Isi Otomatis</p>
         </div>
         <div class="flex items-center gap-3 bg-slate-700 p-2 rounded-lg flex-wrap">
             <div class="flex items-center gap-2 bg-slate-600 px-2 py-1 rounded">
@@ -35,12 +32,12 @@
             </div>
             <label for="fileUpload" class="text-xs font-semibold cursor-pointer flex items-center gap-2 hover:text-blue-300">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                .xlsb (Data Karyawan)
+                1. Upload .xlsb (Karyawan)
             </label>
             <input type="file" id="fileUpload" class="hidden" multiple accept=".xlsb">
             <label for="timeUpload" class="text-xs font-semibold cursor-pointer flex items-center gap-2 hover:text-yellow-300 bg-slate-600 px-2 py-1 rounded">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Upload Time Clock (CSV/Excel)
+                2. Upload Time Clock (CSV/Excel)
             </label>
             <input type="file" id="timeUpload" class="hidden" accept=".csv,.xlsx,.xls">
         </div>
@@ -49,7 +46,7 @@
     <!-- PANEL KONTROL -->
     <div class="p-4 bg-slate-50 border-b border-gray-200 grid grid-cols-1 md:grid-cols-12 gap-4 relative">
         <div id="loadingOverlay" class="absolute inset-0 bg-white/95 z-20 hidden flex-col items-center justify-center backdrop-blur-sm">
-            <div class="relative w-20 h-20 mb-4"><div class="absolute inset-0 rounded-full border-t-4 border-blue-600 animate-spin"></div><div class="absolute inset-2 rounded-full border-r-4 border-indigo-400 animate-spin" style="animation-direction: reverse;"></div></div>
+            <div class="relative w-20 h-20 mb-4"><div class="absolute inset-0 rounded-full border-t-4 border-blue-600 animate-spin"></div></div>
             <h2 class="text-2xl font-extrabold text-slate-800">Memproses Data</h2>
             <p class="text-base font-bold text-blue-600 mt-2" id="loadingSubText"></p>
             <div class="mt-4 w-full max-w-2xl bg-slate-900 rounded-lg p-3"><ul id="loadingLog" class="text-xs text-green-400 font-mono h-32 overflow-y-auto"></ul></div>
@@ -80,7 +77,7 @@
     <div class="table-container bg-white relative">
         <table class="w-full text-left border-collapse whitespace-nowrap">
             <thead id="tableHeader"></thead>
-            <tbody id="tableBody"><tr><td colspan="6" class="p-10 text-center text-gray-500">Silakan upload file .xlsb karyawan dan file time clock.</td></tr></tbody>
+            <tbody id="tableBody"><tr><td colspan="6" class="p-10 text-center text-gray-500">1. Upload file .xlsb karyawan<br>2. Upload file time clock (CSV/Excel) dengan kolom ID, Date, Records</td></tr></tbody>
         </table>
     </div>
 
@@ -95,15 +92,16 @@
 </div>
 
 <script>
-    // ======================== GLOBAL VARIABLES ========================
-    let databaseKaryawan = [];       // data karyawan tanpa kolom tanggal (hanya personal)
-    let timeMap = new Map();         // key = `${id}_${date}` -> value = record time (misal "05:42;14:40")
-    let tanggalHeaders = [];          // array kolom tanggal (angka 1-31, 26-31)
-    let currentHeaders = [];          // semua header (ID, NAME, SECTION, ..., plus tanggal)
+    // ======================== GLOBAL ========================
+    let databaseKaryawan = [];       // data karyawan tanpa kolom tanggal
+    let timeMap = new Map();         // key = `${id}_${tanggal}` -> record (contoh "05:42;14:40")
+    let tanggalHeaders = [];          // array kolom tanggal (1-31, 26-31)
+    let currentHeaders = [];
+    let databaseGlobal = [];          // data final setelah digabung dengan time
     let fileBerhasilList = [];
     const MAX_CONCURRENT = 4;
 
-    // DOM elements
+    // DOM
     const fileUpload = document.getElementById('fileUpload');
     const timeUpload = document.getElementById('timeUpload');
     const headerRowInput = document.getElementById('headerRow');
@@ -121,7 +119,7 @@
     const totalDataCount = document.getElementById('totalDataCount');
     const dbStatus = document.getElementById('dbStatus');
 
-    // Helper functions
+    // Helper
     function addLog(msg, type="info") {
         if(!loadingLog) return;
         const li = document.createElement('li');
@@ -142,7 +140,16 @@
         modal.classList.add('flex');
     }
     function closeAlert() { document.getElementById('modernAlert').classList.add('hidden'); }
-    function formatDateToString(dateValue) { ... } // sama seperti sebelumnya
+    function formatDateToString(d) {
+        if(!d) return "";
+        let date;
+        if(d instanceof Date) date=d;
+        else if(typeof d==='number') date=new Date((d-25569)*86400*1000);
+        else date=new Date(d);
+        if(isNaN(date.getTime())) return String(d);
+        const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        return `${String(date.getDate()).padStart(2,'0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
+    }
 
     // ======================== BACA FILE TIME CLOCK ========================
     async function loadTimeFile(file) {
@@ -154,37 +161,41 @@
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
                 if(!rows.length) { resolve(new Map()); return; }
-                // cari baris header: mengandung "ID" dan "Date" dan "Records"
+                // Cari baris header (case-insensitive) yang mengandung ID, Date, Records
                 let headerRowIdx = -1;
+                let idCol=-1, dateCol=-1, recordCol=-1;
                 for(let i=0; i<Math.min(rows.length,20); i++) {
                     const row = rows[i];
-                    if(row.some(cell => String(cell||"").toUpperCase().includes("ID")) &&
-                       row.some(cell => String(cell||"").toUpperCase().includes("DATE")) &&
-                       row.some(cell => String(cell||"").toUpperCase().includes("RECORD"))) {
+                    for(let c=0; c<row.length; c++) {
+                        let cell = String(row[c]||"").toUpperCase();
+                        if(cell.includes("ID")) idCol = c;
+                        if(cell.includes("DATE")) dateCol = c;
+                        if(cell.includes("RECORD")) recordCol = c;
+                    }
+                    if(idCol !== -1 && dateCol !== -1 && recordCol !== -1) {
                         headerRowIdx = i;
                         break;
                     }
                 }
                 if(headerRowIdx === -1) { resolve(new Map()); return; }
-                const headers = rows[headerRowIdx].map(h => String(h||"").toUpperCase());
-                const idxID = headers.findIndex(h => h.includes("ID"));
-                const idxDate = headers.findIndex(h => h.includes("DATE"));
-                const idxRecord = headers.findIndex(h => h.includes("RECORD"));
-                if(idxID === -1 || idxDate === -1 || idxRecord === -1) { resolve(new Map()); return; }
                 const timeMapLocal = new Map();
                 for(let r=headerRowIdx+1; r<rows.length; r++) {
                     const row = rows[r];
                     if(!row || row.length===0) continue;
-                    let id = String(row[idxID]||"").trim();
-                    let dateRaw = row[idxDate];
+                    let id = String(row[idCol]||"").trim();
+                    let dateRaw = row[dateCol];
                     let dateStr = "";
                     if(dateRaw instanceof Date) dateStr = dateRaw.toISOString().slice(0,10);
                     else if(typeof dateRaw === 'number') dateStr = new Date((dateRaw-25569)*86400*1000).toISOString().slice(0,10);
                     else dateStr = String(dateRaw).trim();
-                    let record = String(row[idxRecord]||"").trim();
+                    let record = String(row[recordCol]||"").trim();
                     if(id && dateStr && record) {
-                        const key = `${id}_${dateStr}`;
-                        timeMapLocal.set(key, record);
+                        // Ambil angka tanggal dari dateStr (YYYY-MM-DD)
+                        const tgl = parseInt(dateStr.split('-')[2], 10);
+                        if(!isNaN(tgl)) {
+                            const key = `${id}_${tgl}`;
+                            timeMapLocal.set(key, record);
+                        }
                     }
                 }
                 resolve(timeMapLocal);
@@ -194,8 +205,8 @@
         });
     }
 
-    // ======================== BACA FILE .XLSB (HANYA DATA PERSONAL) ========================
-    async function prosesSatuFile(file, forcedStatus, targetPersonalHeaders, vbaColMap) {
+    // ======================== BACA FILE .XLSB (KARYAWAN) ========================
+    async function prosesSatuFile(file, forcedStatus, vbaColMap) {
         return new Promise(async (resolve) => {
             try {
                 const data = await readFileAsArrayBuffer(file);
@@ -206,7 +217,7 @@
                 let range = XLSX.utils.decode_range(ref);
                 if(range.e.r > 4000) range.e.r = 4000;
                 const rawData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", blankrows:false, range: XLSX.utils.encode_range(range) });
-                // deteksi header
+                // Deteksi header
                 let headerRowIdx = -1, colMap = {};
                 for(let r=0; r<Math.min(rawData.length,10); r++) {
                     const row = rawData[r];
@@ -242,12 +253,10 @@
                     let name = String(row[colMap["NAME"]]||"").trim();
                     let id = String(row[colMap["New ID No"]]||"").trim();
                     if(name === "" && id === "") continue;
-                    // SKIP baris yang mengandung teks footer
+                    // Skip baris footer
                     const lowerRow = JSON.stringify(row).toLowerCase();
                     if(lowerRow.includes("hadir penuh") || lowerRow.includes("mangkir") || lowerRow.includes("sakit") || 
-                       lowerRow.includes("cuti tahunan") || lowerRow.includes("cuti lain-lain")) {
-                        continue;
-                    }
+                       lowerRow.includes("cuti tahunan") || lowerRow.includes("cuti lain-lain")) continue;
                     const personal = {
                         "New ID No": id,
                         "NAME": name,
@@ -266,8 +275,7 @@
     }
 
     function isFileValid(file) {
-        return file.name.toLowerCase().endsWith('.xlsb') && 
-               /WORKER|STAFF|SECURITY/i.test(file.name);
+        return file.name.toLowerCase().endsWith('.xlsb') && /WORKER|STAFF|SECURITY/i.test(file.name);
     }
     function getForcedStatus(fileName) {
         if(/STAFF/i.test(fileName)) return "STAFF";
@@ -278,19 +286,18 @@
         if(!files.length) return;
         loadingOverlay.classList.remove('hidden');
         loadingOverlay.classList.add('flex');
-        loadingLog.innerHTML = '<li>[SYSTEM] Memuat data karyawan dari .xlsb...</li>';
+        loadingLog.innerHTML = '<li>[SISTEM] Memuat data karyawan dari .xlsb...</li>';
         const valid = [];
         for(let f of files) if(isFileValid(f)) valid.push(f);
         if(!valid.length) { showAlert("Peringatan","Tidak ada file .xlsb valid (nama harus mengandung WORKER/STAFF/SECURITY)","warning"); loadingOverlay.classList.add('hidden'); return; }
         loadingSubText.innerText = `Memproses ${valid.length} file .xlsb...`;
-        const targetPersonal = ["New ID No","NAME","SECTION","NEW POSITION / TITLE","JOIN DATE","STATUS"];
         const vbaColMap = { "New ID No":1,"NAME":2,"SECTION":3,"NEW POSITION / TITLE":4,"JOIN DATE":5 };
         const statuses = valid.map(f=>getForcedStatus(f.name));
         const allResults = [];
         for(let i=0;i<valid.length;i+=MAX_CONCURRENT) {
             const batch = valid.slice(i,i+MAX_CONCURRENT);
             const batchStatus = statuses.slice(i,i+MAX_CONCURRENT);
-            const promises = batch.map((f,idx)=>prosesSatuFile(f,batchStatus[idx],targetPersonal,vbaColMap));
+            const promises = batch.map((f,idx)=>prosesSatuFile(f,batchStatus[idx],vbaColMap));
             const res = await Promise.all(promises);
             allResults.push(...res);
             loadingSubText.innerText = `Proses ${Math.min(i+MAX_CONCURRENT,valid.length)}/${valid.length} file .xlsb...`;
@@ -306,13 +313,13 @@
         if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan yang valid","error"); loadingOverlay.classList.add('hidden'); return; }
         databaseKaryawan = Array.from(masterMap.values());
         fileBerhasilList = berhasil;
-        // Gabungkan dengan data time jika sudah ada
+        // Gabungkan dengan timeMap (jika sudah ada)
         gabungkanDanRender();
         loadingOverlay.classList.add('hidden');
-        showAlert("Sukses",`${databaseKaryawan.length} karyawan berhasil dimuat. Upload file time clock untuk mengisi waktu.`,"success");
+        showAlert("Sukses",`${databaseKaryawan.length} karyawan dimuat. Sekarang upload file time clock untuk mengisi absensi.`,"success");
     }
 
-    // ======================== GABUNGKAN DENGAN TIME MAP & RENDER ========================
+    // ======================== GABUNGKAN DATA KARYAWAN + TIME ========================
     function gabungkanDanRender() {
         if(!databaseKaryawan.length) return;
         // Tentukan header tanggal (1-31 dan 26-31)
@@ -322,30 +329,21 @@
         tanggalHeaders = [...new Set(allDates)].sort((a,b)=>Number(a)-Number(b));
         currentHeaders = ["New ID No","NAME","SECTION","NEW POSITION / TITLE","JOIN DATE","STATUS", ...tanggalHeaders];
         
-        // Bangun data lengkap untuk tabel
+        // Buat data final
         const finalData = databaseKaryawan.map(karyawan => {
             const row = { ...karyawan };
             for(let tgl of tanggalHeaders) {
-                // cari data time berdasarkan ID dan tanggal (YYYY-MM-DD)
-                // Kita perlu tahu bulan & tahun. Asumsikan dari data time yang ada (ambil tanggal pertama)
-                // Atau biarkan kosong jika tidak ada. Kita akan coba semua kemungkinan tahun-bulan dari timeMap.
-                // Solusi sederhana: kita cari key yang berakhiran `-${String(tgl).padStart(2,'0')}`
-                let found = null;
-                for(let [key, val] of timeMap.entries()) {
-                    if(key.startsWith(karyawan["New ID No"]+"_") && key.endsWith(`-${String(tgl).padStart(2,'0')}`)) {
-                        found = val;
-                        break;
-                    }
-                }
-                row[tgl] = found || "";
+                const key = `${karyawan["New ID No"]}_${tgl}`;
+                row[tgl] = timeMap.get(key) || "";  // kosong jika tidak ada absen
             }
             return row;
         });
-        databaseGlobal = finalData; // untuk keperluan filter, export, dll
+        databaseGlobal = finalData;
         updateDropdowns();
         jalankanPencarian();
+        const timeCount = timeMap.size;
         dbStatus.className = "inline-block px-2 py-1 rounded-full text-[9px] font-semibold bg-green-100 text-green-800";
-        dbStatus.innerHTML = `✅ ${fileBerhasilList.length} file .xlsb | Time: ${timeMap.size} record`;
+        dbStatus.innerHTML = `✅ Karyawan: ${databaseKaryawan.length} | Absen: ${timeCount}`;
     }
 
     // ======================== UPDATE DROPDOWN ========================
@@ -377,7 +375,7 @@
 
     function renderTabel(data) {
         totalDataCount.innerText = data.length;
-        if(!data.length) { tableHeader.innerHTML=''; tableBody.innerHTML='<tr><td colspan="6" class="p-10 text-center">Tidak ada data</td></tr>'; return; }
+        if(!data.length) { tableHeader.innerHTML=''; tableBody.innerHTML='<td><td colspan="6" class="p-10 text-center">Tidak ada data</td></tr>'; return; }
         // Header
         let th = `<tr class="bg-slate-800 text-white text-[11px] uppercase">`;
         currentHeaders.forEach(col => {
@@ -407,6 +405,8 @@
                     else if(val==="STAFF") val='<span class="bg-purple-100 px-2 py-0.5 rounded">STAFF</span>';
                     else if(val==="SECURITY") val='<span class="bg-slate-700 text-white px-2 py-0.5 rounded">SECURITY</span>';
                 }
+                // Highlight baris yang kosong absensi? Bisa opsional
+                if(tanggalHeaders.includes(col) && val === "") val = "—";
                 tb += `<td class="${extra}" style="${style}">${val}</td>`;
             }
             tb += `</tr>`;
@@ -415,7 +415,7 @@
         tableBody.innerHTML = tb;
     }
 
-    // ======================== SUMMARY (POSISI + STATUS) ========================
+    // ======================== SUMMARY ========================
     function openSummary() {
         if(!databaseGlobal.length) { showAlert("Peringatan","Tidak ada data","warning"); return; }
         const summary = new Map();
@@ -434,7 +434,7 @@
         for(let [pos,data] of [...summary.entries()].sort()) {
             html += `<tr><td class="border p-2">${pos}</td><td class="border p-2 text-center">${data.WORKER}</td><td class="border p-2 text-center">${data.STAFF}</td><td class="border p-2 text-center">${data.SECURITY}</td><td class="border p-2 text-center font-bold">${data.TOTAL}</td></tr>`;
         }
-        html += `<tr class="bg-indigo-100 font-bold"><td class="p-2">GRAND TOTAL</td><td class="text-center">${gw}</td><td class="text-center">${gs}</td><td class="text-center">${gsec}</td><td class="text-center">${gw+gs+gsec}</td></tr></tbody></table>`;
+        html += `<tr class="bg-indigo-100 font-bold"><td class="p-2">GRAND TOTAL</td><td class="text-center">${gw}</td><td class="text-center">${gs}</td><td class="text-center">${gsec}</td><td class="text-center">${gw+gs+gsec}</td></tr></tbody>`;
         document.getElementById('summaryContent').innerHTML = html;
         document.getElementById('summaryModal').classList.remove('hidden');
         document.getElementById('summaryModal').classList.add('flex');
@@ -444,9 +444,8 @@
     // ======================== EXPORT ========================
     function exportToExcel() {
         if(!databaseGlobal.length) { showAlert("Tidak ada data","","warning"); return; }
-        const dataToExport = databaseGlobal; // bisa pakai hasil filter? biar simpel export semua
         const wsData = [currentHeaders];
-        for(const row of dataToExport) {
+        for(const row of databaseGlobal) {
             const rowArr = currentHeaders.map(h => row[h] !== undefined ? row[h] : "");
             wsData.push(rowArr);
         }
@@ -457,22 +456,26 @@
         showAlert("Berhasil","Data diekspor","success");
     }
 
-    // ======================== EVENT LISTENERS ========================
+    // ======================== EVENT ========================
     fileUpload.addEventListener('change', (e) => { if(e.target.files.length) prosesFileExcel(Array.from(e.target.files)); });
     timeUpload.addEventListener('change', async (e) => {
         if(!e.target.files.length) return;
         const file = e.target.files[0];
         loadingOverlay.classList.remove('hidden');
         loadingOverlay.classList.add('flex');
-        loadingLog.innerHTML = '<li>[TIME] Memuat data time clock...</li>';
+        loadingLog.innerHTML = '<li>[TIME] Memuat file time clock...</li>';
         const newTimeMap = await loadTimeFile(file);
         if(newTimeMap.size) {
             timeMap = newTimeMap;
-            addLog(`Berhasil memuat ${timeMap.size} record time clock`,"success");
-            if(databaseKaryawan.length) gabungkanDanRender();
-            else showAlert("Info","Data time tersimpan. Upload file .xlsb karyawan terlebih dahulu.","info");
+            addLog(`Berhasil memuat ${timeMap.size} record absensi`,"success");
+            if(databaseKaryawan.length) {
+                gabungkanDanRender();
+                showAlert("Sukses",`Absensi berhasil digabungkan. Lihat kolom tanggal untuk data clock in/out.`,"success");
+            } else {
+                showAlert("Info","Data time tersimpan. Upload file .xlsb karyawan terlebih dahulu.","info");
+            }
         } else {
-            showAlert("Gagal","Tidak ada data time yang valid. Pastikan file memiliki kolom ID, Date, Records.","error");
+            showAlert("Gagal","Tidak ada data absensi yang valid. Pastikan file memiliki kolom ID, Date, Records.","error");
         }
         loadingOverlay.classList.add('hidden');
         e.target.value = "";
@@ -491,17 +494,6 @@
             fr.readAsArrayBuffer(file);
         });
     }
-    function formatDateToString(d) {
-        if(!d) return "";
-        let date;
-        if(d instanceof Date) date=d;
-        else if(typeof d==='number') date=new Date((d-25569)*86400*1000);
-        else date=new Date(d);
-        if(isNaN(date.getTime())) return String(d);
-        const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-        return `${String(date.getDate()).padStart(2,'0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
-    }
-    let databaseGlobal = []; // untuk keperluan filter & export setelah digabung
 </script>
 </body>
 </html>
