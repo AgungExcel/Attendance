@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hoplun - Attendance Dashboard (Searchable Dates + Filter Indicators)</title>
+    <title>Hoplun - Attendance Dashboard (Super Fast)</title>
     <link rel="icon" type="image/png" href="hoplun128.png">
     <link rel="shortcut icon" href="hoplun128.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -99,129 +99,54 @@
         .col-join-fixed { width: 85px !important; min-width: 85px !important; }
         .col-status-fixed { width: 75px !important; min-width: 75px !important; }
         
-        /* Multi-select & searchable styles */
-        .multi-select, .searchable-multi-select {
-            position: relative;
-            width: 100%;
-            font-size: 9px;
-        }
+        .multi-select, .searchable-multi-select { position: relative; width: 100%; font-size: 9px; }
         .multi-select-btn, .searchable-btn {
-            width: 100%;
-            padding: 2px 4px;
-            background: white;
-            border: 1px solid #94a3b8;
-            border-radius: 4px;
-            cursor: pointer;
-            text-align: left;
-            font-size: 9px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background 0.1s;
+            width: 100%; padding: 2px 4px; background: white; border: 1px solid #94a3b8;
+            border-radius: 4px; cursor: pointer; text-align: left; font-size: 9px;
+            display: flex; justify-content: space-between; align-items: center; transition: background 0.1s;
         }
-        .multi-select-btn.active, .searchable-btn.active {
-            background-color: #dbeafe;
-            border-color: #3b82f6;
-        }
-        .multi-select-btn span:first-child, .searchable-btn span:first-child {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+        .multi-select-btn.active, .searchable-btn.active { background-color: #dbeafe; border-color: #3b82f6; }
+        .multi-select-btn span:first-child, .searchable-btn span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .multi-select-dropdown, .searchable-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            z-index: 100;
-            max-height: 200px;
-            overflow-y: auto;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: none;
+            position: absolute; top: 100%; left: 0; right: 0; background: white;
+            border: 1px solid #ccc; border-radius: 4px; z-index: 100; max-height: 200px;
+            overflow-y: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: none;
         }
-        .multi-select-dropdown.show, .searchable-dropdown.show {
-            display: block;
-        }
-        .multi-select-option, .searchable-option {
-            padding: 2px 6px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-        }
-        .multi-select-option:hover, .searchable-option:hover {
-            background-color: #e2e8f0;
-        }
-        .multi-select-option input, .searchable-option input {
-            margin: 0;
-            width: 12px;
-            height: 12px;
-            pointer-events: none;
-        }
-        .searchable-input {
-            width: 100%;
-            padding: 2px 4px;
-            border: none;
-            border-bottom: 1px solid #ccc;
-            font-size: 9px;
-            outline: none;
-        }
+        .multi-select-dropdown.show, .searchable-dropdown.show { display: block; }
+        .multi-select-option, .searchable-option { padding: 2px 6px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        .multi-select-option:hover, .searchable-option:hover { background-color: #e2e8f0; }
+        .multi-select-option input, .searchable-option input { margin: 0; width: 12px; height: 12px; pointer-events: none; }
+        .searchable-input { width: 100%; padding: 2px 4px; border: none; border-bottom: 1px solid #ccc; font-size: 9px; outline: none; }
+        
         .btn-export { background: #059669; transition: 0.2s; }
         .btn-export:hover { background: #047857; }
         .btn-reset { background: #dc2626; }
         .rekap-box { background: #f1f5f9; border-radius: 6px; padding: 4px 8px; display: inline-block; margin-right: 8px; }
         .rekap-label { font-size: 9px; font-weight: bold; color: #334155; }
         .rekap-value { font-size: 12px; font-weight: bold; margin-left: 4px; }
-        .last-update-panel {
-            background: #fef9e3;
-            border-left: 4px solid #f59e0b;
-            font-size: 9px;
-            max-height: 70px;
-            overflow-y: auto;
-        }
+        .last-update-panel { background: #fef9e3; border-left: 4px solid #f59e0b; font-size: 9px; max-height: 70px; overflow-y: auto; }
+        
+        /* Modern Loading Overlay */
         .loading-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-            backdrop-filter: blur(2px);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); transition: opacity 0.3s;
         }
         .loading-content {
-            background: #1e293b;
-            padding: 16px 24px;
-            border-radius: 12px;
-            text-align: center;
-            min-width: 260px;
+            background: white; padding: 24px; border-radius: 16px;
+            text-align: center; min-width: 320px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        .progress-bar {
-            height: 6px;
-            background: #334155;
-            border-radius: 3px;
-            margin: 12px 0;
-            overflow: hidden;
+        .spinner {
+            border: 3px solid #f3f4f6; border-top: 3px solid #3b82f6;
+            border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;
+            margin: 0 auto 12px auto;
         }
-        .progress-fill {
-            width: 0%;
-            height: 100%;
-            background: #10b981;
-            transition: width 0.2s;
-        }
-        .highlight {
-            background-color: #fde047;
-            color: #1e293b;
-            font-weight: bold;
-            border-radius: 2px;
-            padding: 0 1px;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress-bar-container { height: 8px; background: #e2e8f0; border-radius: 4px; margin: 16px 0 8px 0; overflow: hidden; }
+        .progress-fill { width: 0%; height: 100%; background: #3b82f6; transition: width 0.3s ease-out; }
+        
+        .highlight { background-color: #fde047; color: #1e293b; font-weight: bold; border-radius: 2px; padding: 0 1px; }
         .att-code-pr { color: #15803d; font-weight: bold; background-color: #dcfce7; border-radius: 2px; padding: 0 2px; display: inline-block; }
         .att-code-prs { color: #c2410c; font-weight: bold; background-color: #ffedd5; border-radius: 2px; padding: 0 2px; display: inline-block; }
         .att-code-prp { color: #1e40af; font-weight: bold; background-color: #dbeafe; border-radius: 2px; padding: 0 2px; display: inline-block; }
@@ -234,13 +159,14 @@
 <body>
 
 <div class="dashboard-container">
-    <!-- HEADER (unchanged) -->
+    <!-- HEADER -->
     <div class="bg-slate-800 text-white p-2 flex justify-between items-center flex-wrap gap-2 shrink-0">
         <div class="flex items-center gap-2">
-            <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4=">
+            <!-- FIXED: atribut onerror sekarang memiliki kutip penutup tunggal -->
+            <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
                 <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
-                <p class="text-[9px] text-emerald-400">Searchable Dates | Filter Indicators | Cepat</p>
+                <p class="text-[9px] text-emerald-400">Super Fast Engine | Filter Indicators</p>
             </div>
         </div>
 
@@ -265,42 +191,40 @@
                 <label class="text-[9px] font-semibold">Header:</label>
                 <input type="number" id="headerRow" value="6" class="w-8 px-0 py-0 text-black font-bold rounded text-[9px] text-center">
             </div>
-            <label for="fileUpload" class="text-[9px] font-semibold cursor-pointer flex items-center gap-1 hover:text-blue-300 bg-slate-600 px-1.5 py-0.5 rounded">📁 .xlsb</label>
+            <label for="fileUpload" class="text-[9px] font-semibold cursor-pointer flex items-center gap-1 hover:text-blue-300 bg-slate-600 px-1.5 py-0.5 rounded" title="Upload File Manual">📁 Manual</label>
             <input type="file" id="fileUpload" class="hidden" multiple accept=".xlsb">
-            <label for="timeUpload" class="text-[9px] font-semibold cursor-pointer flex items-center gap-1 hover:text-yellow-300 bg-slate-600 px-1.5 py-0.5 rounded">⏱️ Time</label>
-            <input type="file" id="timeUpload" class="hidden" accept=".csv,.xlsx,.xls">
-            <button id="resetDataBtn" class="bg-red-600 hover:bg-red-700 text-white px-1.5 py-0.5 rounded text-[9px]">Reset</button>
+            <button id="resetDataBtn" class="bg-red-600 hover:bg-red-700 text-white px-1.5 py-0.5 rounded text-[9px]">Reset Data</button>
         </div>
     </div>
 
     <!-- REKAP & FILTER UTAMA -->
     <div class="p-2 bg-slate-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div class="flex flex-wrap gap-2 items-center">
-            <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">Total Staff:</span><span id="totalStaff" class="rekap-value">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">Total Security:</span><span id="totalSecurity" class="rekap-value">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">Total Semua:</span><span id="totalSemua" class="rekap-value">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value text-emerald-700">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">Total Staff:</span><span id="totalStaff" class="rekap-value text-purple-700">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">Total Security:</span><span id="totalSecurity" class="rekap-value text-slate-700">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">Total Semua:</span><span id="totalSemua" class="rekap-value text-blue-700">0</span></div>
         </div>
         <div class="flex gap-2 items-center flex-wrap">
             <div class="flex items-center gap-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-sm">
                 <span class="text-[10px]">🔍</span>
-                <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[9px] border-none outline-none w-32 bg-transparent">
+                <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[10px] border-none outline-none w-36 bg-transparent font-medium text-slate-800">
             </div>
-            <div class="flex items-center gap-1 bg-white border rounded px-1 py-0.5">
-                <span class="text-[9px] font-semibold">Tgl:</span>
-                <select id="dateFrom" class="text-[9px] border-none bg-transparent outline-none"><option value="ALL">Dari</option></select>
-                <span class="text-[9px]">-</span>
-                <select id="dateTo" class="text-[9px] border-none bg-transparent outline-none"><option value="ALL">Sampai</option></select>
+            <div class="flex items-center gap-1 bg-white border rounded px-1 py-0.5 shadow-sm">
+                <span class="text-[9px] font-semibold text-slate-600">Tgl:</span>
+                <select id="dateFrom" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Dari</option></select>
+                <span class="text-[9px] text-slate-400">-</span>
+                <select id="dateTo" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Sampai</option></select>
             </div>
-            <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none">
+            <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none shadow-sm font-medium cursor-pointer">
                 <option value="ALL">Semua Kehadiran</option>
-                <option value="NO_TIME">Tidak ada clock in dan out (kosong / "-")</option>
-                <option value="ONE_TIME">Tidak ada in atau out (hanya satu waktu)</option>
-                <option value="FULL_TIME">Ada time in dan time out (format "HH:MM-HH:MM")</option>
+                <option value="NO_TIME">Tdk ada clock in/out (Kosong)</option>
+                <option value="ONE_TIME">Satu waktu saja (Tdk ada in/out)</option>
+                <option value="FULL_TIME">Hadir Penuh (Time in & out)</option>
             </select>
-            <button id="btnExport" class="btn-export text-white font-bold py-0.5 px-2 rounded text-[9px]">Export XLSX</button>
-            <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-0.5 px-2 rounded text-[9px]">Summary</button>
-            <span id="dbStatus" class="text-[9px] font-semibold bg-blue-100 px-1 py-0.5 rounded border border-blue-200">Kosong</span>
+            <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export</button>
+            <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
+            <span id="dbStatus" class="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-1 rounded border border-blue-200">Menunggu Data...</span>
         </div>
     </div>
 
@@ -312,20 +236,26 @@
         <table id="attendanceTable">
             <thead id="tableHeader"></thead>
             <tbody id="tableBody"></tbody>
-           </table>
+        </table>
     </div>
 </div>
 
 <!-- Modals -->
-<div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4"><div class="bg-white rounded-lg w-full max-w-4xl max-h-[85vh] flex flex-col"><div class="p-2 border-b bg-slate-800 text-white rounded-t-lg flex justify-between"><h2 class="text-sm font-bold">Summary (Data Terfilter)</h2><button onclick="closeSummary()" class="text-gray-300">✕</button></div><div class="p-2 overflow-auto" id="summaryContent"></div></div></div>
-<div id="modernAlert" class="hidden fixed inset-0 bg-black/60 z-50 items-center justify-center"><div class="bg-white rounded-xl p-3 max-w-xs text-center"><div id="alertIcon"></div><h3 id="alertTitle" class="text-sm font-bold mb-1"></h3><p id="alertMessage" class="text-xs mb-3"></p><button onclick="closeAlert()" class="w-full bg-blue-600 text-white py-1 rounded text-xs">Mengerti</button></div></div>
+<div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white rounded-xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl"><div class="p-3 border-b bg-slate-800 text-white rounded-t-xl flex justify-between items-center"><h2 class="text-sm font-bold">Summary Berdasarkan Posisi</h2><button onclick="closeSummary()" class="text-gray-300 hover:text-white bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center">✕</button></div><div class="p-3 overflow-auto" id="summaryContent"></div></div></div>
+<div id="modernAlert" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center backdrop-blur-sm"><div class="bg-white rounded-xl p-4 max-w-xs text-center shadow-2xl transform scale-95 transition-transform"><h3 id="alertTitle" class="text-sm font-bold mb-2 text-slate-800"></h3><p id="alertMessage" class="text-xs mb-4 text-slate-600"></p><button onclick="closeAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-xs font-bold transition">Tutup</button></div></div>
 
+<!-- Modern Loading Overlay -->
 <div id="loadingOverlay" class="loading-overlay hidden">
     <div class="loading-content">
-        <div class="text-white mb-2">📂 Memproses file absen...</div>
-        <div id="loadingProgressText" class="text-xs text-gray-300 mb-1">0 / 0</div>
-        <div class="progress-bar"><div id="loadingProgressFill" class="progress-fill"></div></div>
-        <button id="cancelLoadingBtn" class="mt-3 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[10px]">Batalkan</button>
+        <div class="spinner"></div>
+        <div class="text-slate-800 font-bold text-sm mb-1">Memproses Data Absensi</div>
+        <div id="loadingDetailText" class="text-xs text-slate-500 mb-2 truncate max-w-[260px] mx-auto font-mono">Menyiapkan...</div>
+        <div class="progress-bar-container"><div id="loadingProgressFill" class="progress-fill"></div></div>
+        <div class="flex justify-between items-center mt-1">
+            <span id="loadingProgressText" class="text-xs font-bold text-slate-700">0%</span>
+            <span id="loadingFileCount" class="text-[10px] text-slate-500">0 / 0 file</span>
+        </div>
+        <button id="cancelLoadingBtn" class="mt-4 w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold px-3 py-1.5 rounded-lg text-xs transition">Batalkan Proses</button>
     </div>
 </div>
 
@@ -343,45 +273,35 @@
     let filterOptions = {}; // { columnKey: { values: [], displayValues: [] } }
     
     // DOM elements
-    const fileUpload = document.getElementById('fileUpload');
-    const timeUpload = document.getElementById('timeUpload');
-    const headerRowInput = document.getElementById('headerRow');
-    const dateFrom = document.getElementById('dateFrom');
-    const dateTo = document.getElementById('dateTo');
-    const filterAttendanceDetailSelect = document.getElementById('filterAttendanceDetail');
-    const btnExport = document.getElementById('btnExport');
-    const resetDataBtn = document.getElementById('resetDataBtn');
+    const globalSearch = document.getElementById('globalSearch');
     const tableHeader = document.getElementById('tableHeader');
     const tableBody = document.getElementById('tableBody');
-    const dbStatus = document.getElementById('dbStatus');
-    const totalWorkerSpan = document.getElementById('totalWorker');
-    const totalStaffSpan = document.getElementById('totalStaff');
-    const totalSecuritySpan = document.getElementById('totalSecurity');
-    const totalSemuaSpan = document.getElementById('totalSemua');
-    const globalSearch = document.getElementById('globalSearch');
-    const lastUpdatePanel = document.getElementById('lastUpdateInfo');
     const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingProgressText = document.getElementById('loadingProgressText');
     const loadingProgressFill = document.getElementById('loadingProgressFill');
-    const cancelLoadingBtn = document.getElementById('cancelLoadingBtn');
+    const loadingProgressText = document.getElementById('loadingProgressText');
+    const loadingFileCount = document.getElementById('loadingFileCount');
+    const loadingDetailText = document.getElementById('loadingDetailText');
     const tableContainer = document.getElementById('tableContainer');
-    
-    const hiddenFolderInput = document.getElementById('hiddenFolderInput');
-    const folderXlsbDisplay = document.getElementById('folderXlsbDisplay');
-    const hiddenTimeInput = document.getElementById('hiddenTimeInput');
-    const fileTimeDisplay = document.getElementById('fileTimeDisplay');
 
-    // Helper functions (same as before)
+    // Helper functions
     function showAlert(title, msg) {
         const modal = document.getElementById('modernAlert');
         document.getElementById('alertTitle').innerText = title;
         document.getElementById('alertMessage').innerText = msg;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        setTimeout(() => { if(modal) modal.classList.add('hidden'); }, 3000);
     }
     function closeAlert() { document.getElementById('modernAlert').classList.add('hidden'); }
     
+    // Optimasi Debounce untuk pencarian super cepat
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
     function formatDateToString(d) {
         if(!d) return "";
         let date;
@@ -392,6 +312,7 @@
         const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         return `${String(date.getDate()).padStart(2,'0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
     }
+    
     function formatTimeRange(record) {
         if(!record) return "";
         const parts = record.split(';').map(p=>p.trim()).filter(p=>p);
@@ -401,9 +322,10 @@
     }
 
     function displayLastUpdate(filesArray) {
-        if(!filesArray || filesArray.length === 0) { lastUpdatePanel.classList.add('hidden'); return; }
+        const panel = document.getElementById('lastUpdateInfo');
+        if(!filesArray || filesArray.length === 0) { panel.classList.add('hidden'); return; }
         const validFiles = filesArray.filter(f => f && f.name && f.name.toLowerCase().endsWith('.xlsb'));
-        if(validFiles.length === 0) { lastUpdatePanel.classList.add('hidden'); return; }
+        if(validFiles.length === 0) { panel.classList.add('hidden'); return; }
         let html = '<div class="flex items-center gap-2 flex-wrap"><span class="font-bold text-amber-800">📅 LAST UPDATE (Absen Files):</span>';
         for(let file of validFiles) {
             let modDate = new Date(file.lastModified);
@@ -412,13 +334,13 @@
             if(file.name.toUpperCase().includes('WORKER')) fileType = "👷 WORKER";
             else if(file.name.toUpperCase().includes('STAFF')) fileType = "👔 STAFF";
             else if(file.name.toUpperCase().includes('SECURITY')) fileType = "🔒 SECURITY";
-            html += `<span class="bg-white rounded px-2 py-0.5 shadow-sm text-[9px]">${fileType} : ${file.name} (${dateStr})</span>`;
+            html += `<span class="bg-white rounded px-2 py-0.5 shadow-sm text-[9px] border border-amber-100">${fileType} : ${file.name} (${dateStr})</span>`;
         }
         html += '</div>';
-        lastUpdatePanel.innerHTML = html;
-        lastUpdatePanel.classList.remove('hidden');
+        panel.innerHTML = html;
+        panel.classList.remove('hidden');
     }
-    function clearLastUpdate() { lastUpdatePanel.classList.add('hidden'); lastUpdatePanel.innerHTML = ''; }
+    function clearLastUpdate() { const panel = document.getElementById('lastUpdateInfo'); panel.classList.add('hidden'); panel.innerHTML = ''; }
 
     function isFileValid(file) { 
         if (!file || file.size === 0) return false;
@@ -435,17 +357,26 @@
         return true;
     }
 
+    // YIELD function to prevent browser freeze
+    const yieldToBrowser = () => new Promise(resolve => setTimeout(resolve, 5));
+
     async function bacaFileXLSB(file, forcedStatus) {
         return new Promise(async (resolve) => {
             try {
                 const data = await readFileAsArrayBuffer(file);
-                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                // OPTIMASI: dense: true mengurangi penggunaan RAM dan mempercepat parsing array
+                // cellDates dibiarkan jika masih dibutuhkan, namun raw/dense sangat membantu
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: true });
                 let sheetName = workbook.SheetNames.find(s => s.toUpperCase().includes('ATTEND')) || workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
+                
                 let range = XLSX.utils.decode_range(worksheet['!ref'] || "A1:AK1000");
                 if(range.e.r > MAX_BARIS_PER_FILE) range.e.r = MAX_BARIS_PER_FILE;
-                const rawData = XLSX.utils.sheet_to_json(worksheet, { header:1, defval:"", blankrows:false, range: XLSX.utils.encode_range(range) });
+                
+                // OPTIMASI: raw: true lebih cepat
+                const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "", blankrows: false, range: XLSX.utils.encode_range(range) });
                 if(!rawData.length) { resolve(null); return; }
+                
                 let headerRowIdx = -1, colMap = { id:-1, name:-1, section:-1, position:-1, join:-1 };
                 for(let r=0; r<Math.min(rawData.length,15); r++) {
                     const row = rawData[r];
@@ -470,7 +401,7 @@
                     }
                 }
                 if(headerRowIdx === -1) {
-                    headerRowIdx = parseInt(headerRowInput.value)-1 || 5;
+                    headerRowIdx = parseInt(document.getElementById('headerRow').value)-1 || 5;
                     colMap = { id:0, name:1, section:2, position:3, join:4 };
                 }
                 const headerRow = rawData[headerRowIdx];
@@ -479,6 +410,7 @@
                     let val = String(headerRow[c]||"").trim();
                     if(/^\d+$/.test(val)) colTanggal[val] = c;
                 }
+                
                 const karyawanMap = new Map();
                 for(let r=headerRowIdx+1; r<rawData.length; r++) {
                     const row = rawData[r];
@@ -487,22 +419,17 @@
                     let name = String(row[colMap.name]||"").trim();
                     if(!id && !name) continue;
                     
-                    // === FIX: Skip rows where ID or name looks like a header or summary marker ===
-                    // Skip if ID or name matches "H 4", "H 5", "H1", etc.
                     const headerPattern = /^[A-Z]\s?\d+$/i;
                     if (headerPattern.test(id) || headerPattern.test(name)) continue;
-                    // Skip if ID/name is numeric only (e.g., "12345" might be valid ID, but we need to be careful)
-                    // Instead skip if it's a known summary word
                     const summaryWords = ['total', 'grand', 'summary', 'hadir', 'mangkir', 'sakit', 'cuti', 'absen'];
                     if (summaryWords.some(word => id.toLowerCase().includes(word) || name.toLowerCase().includes(word))) continue;
                     
-                    let idLow = id.toLowerCase();
-                    let nameLow = name.toLowerCase();
+                    let idLow = id.toLowerCase(), nameLow = name.toLowerCase();
                     if (idLow.includes("new id") || idLow.includes("id no") || idLow === "id" || nameLow === "name" || nameLow === "nama" || nameLow.includes("department")) continue;
                     const monthYearRegex = /^(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{4}$/i;
                     if (monthYearRegex.test(name) || monthYearRegex.test(id)) continue;
-                    let cleanIdLow = idLow.replace(/\s+/g, ' ');
-                    let cleanNameLow = nameLow.replace(/\s+/g, ' ');
+                    
+                    let cleanIdLow = idLow.replace(/\s+/g, ' '); let cleanNameLow = nameLow.replace(/\s+/g, ' ');
                     const summaryContains = ["hadir penuh", "full day", "mangkir", "absent w/o", "sakit (sick)", "cuti tahunan", "annual leave", "cuti lain", "other leave"];
                     const summaryExact = ["sakit", "cuti", "total", "hadir"];
                     if (summaryExact.includes(cleanIdLow) || summaryExact.includes(cleanNameLow)) continue;
@@ -522,6 +449,10 @@
                     let key = id !== "" ? id.toUpperCase() : name.toUpperCase();
                     if(!karyawanMap.has(key)) karyawanMap.set(key, personal);
                 }
+                
+                // Allow UI to breathe after a heavy loop
+                await yieldToBrowser();
+                
                 if(karyawanMap.size) resolve({ map: karyawanMap, fileName: file.name });
                 else resolve(null);
             } catch(e) { console.warn(`File gagal: ${file.name}`, e); resolve(null); }
@@ -533,63 +464,71 @@
     async function prosesFileExcel(files) {
         if(!files.length) return;
         const valid = files.filter(f => isFileValid(f));
-        if(!valid.length) { showAlert("Peringatan","Tidak ada file .xlsb valid"); return; }
+        if(!valid.length) { showAlert("Peringatan","Tidak ada file .xlsb valid (Harus mengandung kata Worker/Staff/Security)"); return; }
         if(isProcessing) { showAlert("Info","Sedang memproses data, harap tunggu"); return; }
-        isProcessing = true;
-        cancelProcessing = false;
         
+        isProcessing = true; cancelProcessing = false;
         loadingOverlay.classList.remove('hidden');
+        
         const totalFiles = valid.length;
         let processed = 0;
         const masterMap = new Map();
         
-        const updateProgress = (count) => {
-            const percent = (count / totalFiles) * 100;
+        const updateProgressUI = (filename, p_count) => {
+            const percent = Math.round((p_count / totalFiles) * 100);
+            loadingDetailText.innerText = filename ? `Mengekstrak: ${filename}` : "Menyatukan data...";
             loadingProgressFill.style.width = percent + '%';
-            loadingProgressText.innerText = `${count} / ${totalFiles} file diproses`;
+            loadingProgressText.innerText = percent + '%';
+            loadingFileCount.innerText = `${p_count} / ${totalFiles} file`;
         };
-        
+
         try {
+            updateProgressUI("Mempersiapkan...", 0);
+            await yieldToBrowser(); // Force UI update before freezing loop
+            
             for(let i=0; i<valid.length; i++) {
-                if(cancelProcessing) {
-                    showAlert("Dibatalkan","Proses update absen dibatalkan oleh user.");
-                    break;
-                }
+                if(cancelProcessing) { showAlert("Dibatalkan","Proses update absen dibatalkan."); break; }
                 const file = valid[i];
+                
+                updateProgressUI(file.name, i); // Show what we are about to process
+                await yieldToBrowser(); // YIELD TO UI THREAD
+
                 const forcedStatus = getForcedStatus(file.name);
                 const result = await bacaFileXLSB(file, forcedStatus);
                 if(result && result.map.size) {
-                    for(let [k,v] of result.map) {
-                        masterMap.set(k, v); // overwrite
-                    }
+                    for(let [k,v] of result.map) masterMap.set(k, v); 
                 }
+                
                 processed++;
-                updateProgress(processed);
-                await new Promise(resolve => setTimeout(resolve, 0));
+                updateProgressUI(file.name, processed);
+                await yieldToBrowser();
             }
             
             if(!cancelProcessing) {
-                if(!masterMap.size) {
-                    showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file.");
-                    return;
-                }
+                loadingDetailText.innerText = "Menyusun Database Global...";
+                await yieldToBrowser();
+                
+                if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file."); return; }
                 databaseKaryawan = Array.from(masterMap.values());
+                
                 semuaTanggal = [];
                 for(let i=26;i<=31;i++) semuaTanggal.push(i);
                 for(let i=1;i<=25;i++) semuaTanggal.push(i);
                 
-                localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan.map(k => ({ ...k, kodePerTanggal: k.kodePerTanggal }))));
+                localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
                 localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
+                
+                loadingDetailText.innerText = "Merender Tabel...";
+                await yieldToBrowser();
+                
                 gabungkanDanRender();
                 displayLastUpdate(valid);
-                showAlert("Sukses", `${databaseKaryawan.length} karyawan dimuat dari ${processed} file. Data lama diganti.`);
+                showAlert("Sukses", `${databaseKaryawan.length} karyawan dimuat dengan cepat.`);
             }
         } catch (err) {
-            console.error(err);
-            showAlert("Error", "Gagal memproses file: " + err.message);
+            console.error(err); showAlert("Error", "Gagal memproses file: " + err.message);
         } finally {
-            isProcessing = false;
-            loadingOverlay.classList.add('hidden');
+            isProcessing = false; loadingOverlay.classList.add('hidden');
         }
     }
 
@@ -599,7 +538,7 @@
             reader.onload = function(e) {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    const workbook = XLSX.read(data, { type: 'array', dense: true });
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
                     if(!rows.length) { resolve(new Map()); return; }
@@ -654,17 +593,16 @@
             return { id: karyawan.id, name: karyawan.name, section: karyawan.section, position: karyawan.position, joinDate: karyawan.joinDate, status: karyawan.status, tanggalData };
         });
         databaseGlobal = finalData;
-        const optFrom = ['<option value="ALL">Dari</option>'];
-        const optTo = ['<option value="ALL">Sampai</option>'];
+        const dateFromEl = document.getElementById('dateFrom'); const dateToEl = document.getElementById('dateTo');
+        const optFrom = ['<option value="ALL">Dari</option>']; const optTo = ['<option value="ALL">Sampai</option>'];
         for(let t of semuaTanggal) { optFrom.push(`<option value="${t}">${t}</option>`); optTo.push(`<option value="${t}">${t}</option>`); }
-        dateFrom.innerHTML = optFrom.join('');
-        dateTo.innerHTML = optTo.join('');
-        dateFrom.value = "ALL"; dateTo.value = "ALL";
+        dateFromEl.innerHTML = optFrom.join(''); dateToEl.innerHTML = optTo.join('');
+        dateFromEl.value = "ALL"; dateToEl.value = "ALL";
         filters = {};
         precomputeFilterOptions();
         buildFilterHeader();
         renderTable();
-        dbStatus.innerHTML = `✅ Karyawan: ${databaseKaryawan.length} | Absen: ${timeMap.size}`;
+        document.getElementById('dbStatus').innerHTML = `✅ DB Karyawan: ${databaseKaryawan.length} | DB Time: ${timeMap.size}`;
     }
 
     function precomputeFilterOptions() {
@@ -673,138 +611,88 @@
         for (let col of fixedColumns) {
             const valueSet = new Set();
             for (let row of databaseGlobal) {
-                let val = row[col];
-                if (col === 'joinDate') val = row.joinDate;
-                if (val === undefined || val === null || val === "") {
-                    valueSet.add("__EMPTY__");
-                } else {
-                    valueSet.add(val);
-                }
+                let val = col === 'joinDate' ? row.joinDate : row[col];
+                valueSet.add((val === undefined || val === null || val === "") ? "__EMPTY__" : val);
             }
-            const values = Array.from(valueSet).sort((a,b) => {
-                if (a === "__EMPTY__") return -1;
-                if (b === "__EMPTY__") return 1;
-                return String(a).localeCompare(String(b));
-            });
-            const displayValues = values.map(v => v === "__EMPTY__" ? "Kosong" : v);
-            filterOptions[col] = { values, displayValues };
+            const values = Array.from(valueSet).sort((a,b) => (a==="__EMPTY__"?-1:b==="__EMPTY__"?1:String(a).localeCompare(String(b))));
+            filterOptions[col] = { values, displayValues: values.map(v => v === "__EMPTY__" ? "Kosong" : v) };
         }
-        // Date columns: include empty as "Kosong"
         for (let tgl of semuaTanggal) {
             const key = `date_${tgl}`;
             const valueSet = new Set();
             for (let row of databaseGlobal) {
-                const cell = row.tanggalData[tgl];
-                const val = getCellDisplayValue(cell);
-                if (val && val !== "") {
-                    valueSet.add(val);
-                } else {
-                    valueSet.add("__EMPTY__");
-                }
+                const val = getCellDisplayValue(row.tanggalData[tgl]);
+                valueSet.add((val && val !== "") ? val : "__EMPTY__");
             }
-            const values = Array.from(valueSet).sort((a,b) => {
-                if (a === "__EMPTY__") return -1;
-                if (b === "__EMPTY__") return 1;
-                return String(a).localeCompare(String(b));
-            });
-            const displayValues = values.map(v => v === "__EMPTY__" ? "Kosong" : v);
-            filterOptions[key] = { values, displayValues };
+            const values = Array.from(valueSet).sort((a,b) => (a==="__EMPTY__"?-1:b==="__EMPTY__"?1:String(a).localeCompare(String(b))));
+            filterOptions[key] = { values, displayValues: values.map(v => v === "__EMPTY__" ? "Kosong" : v) };
         }
     }
 
-    function getCellDisplayValue(cell) {
-        if (!cell) return "";
-        if (cell.time) return cell.time;
-        if (cell.kode) return cell.kode;
-        return "";
-    }
+    function getCellDisplayValue(cell) { return !cell ? "" : (cell.time ? cell.time : (cell.kode ? cell.kode : "")); }
 
     function buildFilterHeader() {
         const fixedCols = [
-            { name: "NO", width: 40, filterKey: null },
-            { name: "ID", width: 70, filterKey: "id" },
-            { name: "NAMA", width: 120, filterKey: "name" },
-            { name: "SECTION", width: 100, filterKey: "section" },
-            { name: "POSISI", width: 100, filterKey: "position" },
-            { name: "JOIN DATE", width: 85, filterKey: "joinDate" },
+            { name: "NO", width: 40, filterKey: null }, { name: "ID", width: 70, filterKey: "id" },
+            { name: "NAMA", width: 120, filterKey: "name" }, { name: "SECTION", width: 100, filterKey: "section" },
+            { name: "POSISI", width: 100, filterKey: "position" }, { name: "JOIN DATE", width: 85, filterKey: "joinDate" },
             { name: "STATUS", width: 75, filterKey: "status" }
         ];
         const range = getTanggalRange();
-        const tanggalCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: `date_${t}` }));
-        const allCols = [...fixedCols, ...tanggalCols];
+        const allCols = [...fixedCols, ...range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: `date_${t}` }))];
         
-        // Header row 1
         let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
         for(let i=0; i<allCols.length; i++) {
-            let col = allCols[i];
-            let cls = "px-1 py-1 border-r";
-            let widthStyle = `width: ${col.width}px; min-width: ${col.width}px;`;
+            let col = allCols[i], cls = "px-1 py-1 border-r", ws = `width: ${col.width}px; min-width: ${col.width}px;`;
             if(i===0) cls += " sticky left-0 z-20 bg-slate-800";
             if(i===1) cls += " sticky left-[40px] z-20 bg-slate-800";
             if(i===2) cls += " sticky left-[110px] z-20 bg-slate-800";
-            th += `<th style="${widthStyle}" class="${cls}">${col.name}</th>`;
+            th += `<th style="${ws}" class="${cls}">${col.name}</th>`;
         }
-        th += `</tr>`;
-        
-        // Header row 2 (filters)
-        th += `<tr class="bg-gray-100 text-[9px]">`;
+        th += `</tr><tr class="bg-gray-100 text-[9px]">`;
         for(let i=0; i<allCols.length; i++) {
-            let col = allCols[i];
-            let cls = "px-1 py-0.5 border-r border-slate-200";
-            let widthStyle = `width: ${col.width}px; min-width: ${col.width}px;`;
-            if(i===0) { cls += " sticky left-0 z-10 bg-gray-100"; widthStyle += "width:40px;"; }
-            if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; widthStyle += "width:70px;"; }
-            if(i===2) { cls += " sticky left-[110px] z-10 bg-gray-100"; widthStyle += "width:120px;"; }
-            th += `<th style="${widthStyle}" class="${cls}" data-colkey="${col.filterKey || ''}"><div class="filter-container" id="filter_${col.filterKey || ''}"></div></th>`;
+            let col = allCols[i], cls = "px-1 py-0.5 border-r border-slate-200", ws = `width: ${col.width}px; min-width: ${col.width}px;`;
+            if(i===0) { cls += " sticky left-0 z-10 bg-gray-100"; ws += "width:40px;"; }
+            if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; ws += "width:70px;"; }
+            if(i===2) { cls += " sticky left-[110px] z-10 bg-gray-100"; ws += "width:120px;"; }
+            th += `<th style="${ws}" class="${cls}" data-colkey="${col.filterKey || ''}"><div class="filter-container" id="filter_${col.filterKey || ''}"></div></th>`;
         }
-        th += `</tr>`;
-        tableHeader.innerHTML = th;
+        th += `</tr>`; tableHeader.innerHTML = th;
         
-        // Create filter components
         for(let col of allCols) {
             if (!col.filterKey) continue;
             const container = document.getElementById(`filter_${col.filterKey}`);
-            if (!container) continue;
             const options = filterOptions[col.filterKey];
-            if (!options) continue;
-            
+            if (!container || !options) continue;
             if (!filters[col.filterKey]) filters[col.filterKey] = new Set();
-            const selectedSet = filters[col.filterKey];
-            
-            // Make date columns searchable (like position)
-            const isSearchable = (col.filterKey === 'position' || col.filterKey.startsWith('date_'));
-            if (isSearchable) {
-                createSearchableMultiSelect(container, options.values, options.displayValues, selectedSet, col.filterKey, () => { renderTable(); });
-            } else {
-                createMultiSelect(container, options.values, options.displayValues, selectedSet, col.filterKey, () => { renderTable(); });
-            }
+            const set = filters[col.filterKey], isSearchable = (col.filterKey === 'position' || col.filterKey.startsWith('date_'));
+            if (isSearchable) createSearchableMultiSelect(container, options.values, options.displayValues, set, col.filterKey, () => renderTable());
+            else createMultiSelect(container, options.values, options.displayValues, set, col.filterKey, () => renderTable());
         }
     }
 
+    // Menguraikan (un-minify) fungsi untuk mencegah error parsing yang sering muncul pada kode yang terlalu panjang 
     function createMultiSelect(container, values, displayValues, selectedSet, filterKey, onUpdate) {
         container.innerHTML = '';
         const btn = document.createElement('div');
         btn.className = 'multi-select-btn';
         const span = document.createElement('span');
+        const arrow = document.createElement('span');
+        arrow.innerText = '▼';
+
         const updateBtnText = () => {
             const count = selectedSet.size;
             span.innerText = count === 0 ? 'Semua' : `${count} terpilih`;
-            if (count > 0) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+            if(count > 0) btn.classList.add('active');
+            else btn.classList.remove('active');
         };
         updateBtnText();
-        const arrow = document.createElement('span');
-        arrow.innerText = '▼';
         btn.appendChild(span);
         btn.appendChild(arrow);
-        
+
         const dropdown = document.createElement('div');
         dropdown.className = 'multi-select-dropdown';
-        
-        // "Semua" option
+
         const allOption = document.createElement('div');
         allOption.className = 'multi-select-option';
         const allCheck = document.createElement('input');
@@ -814,6 +702,7 @@
         allLabel.innerText = 'Semua';
         allOption.appendChild(allCheck);
         allOption.appendChild(allLabel);
+
         allOption.addEventListener('click', (e) => {
             e.stopPropagation();
             if (selectedSet.size === 0) {
@@ -828,20 +717,24 @@
             onUpdate();
         });
         dropdown.appendChild(allOption);
-        
+
         const optionElements = [];
         for (let idx = 0; idx < values.length; idx++) {
             const val = values[idx];
             const displayVal = displayValues[idx];
             const option = document.createElement('div');
             option.className = 'multi-select-option';
+            
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.checked = selectedSet.has(val);
+            
             const label = document.createElement('span');
             label.innerText = displayVal;
+            
             option.appendChild(cb);
             option.appendChild(label);
+            
             option.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (cb.checked) {
@@ -858,21 +751,23 @@
             dropdown.appendChild(option);
             optionElements.push({ option, cb, val });
         }
-        
+
         function updateCheckboxes() {
             allCheck.checked = (selectedSet.size === 0);
             for (let item of optionElements) {
                 item.cb.checked = selectedSet.has(item.val);
             }
         }
-        
+
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdown.classList.toggle('show');
         });
+        
         document.addEventListener('click', function closeDropdown(e) {
             if (!container.contains(e.target)) dropdown.classList.remove('show');
         });
+
         container.appendChild(btn);
         container.appendChild(dropdown);
     }
@@ -882,43 +777,39 @@
         const btn = document.createElement('div');
         btn.className = 'searchable-btn';
         const span = document.createElement('span');
+        const arrow = document.createElement('span');
+        arrow.innerText = '▼';
+
         const updateBtnText = () => {
             const count = selectedSet.size;
             span.innerText = count === 0 ? 'Semua' : `${count} terpilih`;
-            if (count > 0) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+            if(count > 0) btn.classList.add('active');
+            else btn.classList.remove('active');
         };
         updateBtnText();
-        const arrow = document.createElement('span');
-        arrow.innerText = '▼';
         btn.appendChild(span);
         btn.appendChild(arrow);
-        
+
         const dropdown = document.createElement('div');
         dropdown.className = 'searchable-dropdown';
-        
-        // Search input
+
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = filterKey.startsWith('date_') ? 'Cari nilai tanggal...' : 'Cari posisi...';
+        searchInput.placeholder = 'Cari...';
         searchInput.className = 'searchable-input';
         dropdown.appendChild(searchInput);
-        
-        // Options container
+
         const optionsContainer = document.createElement('div');
         optionsContainer.style.maxHeight = '150px';
         optionsContainer.style.overflowY = 'auto';
         dropdown.appendChild(optionsContainer);
-        
+
         let filteredValues = [...values];
         let filteredDisplay = [...displayValues];
-        
+
         function renderOptions() {
             optionsContainer.innerHTML = '';
-            // "Semua" option
+            
             const allOption = document.createElement('div');
             allOption.className = 'searchable-option';
             const allCheck = document.createElement('input');
@@ -926,8 +817,10 @@
             allCheck.checked = (selectedSet.size === 0);
             const allLabel = document.createElement('span');
             allLabel.innerText = 'Semua';
+            
             allOption.appendChild(allCheck);
             allOption.appendChild(allLabel);
+            
             allOption.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (selectedSet.size === 0) {
@@ -942,20 +835,23 @@
                 onUpdate();
             });
             optionsContainer.appendChild(allOption);
-            
-            // Filtered options
-            for (let idx = 0; idx < filteredValues.length; idx++) {
-                const val = filteredValues[idx];
-                const displayVal = filteredDisplay[idx];
+
+            for (let i = 0; i < filteredValues.length; i++) {
+                const val = filteredValues[i];
+                const displayVal = filteredDisplay[i];
                 const option = document.createElement('div');
                 option.className = 'searchable-option';
+                
                 const cb = document.createElement('input');
                 cb.type = 'checkbox';
                 cb.checked = selectedSet.has(val);
+                
                 const label = document.createElement('span');
                 label.innerText = displayVal;
+                
                 option.appendChild(cb);
                 option.appendChild(label);
+                
                 option.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (cb.checked) {
@@ -972,18 +868,18 @@
                 optionsContainer.appendChild(option);
             }
         }
-        
+
         function updateCheckboxes() {
             const allCheck = optionsContainer.querySelector('input');
             if (allCheck) allCheck.checked = (selectedSet.size === 0);
             const checkboxes = optionsContainer.querySelectorAll('.searchable-option input');
             checkboxes.forEach((cb, idx) => {
                 if (idx === 0) return;
-                const val = filteredValues[idx-1];
+                const val = filteredValues[idx - 1];
                 cb.checked = selectedSet.has(val);
             });
         }
-        
+
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             const newValues = [];
@@ -998,9 +894,9 @@
             filteredDisplay = newDisplay;
             renderOptions();
         });
-        
+
         renderOptions();
-        
+
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdown.classList.toggle('show');
@@ -1009,309 +905,254 @@
                 searchInput.select();
             }
         });
+        
         document.addEventListener('click', function closeDropdown(e) {
             if (!container.contains(e.target)) dropdown.classList.remove('show');
         });
+
         container.appendChild(btn);
         container.appendChild(dropdown);
     }
 
     function getTanggalRange() {
-        let from = dateFrom.value, to = dateTo.value;
+        let from = document.getElementById('dateFrom').value, to = document.getElementById('dateTo').value;
         if(from === "ALL" || to === "ALL") return semuaTanggal;
         let fromIdx = semuaTanggal.indexOf(parseInt(from)), toIdx = semuaTanggal.indexOf(parseInt(to));
         if(fromIdx === -1 || toIdx === -1) return semuaTanggal;
         if(fromIdx <= toIdx) return semuaTanggal.slice(fromIdx, toIdx+1);
-        else return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
+        return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
     
-    function applyAllFilters() {
+    // OPTIMASI: Single-Pass Filtering (Jauh lebih cepat dari multiple .filter())
+    function applyAllFiltersFast() {
         if (!databaseGlobal.length) return [];
-        let filtered = [...databaseGlobal];
-        
-        const searchKeyword = (globalSearch.value || "").toLowerCase().trim();
-        if (searchKeyword !== "") {
-            filtered = filtered.filter(r => r.id.toLowerCase().includes(searchKeyword) || r.name.toLowerCase().includes(searchKeyword));
-        }
-        
-        for (let [key, valueSet] of Object.entries(filters)) {
-            if (valueSet.size === 0) continue;
-            if (key.startsWith('date_')) {
-                const tgl = parseInt(key.split('_')[1]);
-                filtered = filtered.filter(row => {
-                    const cell = row.tanggalData[tgl];
-                    const cellVal = getCellDisplayValue(cell);
-                    return valueSet.has(cellVal) || (cellVal === "" && valueSet.has("__EMPTY__"));
-                });
-            } else {
-                filtered = filtered.filter(row => {
-                    let rowVal = row[key];
-                    if (key === 'joinDate') rowVal = row.joinDate;
-                    if ((rowVal === undefined || rowVal === null || rowVal === "") && valueSet.has("__EMPTY__")) return true;
-                    return valueSet.has(rowVal);
-                });
-            }
-        }
-        
+        const searchKeyword = globalSearch.value.trim().toLowerCase();
         const range = getTanggalRange();
-        const mode = filterAttendanceDetailSelect.value;
-        if (mode !== "ALL") {
-            filtered = filtered.filter(row => {
-                for (let tgl of range) {
-                    const item = row.tanggalData[tgl] || { kode: "", time: "" };
-                    const time = item.time;
-                    if (mode === "NO_TIME" && !time) return true;
-                    if (mode === "ONE_TIME" && time && !time.includes('-')) return true;
-                    if (mode === "FULL_TIME" && time && time.includes('-')) return true;
+        const mode = document.getElementById('filterAttendanceDetail').value;
+        
+        // Pre-check which filters are active to avoid looping object keys in the main loop
+        const activeFilters = [];
+        for (let key in filters) { if(filters[key].size > 0) activeFilters.push({key, set: filters[key]}); }
+        const hasSearch = searchKeyword !== "";
+        const checkMode = mode !== "ALL";
+
+        return databaseGlobal.filter(row => {
+            // 1. Check Global Search
+            if (hasSearch && !(row.id.toLowerCase().includes(searchKeyword) || row.name.toLowerCase().includes(searchKeyword))) return false;
+            
+            // 2. Check Multi-Select Filters
+            for (let i = 0; i < activeFilters.length; i++) {
+                const {key, set} = activeFilters[i];
+                if (key.startsWith('date_')) {
+                    const tgl = parseInt(key.split('_')[1]);
+                    const cellVal = getCellDisplayValue(row.tanggalData[tgl]);
+                    if (!set.has(cellVal) && !(cellVal === "" && set.has("__EMPTY__"))) return false;
+                } else {
+                    let rowVal = key === 'joinDate' ? row.joinDate : row[key];
+                    let isEmp = (rowVal === undefined || rowVal === null || rowVal === "");
+                    if (!set.has(rowVal) && !(isEmp && set.has("__EMPTY__"))) return false;
                 }
-                return false;
-            });
-        }
-        return filtered;
+            }
+
+            // 3. Check Time Mode
+            if (checkMode) {
+                let matchMode = false;
+                for (let i=0; i<range.length; i++) {
+                    const time = row.tanggalData[range[i]]?.time || "";
+                    if (mode === "NO_TIME" && !time) { matchMode = true; break; }
+                    if (mode === "ONE_TIME" && time && !time.includes('-')) { matchMode = true; break; }
+                    if (mode === "FULL_TIME" && time && time.includes('-')) { matchMode = true; break; }
+                }
+                if (!matchMode) return false;
+            }
+
+            return true;
+        });
     }
 
     function updateRekapUtama(dataList) {
-        let worker=0,staff=0,security=0;
-        for(let row of dataList) {
-            if(row.status === "WORKER") worker++;
-            else if(row.status === "STAFF") staff++;
-            else if(row.status === "SECURITY") security++;
-        }
-        totalWorkerSpan.innerText = worker;
-        totalStaffSpan.innerText = staff;
-        totalSecuritySpan.innerText = security;
-        totalSemuaSpan.innerText = dataList.length;
+        let w=0,s=0,sec=0;
+        for(let r of dataList) { if(r.status==="WORKER") w++; else if(r.status==="STAFF") s++; else if(r.status==="SECURITY") sec++; }
+        document.getElementById('totalWorker').innerText = w; document.getElementById('totalStaff').innerText = s;
+        document.getElementById('totalSecurity').innerText = sec; document.getElementById('totalSemua').innerText = dataList.length;
     }
 
     function highlightText(text, keyword) {
-        if (!keyword || keyword === "") return text;
+        if (!keyword) return text;
         const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
         return text.replace(regex, '<span class="highlight">$1</span>');
     }
-
     function getAttendanceCodeClass(code) {
-        const upper = code.toUpperCase();
-        if (upper === "PR") return "att-code-pr";
-        if (upper === "PRS") return "att-code-prs";
-        if (upper === "PRP") return "att-code-prp";
-        if (upper === "PRM") return "att-code-prm";
-        if (upper === "AB" || upper === "LWP") return "att-code-ab";
-        if (upper === "AL" || upper === "OL") return "att-code-al";
-        if (upper === "ML") return "att-code-ml";
-        return "";
+        const u = code.toUpperCase();
+        if (u==="PR") return "att-code-pr"; if (u==="PRS") return "att-code-prs"; if (u==="PRP") return "att-code-prp";
+        if (u==="PRM") return "att-code-prm"; if (u==="AB"||u==="LWP") return "att-code-ab";
+        if (u==="AL"||u==="OL") return "att-code-al"; if (u==="ML") return "att-code-ml"; return "";
     }
-
     function scrollToFirstMatch() {
-        const firstRow = document.querySelector('#tableBody tr');
-        if (firstRow) {
-            const rowRect = firstRow.getBoundingClientRect();
-            const containerRect = tableContainer.getBoundingClientRect();
-            const offset = 70;
-            if (rowRect.top < containerRect.top + offset) {
-                tableContainer.scrollTop += rowRect.top - containerRect.top - offset;
-            }
-        }
+        const row = document.querySelector('#tableBody tr');
+        if (row) tableContainer.scrollTop = Math.max(0, row.offsetTop - tableContainer.offsetTop - 70);
     }
 
+    // OPTIMASI: Rendering menggunakan Array Join (Sangat Cepat untuk browser)
     let renderScheduled = false;
     function renderTable() {
         if (renderScheduled) return;
         renderScheduled = true;
         requestAnimationFrame(() => {
-            const filteredData = applyAllFilters();
+            const t0 = performance.now();
+            const filteredData = applyAllFiltersFast();
             updateRekapUtama(filteredData);
             
             const range = getTanggalRange();
-            const fixedColsCount = 7;
-            const totalCols = fixedColsCount + range.length;
-            
             if (filteredData.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="${totalCols}" class="p-4 text-center">Tidak ada data yang sesuai filter</td></tr>`;
-                renderScheduled = false;
-                return;
+                tableBody.innerHTML = `<tr><td colspan="${7 + range.length}" class="p-4 text-center text-slate-500 font-bold">Tidak ada data yang sesuai filter</td></tr>`;
+                renderScheduled = false; return;
             }
             
-            let tb = "";
             const keyword = globalSearch.value.trim().toLowerCase();
+            const htmlChunks = []; // Using array for fast DOM string building
+            
             for(let index=0; index<filteredData.length; index++) {
                 let row = filteredData[index];
-                tb += `<tr class="hover:bg-blue-50 border-b">`;
-                const fixedVals = [index+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
-                const fixedStyles = ["width:40px;", "width:70px;", "width:120px;", "width:100px;", "width:100px;", "width:85px;", "width:75px;"];
-                const fixedClasses = ["sticky-no", "sticky-id", "sticky-name", "col-section-fixed", "col-posisi-fixed", "col-join-fixed", "col-status-fixed"];
-                for(let i=0; i<fixedVals.length; i++) {
-                    let val = fixedVals[i];
-                    let extra = fixedClasses[i];
-                    let style = fixedStyles[i] + "background:white;";
-                    if(i===6) {
-                        if(val==="WORKER") val='<span class="bg-emerald-100 px-1 rounded">WORKER</span>';
-                        else if(val==="STAFF") val='<span class="bg-purple-100 px-1 rounded">STAFF</span>';
-                        else if(val==="SECURITY") val='<span class="bg-slate-700 text-white px-1 rounded">SECURITY</span>';
-                    }
-                    if (i === 1 || i === 2) {
-                        val = highlightText(val, keyword);
-                    }
-                    tb += `<td class="${extra} px-1 py-0.5" style="${style}">${val}</td>`;
-                }
-                for(let tgl of range) {
-                    const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
-                    let kode = dataTgl.kode, time = dataTgl.time;
-                    let display = time ? time : (kode ? kode : "—");
-                    let colorClass = "";
-                    let codeClass = "";
+                htmlChunks.push(`<tr class="hover:bg-blue-50 border-b transition-colors">`);
+                
+                let sBadge = row.status==="WORKER"?'<span class="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[9px]">WORKER</span>':
+                             row.status==="STAFF"?'<span class="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[9px]">STAFF</span>':
+                             '<span class="bg-slate-700 text-white font-bold px-1.5 py-0.5 rounded text-[9px]">SECURITY</span>';
+                
+                let rId = highlightText(row.id, keyword), rName = highlightText(row.name, keyword);
+                htmlChunks.push(
+                    `<td class="sticky-no px-1 py-0.5 text-slate-500 font-medium" style="width:40px;background:white;">${index+1}</td>`,
+                    `<td class="sticky-id px-1 py-0.5 font-bold text-slate-800" style="width:70px;background:white;">${rId}</td>`,
+                    `<td class="sticky-name px-1 py-0.5 text-slate-700 truncate" style="width:120px;background:white;" title="${row.name}">${rName}</td>`,
+                    `<td class="col-section-fixed px-1 py-0.5 text-slate-600 truncate" style="width:100px;">${row.section}</td>`,
+                    `<td class="col-posisi-fixed px-1 py-0.5 text-slate-600 truncate" style="width:100px;">${row.position}</td>`,
+                    `<td class="col-join-fixed px-1 py-0.5 text-slate-500" style="width:85px;">${row.joinDate}</td>`,
+                    `<td class="col-status-fixed px-1 py-0.5" style="width:75px;">${sBadge}</td>`
+                );
+
+                for(let i=0; i<range.length; i++) {
+                    const dataTgl = row.tanggalData[range[i]] || { kode: "", time: "" };
+                    let kode = dataTgl.kode, time = dataTgl.time, display = time ? time : (kode ? kode : "—");
+                    let colorClass = "", codeClass = "";
                     if (kode && !time) {
                         codeClass = getAttendanceCodeClass(kode);
-                        if (codeClass) display = `<span class="${codeClass}">${display}</span>`;
-                        else colorClass = "text-orange-500 font-semibold";
-                    } else if (time && !time.includes('-')) {
-                        colorClass = "text-blue-600 font-bold";
-                    } else if (time && time.includes('-')) {
-                        colorClass = "text-green-600 font-bold";
-                    }
-                    tb += `<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`;
+                        if (codeClass) display = `<span class="${codeClass} shadow-sm">${display}</span>`;
+                        else colorClass = "text-orange-500 font-bold";
+                    } else if (time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
+                    else if (time && time.includes('-')) colorClass = "text-emerald-600 font-bold";
+                    
+                    htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
                 }
-                tb += `</tr>`;
+                htmlChunks.push(`</tr>`);
             }
-            tableBody.innerHTML = tb;
-            if (keyword !== "" && filteredData.length > 0) {
-                setTimeout(() => scrollToFirstMatch(), 50);
-            }
+            
+            // Apply ke DOM dalam 1 kali assign (Super Fast)
+            tableBody.innerHTML = htmlChunks.join('');
+            
+            if (keyword !== "" && filteredData.length > 0) setTimeout(scrollToFirstMatch, 10);
             renderScheduled = false;
         });
     }
 
     function openSummary() {
-        const filteredData = applyAllFilters();
-        if(!filteredData.length) { showAlert("Info","Tidak ada data"); return; }
+        const filteredData = applyAllFiltersFast();
+        if(!filteredData.length) { showAlert("Info","Tidak ada data yang ditampilkan."); return; }
         const summary = new Map();
         let gw=0,gs=0,gsec=0;
         for(const row of filteredData) {
             let pos = row.position || "UNKNOWN";
-            let stat = row.status;
             if(!summary.has(pos)) summary.set(pos,{WORKER:0,STAFF:0,SECURITY:0,TOTAL:0});
             const d = summary.get(pos);
-            if(stat==="WORKER") { d.WORKER++; gw++; }
-            else if(stat==="STAFF") { d.STAFF++; gs++; }
-            else if(stat==="SECURITY") { d.SECURITY++; gsec++; }
+            if(row.status==="WORKER") { d.WORKER++; gw++; }
+            else if(row.status==="STAFF") { d.STAFF++; gs++; }
+            else if(row.status==="SECURITY") { d.SECURITY++; gsec++; }
             d.TOTAL++;
         }
-        let html = `<table class="w-full border text-[9px]"><thead><tr class="bg-slate-700 text-white"><th class="p-1">POSISI</th><th>WORKER</th><th>STAFF</th><th>SECURITY</th><th>TOTAL</th></tr></thead><tbody>`;
-        for(let [pos,data] of [...summary.entries()].sort()) html += `<tr><td class="border p-1">${pos}</td><td class="border p-1 text-center">${data.WORKER}</td><td class="border p-1 text-center">${data.STAFF}</td><td class="border p-1 text-center">${data.SECURITY}</td><td class="border p-1 text-center font-bold">${data.TOTAL}</td></tr>`;
-        html += `<tr class="bg-indigo-100 font-bold"><td class="p-1">GRAND TOTAL</td><td class="text-center">${gw}</td><td class="text-center">${gs}</td><td class="text-center">${gsec}</td><td class="text-center">${gw+gs+gsec}</td></tr>`;
+        let html = `<table class="w-full border-collapse border border-slate-300 text-[10px] text-left"><thead><tr class="bg-slate-700 text-white"><th class="p-2 border border-slate-600">POSISI JABATAN</th><th class="p-2 border border-slate-600 text-center">WORKER</th><th class="p-2 border border-slate-600 text-center">STAFF</th><th class="p-2 border border-slate-600 text-center">SECURITY</th><th class="p-2 border border-slate-600 text-center font-bold text-yellow-300">TOTAL</th></tr></thead><tbody>`;
+        for(let [pos,data] of [...summary.entries()].sort()) html += `<tr class="hover:bg-slate-50"><td class="border border-slate-300 p-2 font-medium text-slate-700">${pos}</td><td class="border border-slate-300 p-2 text-center text-emerald-700 font-bold">${data.WORKER}</td><td class="border border-slate-300 p-2 text-center text-purple-700 font-bold">${data.STAFF}</td><td class="border border-slate-300 p-2 text-center text-slate-700 font-bold">${data.SECURITY}</td><td class="border border-slate-300 p-2 text-center font-bold text-blue-700 bg-blue-50">${data.TOTAL}</td></tr>`;
+        html += `<tr class="bg-slate-800 text-white font-bold text-[11px]"><td class="p-2 border border-slate-700 text-right">GRAND TOTAL KESELURUHAN</td><td class="text-center p-2 border border-slate-700 text-emerald-300">${gw}</td><td class="text-center p-2 border border-slate-700 text-purple-300">${gs}</td><td class="text-center p-2 border border-slate-700 text-slate-300">${gsec}</td><td class="text-center p-2 border border-slate-700 text-yellow-300 text-[12px]">${gw+gs+gsec}</td></tr></tbody></table>`;
         document.getElementById('summaryContent').innerHTML = html;
         document.getElementById('summaryModal').classList.remove('hidden'); document.getElementById('summaryModal').classList.add('flex');
     }
     function closeSummary() { document.getElementById('summaryModal').classList.add('hidden'); }
+    
     function exportToExcel() {
-        const filteredData = applyAllFilters();
-        if(!filteredData.length) { showAlert("Tidak ada data",""); return; }
+        const filteredData = applyAllFiltersFast();
+        if(!filteredData.length) { showAlert("Peringatan","Tidak ada data untuk diexport"); return; }
         const range = getTanggalRange();
-        const fixedCols = ["NO", "ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS"];
-        const tanggalCols = range.map(t => `Tgl ${t}`);
-        const headers = [...fixedCols, ...tanggalCols];
+        const headers = ["NO", "ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS", ...range.map(t => `Tgl ${t}`)];
         const wsData = [headers];
-        let rowIndex = 1;
-        for(const row of filteredData) {
-            const rowArr = [rowIndex++, row.id, row.name, row.section, row.position, row.joinDate, row.status];
+        for(let i=0; i<filteredData.length; i++) {
+            const row = filteredData[i];
+            const rowArr = [i+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
             for(let tgl of range) {
                 const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
-                let display = dataTgl.time ? dataTgl.time : (dataTgl.kode ? dataTgl.kode : "");
-                rowArr.push(display);
+                rowArr.push(dataTgl.time ? dataTgl.time : (dataTgl.kode ? dataTgl.kode : ""));
             }
             wsData.push(rowArr);
         }
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(wsData); const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-        XLSX.writeFile(wb, `hoplun_attendance_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
-        showAlert("Berhasil","Data diekspor");
+        XLSX.writeFile(wb, `Hoplun_Attendance_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
     }
 
-    function readFileAsArrayBuffer(file) { return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(); fr.readAsArrayBuffer(file); }); }
+    function readFileAsArrayBuffer(file) { return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(new Error("Gagal membaca file")); fr.readAsArrayBuffer(file); }); }
     
-    fileUpload.addEventListener('change', async (e) => { 
-        if(e.target.files.length) {
-            const filesArr = Array.from(e.target.files);
-            await prosesFileExcel(filesArr);
-            e.target.value = "";
-        }
+    // Event Listeners
+    document.getElementById('fileUpload').addEventListener('change', async (e) => { 
+        if(e.target.files.length) { await prosesFileExcel(Array.from(e.target.files)); e.target.value = ""; }
     });
     
-    hiddenFolderInput.addEventListener('change', async (e) => {
+    document.getElementById('hiddenFolderInput').addEventListener('change', async (e) => {
         try {
             const files = Array.from(e.target.files);
             if(files.length === 0) return;
-            const firstPath = files[0].webkitRelativePath;
-            const folderName = firstPath ? firstPath.split('/')[0] : "Folder terpilih";
-            folderXlsbDisplay.value = folderName;
+            document.getElementById('folderXlsbDisplay').value = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : "Folder terpilih";
             const xlsbFiles = files.filter(file => isFileValid(file));
-            if (xlsbFiles.length === 0) {
-                showAlert("Peringatan", "Tidak ditemukan file .xlsb valid (Worker/Staff/Security) di folder tersebut.");
-                return;
-            }
+            if (xlsbFiles.length === 0) { showAlert("Peringatan", "File .xlsb valid (Worker/Staff/Security) tidak ditemukan di folder."); return; }
             await prosesFileExcel(xlsbFiles);
-        } catch (error) {
-            console.error(error);
-            showAlert("Error", "Gagal membaca folder: " + error.message);
-        } finally {
-            e.target.value = "";
-        }
+        } catch (error) { showAlert("Error", "Gagal membaca folder: " + error.message); } finally { e.target.value = ""; }
     });
     
-    cancelLoadingBtn.addEventListener('click', () => {
-        if(isProcessing) {
-            cancelProcessing = true;
-            showAlert("Info","Membatalkan proses...");
-        }
-    });
+    document.getElementById('cancelLoadingBtn').addEventListener('click', () => { if(isProcessing) cancelProcessing = true; });
     
-    timeUpload.addEventListener('change', async (e) => {
-        if(!e.target.files.length) return;
-        const file = e.target.files[0];
-        if (!isTimeFileValid(file)) { showAlert("Error","File time tidak valid"); e.target.value=""; return; }
-        const newTimeMap = await loadTimeFile(file);
-        if(newTimeMap.size) {
-            timeMap = newTimeMap;
-            localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
-            if(databaseKaryawan.length) gabungkanDanRender();
-            else showAlert("Info","Data time tersimpan. Upload .xlsb dulu.");
-        } else { showAlert("Gagal","Tidak ada data time valid"); }
-        e.target.value = "";
-    });
-    hiddenTimeInput.addEventListener('change', async (e) => {
+    document.getElementById('hiddenTimeInput').addEventListener('change', async (e) => {
         try {
             if(!e.target.files.length) return;
             const file = e.target.files[0];
-            if (!isTimeFileValid(file)) {
-                showAlert("Error", "File time tidak valid atau merupakan file temporary sistem.");
-                e.target.value = "";
-                return;
-            }
-            fileTimeDisplay.value = file.name;
+            if (!isTimeFileValid(file)) { showAlert("Error", "File time tidak valid."); e.target.value = ""; return; }
+            
+            document.getElementById('fileTimeDisplay').value = file.name;
+            loadingOverlay.classList.remove('hidden');
+            loadingDetailText.innerText = `Memproses Data Time: ${file.name}`;
+            await yieldToBrowser();
+            
             const newTimeMap = await loadTimeFile(file);
             if (newTimeMap.size) {
                 timeMap = newTimeMap;
                 localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
                 if (databaseKaryawan.length) gabungkanDanRender();
                 else showAlert("Info", `Data Time tersimpan. Silakan Update Absen (Folder) dulu.`);
-            } else { showAlert("Gagal", `File Time (${file.name}) kosong.`); }
-        } catch (error) {
-            console.error(error);
-            showAlert("Error", "Gagal membaca file: " + error.message);
-        } finally {
-            e.target.value = "";
+            } else { showAlert("Gagal", `File Time (${file.name}) kosong atau format salah.`); }
+        } catch (error) { showAlert("Error", "Gagal membaca file: " + error.message); } 
+        finally { loadingOverlay.classList.add('hidden'); e.target.value = ""; }
+    });
+    
+    // OPTIMASI: Pasang Debounce agar pencarian ID/Nama tidak freeze saat diketik cepat (Delay 250ms)
+    globalSearch.addEventListener('input', debounce(() => renderTable(), 250));
+    
+    document.getElementById('dateFrom').addEventListener('change', renderTable);
+    document.getElementById('dateTo').addEventListener('change', renderTable);
+    document.getElementById('filterAttendanceDetail').addEventListener('change', renderTable);
+    document.getElementById('btnExport').addEventListener('click', exportToExcel);
+    document.getElementById('resetDataBtn').addEventListener('click', () => {
+        if(confirm("Yakin ingin menghapus seluruh data database dari browser?")) { 
+            localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; filters={}; renderTable(); document.getElementById('dbStatus').innerHTML="Menunggu Data..."; clearLastUpdate(); showAlert("Reset","Data berhasil dihapus dari memori."); 
         }
     });
     
-    globalSearch.addEventListener('input', () => renderTable());
-    dateFrom.addEventListener('change', () => renderTable());
-    dateTo.addEventListener('change', () => renderTable());
-    filterAttendanceDetailSelect.addEventListener('change', () => renderTable());
-    btnExport.addEventListener('click', exportToExcel);
-    resetDataBtn.addEventListener('click', () => {
-        if(confirm("Hapus semua data?")) { localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; filters = {}; renderTable(); dbStatus.innerHTML="Kosong"; clearLastUpdate(); showAlert("Reset","Data dihapus"); }
-    });
-    
+    // Auto Load Data on Start
     (function loadStored() {
         const karyawan = localStorage.getItem('hoplun_karyawan');
         const tanggal = localStorage.getItem('hoplun_tanggal');
