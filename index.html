@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hoplun - Attendance Dashboard (Super Cepat)</title>
+    <title>Hoplun - Attendance Dashboard (Stabil & Cepat)</title>
     <link rel="icon" type="image/png" href="hoplun128.png">
     <link rel="shortcut icon" href="hoplun128.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -35,22 +35,42 @@
             border: 1px solid #e2e8f0; 
             border-radius: 8px; 
             background: white;
+            scroll-padding-top: 70px;
+            will-change: transform;
+            contain: layout style paint;
         }
         table { 
             border-collapse: collapse; 
             width: 100%;
-            table-layout: auto;
+            table-layout: fixed;
         }
-        th { 
-            position: sticky; 
-            top: 0; 
-            background-color: #1e293b; 
-            color: white; 
-            z-index: 10; 
-            padding: 6px 4px; 
-            font-weight: 600; 
+        th, td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        thead tr:first-child th {
+            position: sticky;
+            top: 0;
+            background-color: #1e293b;
+            color: white;
+            z-index: 20;
+            padding: 6px 4px;
+            font-weight: 600;
             font-size: 10px;
             white-space: nowrap;
+            height: 32px;
+            line-height: 1.2;
+        }
+        thead tr:nth-child(2) th {
+            position: sticky;
+            top: 32px;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            z-index: 19;
+            padding: 4px 4px;
+            height: 32px;
+            border-top: 1px solid #e5e7eb;
+            overflow: visible;
         }
         td { 
             padding: 4px 4px; 
@@ -66,50 +86,74 @@
             font-size: 9px; 
             white-space: pre-line; 
         }
-        /* STICKY COLUMNS WITH FIXED WIDTH (TIDAK BERUBAH SAAT FILTER TANGGAL) */
-        .sticky-no { 
-            position: sticky; 
-            left: 0; 
-            background-color: white; 
-            z-index: 9; 
-            width: 40px !important;
-            min-width: 40px !important;
-            max-width: 40px !important;
-            text-align: center; 
+        .sticky-no, .sticky-id, .sticky-name {
+            position: sticky;
+            background-color: white;
+            z-index: 10;
         }
-        .sticky-id { 
-            position: sticky; 
-            left: 40px; 
-            background-color: white; 
-            z-index: 9; 
-            width: 70px !important;
-            min-width: 70px !important;
-            max-width: 70px !important;
-        }
-        .sticky-name { 
-            position: sticky; 
-            left: 110px; 
-            background-color: white; 
-            z-index: 9; 
-            width: 120px !important;
-            min-width: 120px !important;
-            max-width: 120px !important;
-        }
+        .sticky-no { left: 0; width: 40px !important; min-width: 40px !important; max-width: 40px !important; text-align: center; }
+        .sticky-id { left: 40px; width: 70px !important; min-width: 70px !important; max-width: 70px !important; }
+        .sticky-name { left: 110px; width: 120px !important; min-width: 120px !important; max-width: 120px !important; }
         .col-section-fixed { width: 100px !important; min-width: 100px !important; }
         .col-posisi-fixed { width: 100px !important; min-width: 100px !important; }
         .col-join-fixed { width: 85px !important; min-width: 85px !important; }
         .col-status-fixed { width: 75px !important; min-width: 75px !important; }
         
-        .filter-select {
+        .multi-select {
+            position: relative;
+            width: 100%;
+            font-size: 9px;
+        }
+        .multi-select-btn {
             width: 100%;
             padding: 2px 4px;
-            font-size: 9px;
+            background: white;
             border: 1px solid #94a3b8;
             border-radius: 4px;
-            margin-top: 2px;
-            background-color: white;
-            color: #1e293b;
-            box-sizing: border-box;
+            cursor: pointer;
+            text-align: left;
+            font-size: 9px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .multi-select-btn span:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .multi-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            z-index: 100;
+            max-height: 150px;
+            overflow-y: auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
+        }
+        .multi-select-dropdown.show {
+            display: block;
+        }
+        .multi-select-option {
+            padding: 2px 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .multi-select-option:hover {
+            background-color: #e2e8f0;
+        }
+        .multi-select-option input {
+            margin: 0;
+            width: 12px;
+            height: 12px;
+            pointer-events: none;
         }
         .btn-export { background: #059669; transition: 0.2s; }
         .btn-export:hover { background: #047857; }
@@ -157,34 +201,47 @@
             background: #10b981;
             transition: width 0.2s;
         }
+        .highlight {
+            background-color: #fde047;
+            color: #1e293b;
+            font-weight: bold;
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+        .att-code-pr { color: #15803d; font-weight: bold; background-color: #dcfce7; border-radius: 2px; padding: 0 2px; display: inline-block; }
+        .att-code-prs { color: #c2410c; font-weight: bold; background-color: #ffedd5; border-radius: 2px; padding: 0 2px; display: inline-block; }
+        .att-code-prp { color: #1e40af; font-weight: bold; background-color: #dbeafe; border-radius: 2px; padding: 0 2px; display: inline-block; }
+        .att-code-prm { color: #111827; font-weight: bold; background-color: #e5e7eb; border-radius: 2px; padding: 0 2px; display: inline-block; }
+        .att-code-ab, .att-code-lwp { color: #b91c1c; font-weight: bold; background-color: #fee2e2; border-radius: 2px; padding: 0 2px; display: inline-block; }
+        .att-code-al, .att-code-ol { color: #2563eb; font-weight: bold; background-color: #eff6ff; border-radius: 2px; padding: 0 2px; display: inline-block; }
+        .att-code-ml { color: #111827; font-weight: bold; background-color: #e5e7eb; border-radius: 2px; padding: 0 2px; display: inline-block; }
     </style>
 </head>
 <body>
 
 <div class="dashboard-container">
-    <!-- HEADER (same as before) -->
+    <!-- HEADER -->
     <div class="bg-slate-800 text-white p-2 flex justify-between items-center flex-wrap gap-2 shrink-0">
         <div class="flex items-center gap-2">
-            <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
+            <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4=">
             <div>
                 <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
-                <p class="text-[9px] text-emerald-400">Time Clock Overrides Code | Filter Time Aktif</p>
+                <p class="text-[9px] text-emerald-400">Multi-Filter Stabil | Warna Kode | Highlight</p>
             </div>
         </div>
 
         <div class="flex items-center gap-1 bg-slate-700 p-1 rounded-lg border border-slate-600 flex-wrap">
             <input type="file" id="hiddenFolderInput" webkitdirectory directory multiple class="hidden">
             <input type="file" id="hiddenTimeInput" accept=".csv,.xlsx,.xls" class="hidden">
-
             <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold text-blue-300">📂 Folder Absen:</span>
-                <input type="text" id="folderXlsbDisplay" readonly placeholder="Pilih folder .xlsb..." class="text-[9px] px-1.5 py-1 rounded w-28 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenFolderInput').click()" title="Klik untuk memilih folder absen">
+                <input type="text" id="folderXlsbDisplay" readonly placeholder="Pilih folder .xlsb..." class="text-[9px] px-1.5 py-1 rounded w-28 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenFolderInput').click()">
                 <button id="btnUpdateXlsb" onclick="document.getElementById('hiddenFolderInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Absen</button>
             </div>
             <div class="w-px h-5 bg-slate-500 mx-1"></div>
             <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold text-yellow-400">📄 File Time:</span>
-                <input type="text" id="fileTimeDisplay" readonly placeholder="Pilih file time..." class="text-[9px] px-1.5 py-1 rounded w-28 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenTimeInput').click()" title="Klik untuk memilih file time">
+                <input type="text" id="fileTimeDisplay" readonly placeholder="Pilih file time..." class="text-[9px] px-1.5 py-1 rounded w-28 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenTimeInput').click()">
                 <button id="btnUpdateTime" onclick="document.getElementById('hiddenTimeInput').click()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Time</button>
             </div>
         </div>
@@ -202,7 +259,7 @@
         </div>
     </div>
 
-    <!-- REKAP & FILTER UTAMA (unchanged) -->
+    <!-- REKAP & FILTER UTAMA -->
     <div class="p-2 bg-slate-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div class="flex flex-wrap gap-2 items-center">
             <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value">0</span></div>
@@ -237,19 +294,18 @@
     <div id="lastUpdateInfo" class="last-update-panel hidden p-2 text-[10px] border-t border-gray-200 shrink-0 bg-amber-50 flex-wrap gap-x-4 gap-y-1 items-center"></div>
 
     <!-- TABEL -->
-    <div class="table-container">
+    <div class="table-container" id="tableContainer">
         <table id="attendanceTable">
             <thead id="tableHeader"></thead>
             <tbody id="tableBody"></tbody>
-        </table>
+          </table>
     </div>
 </div>
 
-<!-- Modals (same) -->
+<!-- Modal Summary -->
 <div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4"><div class="bg-white rounded-lg w-full max-w-4xl max-h-[85vh] flex flex-col"><div class="p-2 border-b bg-slate-800 text-white rounded-t-lg flex justify-between"><h2 class="text-sm font-bold">Summary (Data Terfilter)</h2><button onclick="closeSummary()" class="text-gray-300">✕</button></div><div class="p-2 overflow-auto" id="summaryContent"></div></div></div>
 <div id="modernAlert" class="hidden fixed inset-0 bg-black/60 z-50 items-center justify-center"><div class="bg-white rounded-xl p-3 max-w-xs text-center"><div id="alertIcon"></div><h3 id="alertTitle" class="text-sm font-bold mb-1"></h3><p id="alertMessage" class="text-xs mb-3"></p><button onclick="closeAlert()" class="w-full bg-blue-600 text-white py-1 rounded text-xs">Mengerti</button></div></div>
 
-<!-- Loading overlay -->
 <div id="loadingOverlay" class="loading-overlay hidden">
     <div class="loading-content">
         <div class="text-white mb-2">📂 Memproses file absen...</div>
@@ -265,12 +321,16 @@
     let timeMap = new Map();         
     let semuaTanggal = [];
     let databaseGlobal = [];
-    let isProcessing = false;         // flag to prevent concurrent processing
-    let cancelProcessing = false;     // user cancel flag
-
+    let isProcessing = false;
+    let cancelProcessing = false;
     const MAX_BARIS_PER_FILE = 2500;
-
-    // DOM
+    
+    // Filter state: { columnKey: Set(values) }
+    let filters = {};
+    // Precomputed unique values for each filter column
+    let filterOptions = {};  // { columnKey: { values: [], displayValues: [] } }
+    
+    // DOM elements
     const fileUpload = document.getElementById('fileUpload');
     const timeUpload = document.getElementById('timeUpload');
     const headerRowInput = document.getElementById('headerRow');
@@ -292,13 +352,14 @@
     const loadingProgressText = document.getElementById('loadingProgressText');
     const loadingProgressFill = document.getElementById('loadingProgressFill');
     const cancelLoadingBtn = document.getElementById('cancelLoadingBtn');
+    const tableContainer = document.getElementById('tableContainer');
     
     const hiddenFolderInput = document.getElementById('hiddenFolderInput');
     const folderXlsbDisplay = document.getElementById('folderXlsbDisplay');
     const hiddenTimeInput = document.getElementById('hiddenTimeInput');
     const fileTimeDisplay = document.getElementById('fileTimeDisplay');
 
-    // Helper functions (showAlert, formatDateToString, etc.) remain same
+    // Helper functions
     function showAlert(title, msg, type='info') {
         const modal = document.getElementById('modernAlert');
         document.getElementById('alertTitle').innerText = title;
@@ -327,7 +388,6 @@
         return `${parts[0]}-${parts[parts.length-1]}`;
     }
 
-    // ================= LAST UPDATE ====================
     function displayLastUpdate(filesArray) {
         if(!filesArray || filesArray.length === 0) { lastUpdatePanel.classList.add('hidden'); return; }
         const validFiles = filesArray.filter(f => f && f.name && f.name.toLowerCase().endsWith('.xlsb'));
@@ -348,7 +408,6 @@
     }
     function clearLastUpdate() { lastUpdatePanel.classList.add('hidden'); lastUpdatePanel.innerHTML = ''; }
 
-    // ================= VALIDASI FILE ====================
     function isFileValid(file) { 
         if (!file || file.size === 0) return false;
         if (file.name.startsWith('~$') || file.name.startsWith('._') || file.name.startsWith('.')) return false;
@@ -364,7 +423,6 @@
         return true;
     }
 
-    // ================= BACA FILE XLSB (SAME LOGIC) ====================
     async function bacaFileXLSB(file, forcedStatus) {
         return new Promise(async (resolve) => {
             try {
@@ -449,7 +507,6 @@
 
     function getForcedStatus(fileName) { if(/STAFF/i.test(fileName)) return "STAFF"; if(/SECURITY/i.test(fileName)) return "SECURITY"; return "WORKER"; }
 
-    // ================= PROSES FILE DENGAN YIELD (SUPER CEPAT & NON-BLOCKING) ====================
     async function prosesFileExcel(files) {
         if(!files.length) return;
         const valid = files.filter(f => isFileValid(f));
@@ -458,13 +515,11 @@
         isProcessing = true;
         cancelProcessing = false;
         
-        // Tampilkan loading overlay
         loadingOverlay.classList.remove('hidden');
         const totalFiles = valid.length;
         let processed = 0;
         const masterMap = new Map();
         
-        // Fungsi untuk update progress
         const updateProgress = (count) => {
             const percent = (count / totalFiles) * 100;
             loadingProgressFill.style.width = percent + '%';
@@ -482,12 +537,12 @@
                 const result = await bacaFileXLSB(file, forcedStatus);
                 if(result && result.map.size) {
                     for(let [k,v] of result.map) {
-                        if(!masterMap.has(k)) masterMap.set(k, v);
+                        // Replace if key exists (overwrite)
+                        masterMap.set(k, v);
                     }
                 }
                 processed++;
                 updateProgress(processed);
-                // Yield control to browser after each file to keep UI responsive
                 await new Promise(resolve => setTimeout(resolve, 0));
             }
             
@@ -496,6 +551,7 @@
                     showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file.","error");
                     return;
                 }
+                // OVERWRITE: completely replace with new data
                 databaseKaryawan = Array.from(masterMap.values());
                 semuaTanggal = [];
                 for(let i=26;i<=31;i++) semuaTanggal.push(i);
@@ -505,7 +561,7 @@
                 localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
                 gabungkanDanRender();
                 displayLastUpdate(valid);
-                showAlert("Sukses", `${databaseKaryawan.length} karyawan dimuat dari ${processed} file.`, "success");
+                showAlert("Sukses", `${databaseKaryawan.length} karyawan dimuat dari ${processed} file. Data lama diganti.`, "success");
             }
         } catch (err) {
             console.error(err);
@@ -516,7 +572,6 @@
         }
     }
 
-    // ================= BACA TIME FILE ====================
     async function loadTimeFile(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -566,7 +621,6 @@
         });
     }
 
-    // ================= GABUNGKAN & RENDER ====================
     function gabungkanDanRender() {
         if(!databaseKaryawan.length) return;
         const finalData = databaseKaryawan.map(karyawan => {
@@ -585,11 +639,218 @@
         dateFrom.innerHTML = optFrom.join('');
         dateTo.innerHTML = optTo.join('');
         dateFrom.value = "ALL"; dateTo.value = "ALL";
-        renderTableWithFilters();
+        filters = {};
+        precomputeFilterOptions();
+        buildFilterHeader();
+        renderTable();
         dbStatus.innerHTML = `✅ Karyawan: ${databaseKaryawan.length} | Absen: ${timeMap.size}`;
     }
 
-    // ================= FILTER & RENDER (SAME AS BEFORE) ====================
+    // Precompute unique values for all filterable columns (including date columns)
+    function precomputeFilterOptions() {
+        filterOptions = {};
+        // Fixed columns
+        const fixedColumns = ['id', 'name', 'section', 'position', 'joinDate', 'status'];
+        for (let col of fixedColumns) {
+            const valueSet = new Set();
+            for (let row of databaseGlobal) {
+                let val = row[col];
+                if (col === 'joinDate') val = row.joinDate;
+                if (val === undefined || val === null || val === "") {
+                    valueSet.add("__EMPTY__");
+                } else {
+                    valueSet.add(val);
+                }
+            }
+            const values = Array.from(valueSet).sort((a,b) => {
+                if (a === "__EMPTY__") return -1;
+                if (b === "__EMPTY__") return 1;
+                return String(a).localeCompare(String(b));
+            });
+            const displayValues = values.map(v => v === "__EMPTY__" ? "Kosong" : v);
+            filterOptions[col] = { values, displayValues };
+        }
+        // Date columns
+        for (let tgl of semuaTanggal) {
+            const key = `date_${tgl}`;
+            const valueSet = new Set();
+            for (let row of databaseGlobal) {
+                const cell = row.tanggalData[tgl];
+                const val = getCellDisplayValue(cell);
+                if (val && val !== "") {
+                    valueSet.add(val);
+                }
+            }
+            const values = Array.from(valueSet).sort();
+            const displayValues = [...values];
+            filterOptions[key] = { values, displayValues };
+        }
+    }
+
+    function getCellDisplayValue(cell) {
+        if (!cell) return "";
+        if (cell.time) return cell.time;
+        if (cell.kode) return cell.kode;
+        return "";
+    }
+
+    // Build filter header once (doesn't re-render on filter changes)
+    function buildFilterHeader() {
+        const fixedCols = [
+            { name: "NO", width: 40, filterKey: null },
+            { name: "ID", width: 70, filterKey: "id" },
+            { name: "NAMA", width: 120, filterKey: "name" },
+            { name: "SECTION", width: 100, filterKey: "section" },
+            { name: "POSISI", width: 100, filterKey: "position" },
+            { name: "JOIN DATE", width: 85, filterKey: "joinDate" },
+            { name: "STATUS", width: 75, filterKey: "status" }
+        ];
+        const range = getTanggalRange();
+        const tanggalCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: `date_${t}` }));
+        const allCols = [...fixedCols, ...tanggalCols];
+        
+        // Header row 1
+        let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
+        for(let i=0; i<allCols.length; i++) {
+            let col = allCols[i];
+            let cls = "px-1 py-1 border-r";
+            let widthStyle = `width: ${col.width}px; min-width: ${col.width}px;`;
+            if(i===0) cls += " sticky left-0 z-20 bg-slate-800";
+            if(i===1) cls += " sticky left-[40px] z-20 bg-slate-800";
+            if(i===2) cls += " sticky left-[110px] z-20 bg-slate-800";
+            th += `<th style="${widthStyle}" class="${cls}">${col.name}</th>`;
+        }
+        th += `</tr>`;
+        
+        // Header row 2 (filters)
+        th += `<tr class="bg-gray-100 text-[9px]">`;
+        for(let i=0; i<allCols.length; i++) {
+            let col = allCols[i];
+            let cls = "px-1 py-0.5 border-r border-slate-200";
+            let widthStyle = `width: ${col.width}px; min-width: ${col.width}px;`;
+            if(i===0) { cls += " sticky left-0 z-10 bg-gray-100"; widthStyle += "width:40px;"; }
+            if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; widthStyle += "width:70px;"; }
+            if(i===2) { cls += " sticky left-[110px] z-10 bg-gray-100"; widthStyle += "width:120px;"; }
+            th += `<th style="${widthStyle}" class="${cls}" data-colkey="${col.filterKey || ''}"><div class="multi-select-container" id="filter_${col.filterKey || ''}"></div></th>`;
+        }
+        th += `</tr>`;
+        tableHeader.innerHTML = th;
+        
+        // Create multi-select components for each filterable column
+        for(let col of allCols) {
+            if (!col.filterKey) continue;
+            const container = document.getElementById(`filter_${col.filterKey}`);
+            if (!container) continue;
+            const options = filterOptions[col.filterKey];
+            if (!options) continue;
+            
+            if (!filters[col.filterKey]) filters[col.filterKey] = new Set();
+            const selectedSet = filters[col.filterKey];
+            
+            createMultiSelect(container, options.values, options.displayValues, selectedSet, () => {
+                renderTable();
+            });
+        }
+    }
+
+    function createMultiSelect(container, values, displayValues, selectedSet, onUpdate) {
+        container.innerHTML = '';
+        const btn = document.createElement('div');
+        btn.className = 'multi-select-btn';
+        const span = document.createElement('span');
+        const updateBtnText = () => {
+            const count = selectedSet.size;
+            span.innerText = count === 0 ? 'Semua' : `${count} terpilih`;
+        };
+        updateBtnText();
+        const arrow = document.createElement('span');
+        arrow.innerText = '▼';
+        btn.appendChild(span);
+        btn.appendChild(arrow);
+        
+        const dropdown = document.createElement('div');
+        dropdown.className = 'multi-select-dropdown';
+        
+        // "Semua" option
+        const allOption = document.createElement('div');
+        allOption.className = 'multi-select-option';
+        const allCheck = document.createElement('input');
+        allCheck.type = 'checkbox';
+        allCheck.checked = (selectedSet.size === 0);
+        const allLabel = document.createElement('span');
+        allLabel.innerText = 'Semua';
+        allOption.appendChild(allCheck);
+        allOption.appendChild(allLabel);
+        allOption.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (allCheck.checked) {
+                // If currently checked, uncheck all
+                selectedSet.clear();
+                allCheck.checked = false;
+            } else {
+                // If unchecked, check all
+                values.forEach(v => selectedSet.add(v));
+                allCheck.checked = true;
+            }
+            updateCheckboxes();
+            updateBtnText();
+            onUpdate();
+        });
+        dropdown.appendChild(allOption);
+        
+        // Create options for each value
+        const optionElements = [];
+        for (let idx = 0; idx < values.length; idx++) {
+            const val = values[idx];
+            const displayVal = displayValues[idx];
+            const option = document.createElement('div');
+            option.className = 'multi-select-option';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = selectedSet.has(val);
+            const label = document.createElement('span');
+            label.innerText = displayVal;
+            option.appendChild(cb);
+            option.appendChild(label);
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (cb.checked) {
+                    selectedSet.delete(val);
+                    cb.checked = false;
+                } else {
+                    selectedSet.add(val);
+                    cb.checked = true;
+                }
+                // Update "Semua" checkbox state
+                allCheck.checked = (selectedSet.size === 0);
+                updateBtnText();
+                onUpdate();
+            });
+            dropdown.appendChild(option);
+            optionElements.push({ option, cb, val });
+        }
+        
+        function updateCheckboxes() {
+            allCheck.checked = (selectedSet.size === 0);
+            for (let item of optionElements) {
+                item.cb.checked = selectedSet.has(item.val);
+            }
+        }
+        
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function closeDropdown(e) {
+            if (!container.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+        container.appendChild(btn);
+        container.appendChild(dropdown);
+    }
+
     function getTanggalRange() {
         let from = dateFrom.value, to = dateTo.value;
         if(from === "ALL" || to === "ALL") return semuaTanggal;
@@ -599,39 +860,55 @@
         else return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
     
-    function getFilteredByColumn() {
-        if(!databaseGlobal.length) return [];
+    function applyAllFilters() {
+        if (!databaseGlobal.length) return [];
         let filtered = [...databaseGlobal];
+        
+        // Global search
         const searchKeyword = (globalSearch.value || "").toLowerCase().trim();
-        if(searchKeyword !== "") filtered = filtered.filter(r => r.id.toLowerCase().includes(searchKeyword) || r.name.toLowerCase().includes(searchKeyword));
-        const idFilter = document.getElementById('filter_id')?.value || "ALL";
-        const nameFilter = document.getElementById('filter_name')?.value || "ALL";
-        const sectionFilter = document.getElementById('filter_section')?.value || "ALL";
-        const positionFilter = document.getElementById('filter_position')?.value || "ALL";
-        const statusFilter = document.getElementById('filter_status')?.value || "ALL";
-        if(idFilter !== "ALL") filtered = filtered.filter(r => r.id === idFilter);
-        if(nameFilter !== "ALL") filtered = filtered.filter(r => r.name === nameFilter);
-        if(sectionFilter !== "ALL") filtered = filtered.filter(r => r.section === sectionFilter);
-        if(positionFilter !== "ALL") filtered = filtered.filter(r => r.position === positionFilter);
-        if(statusFilter !== "ALL") filtered = filtered.filter(r => r.status === statusFilter);
+        if (searchKeyword !== "") {
+            filtered = filtered.filter(r => r.id.toLowerCase().includes(searchKeyword) || r.name.toLowerCase().includes(searchKeyword));
+        }
+        
+        // Apply column filters
+        for (let [key, valueSet] of Object.entries(filters)) {
+            if (valueSet.size === 0) continue;
+            if (key.startsWith('date_')) {
+                const tgl = parseInt(key.split('_')[1]);
+                filtered = filtered.filter(row => {
+                    const cell = row.tanggalData[tgl];
+                    const cellVal = getCellDisplayValue(cell);
+                    return valueSet.has(cellVal);
+                });
+            } else {
+                filtered = filtered.filter(row => {
+                    let rowVal = row[key];
+                    if (key === 'joinDate') rowVal = row.joinDate;
+                    if ((rowVal === undefined || rowVal === null || rowVal === "") && valueSet.has("__EMPTY__")) return true;
+                    return valueSet.has(rowVal);
+                });
+            }
+        }
+        
+        // Attendance detail filter
+        const range = getTanggalRange();
+        const mode = filterAttendanceDetailSelect.value;
+        if (mode !== "ALL") {
+            filtered = filtered.filter(row => {
+                for (let tgl of range) {
+                    const item = row.tanggalData[tgl] || { kode: "", time: "" };
+                    const time = item.time;
+                    if (mode === "NO_TIME" && !time) return true;
+                    if (mode === "ONE_TIME" && time && !time.includes('-')) return true;
+                    if (mode === "FULL_TIME" && time && time.includes('-')) return true;
+                }
+                return false;
+            });
+        }
+        
         return filtered;
     }
-    
-    function applyAttendanceDetailFilter(data, range) {
-        const mode = filterAttendanceDetailSelect.value;
-        if(mode === "ALL") return data;
-        return data.filter(row => {
-            for(let tgl of range) {
-                const item = row.tanggalData[tgl] || { kode: "", time: "" };
-                const time = item.time;
-                if(mode === "NO_TIME" && !time) return true;
-                if(mode === "ONE_TIME" && time && !time.includes('-')) return true;
-                if(mode === "FULL_TIME" && time && time.includes('-')) return true;
-            }
-            return false;
-        });
-    }
-    
+
     function updateRekapUtama(dataList) {
         let worker=0,staff=0,security=0;
         for(let row of dataList) {
@@ -645,104 +922,107 @@
         totalSemuaSpan.innerText = dataList.length;
     }
 
-    function renderTableWithFilters() {
-        const fixedCols = [
-            { name: "NO", width: 40, filterKey: null, styleClass: "sticky-no" },
-            { name: "ID", width: 70, filterKey: "id", styleClass: "sticky-id" },
-            { name: "NAMA", width: 120, filterKey: "name", styleClass: "sticky-name" },
-            { name: "SECTION", width: 100, filterKey: "section", styleClass: "col-section-fixed" },
-            { name: "POSISI", width: 100, filterKey: "position", styleClass: "col-posisi-fixed" },
-            { name: "JOIN DATE", width: 85, filterKey: null, styleClass: "col-join-fixed" },
-            { name: "STATUS", width: 75, filterKey: "status", styleClass: "col-status-fixed" }
-        ];
-        if(!databaseGlobal.length) {
-            tableHeader.innerHTML = ''; tableBody.innerHTML = '<tr><td colspan="7" class="p-4 text-center">Belum ada data</td></tr>';
-            updateRekapUtama([]); return;
-        }
-        let filteredByColumn = getFilteredByColumn();
-        const range = getTanggalRange();
-        let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
-        updateRekapUtama(filteredData);
-        const tanggalCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: null }));
-        const allCols = [...fixedCols, ...tanggalCols];
-        // HEADER ROW 1
-        let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
-        for(let i=0; i<allCols.length; i++) {
-            let col = allCols[i];
-            let cls = "px-1 py-1 border-r";
-            let widthStyle = `width: ${col.width}px; min-width: ${col.width}px;`;
-            if(i===0) cls += " sticky left-0 z-20 bg-slate-800";
-            if(i===1) cls += " sticky left-[40px] z-20 bg-slate-800";
-            if(i===2) cls += " sticky left-[110px] z-20 bg-slate-800";
-            th += `<th style="${widthStyle}" class="${cls}">${col.name}</th>`;
-        }
-        th += `</tr><tr class="bg-gray-100 text-[9px]">`;
-        // HEADER ROW 2 (FILTER)
-        for(let i=0; i<allCols.length; i++) {
-            let col = allCols[i];
-            let cls = "px-1 py-0.5 border-r border-slate-200";
-            let widthStyle = `width: ${col.width}px; min-width: ${col.width}px;`;
-            if(i===0) { cls += " sticky left-0 z-10 bg-gray-100"; widthStyle += "width:40px;"; }
-            if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; widthStyle += "width:70px;"; }
-            if(i===2) { cls += " sticky left-[110px] z-10 bg-gray-100"; widthStyle += "width:120px;"; }
-            if(col.filterKey) {
-                let baseDataForDropdown = (globalSearch.value.trim() !== "") ? filteredData : databaseGlobal;
-                let uniqueValues = [...new Set(baseDataForDropdown.map(r => r[col.filterKey]).filter(v => v && v !== ""))].sort();
-                let selectedVal = document.getElementById(`filter_${col.filterKey}`)?.value || "ALL";
-                let options = `<option value="ALL" ${selectedVal === "ALL" ? "selected" : ""}>Semua</option>`;
-                for(let val of uniqueValues) options += `<option value="${val.replace(/"/g, '&quot;')}" ${val === selectedVal ? "selected" : ""}>${val}</option>`;
-                th += `<th style="${widthStyle}" class="${cls}"><select id="filter_${col.filterKey}" class="filter-select" style="width:100%">${options}</select></th>`;
-            } else {
-                th += `<th style="${widthStyle}" class="${cls}"></th>`;
-            }
-        }
-        th += `</tr>`;
-        tableHeader.innerHTML = th;
-        for(let col of fixedCols) if(col.filterKey) {
-            const sel = document.getElementById(`filter_${col.filterKey}`);
-            if(sel) sel.addEventListener('change', () => renderTableWithFilters());
-        }
-        // BODY
-        let tb = "";
-        const max = Math.min(filteredData.length, 2000);
-        for(let index=0; index<max; index++) {
-            let row = filteredData[index];
-            tb += `<tr class="hover:bg-blue-50 border-b">`;
-            const fixedVals = [index+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
-            const fixedStyles = ["width:40px;", "width:70px;", "width:120px;", "width:100px;", "width:100px;", "width:85px;", "width:75px;"];
-            const fixedClasses = ["sticky-no", "sticky-id", "sticky-name", "col-section-fixed", "col-posisi-fixed", "col-join-fixed", "col-status-fixed"];
-            for(let i=0; i<fixedVals.length; i++) {
-                let val = fixedVals[i];
-                let extra = fixedClasses[i];
-                let style = fixedStyles[i] + "background:white;";
-                if(i===6) {
-                    if(val==="WORKER") val='<span class="bg-emerald-100 px-1 rounded">WORKER</span>';
-                    else if(val==="STAFF") val='<span class="bg-purple-100 px-1 rounded">STAFF</span>';
-                    else if(val==="SECURITY") val='<span class="bg-slate-700 text-white px-1 rounded">SECURITY</span>';
-                }
-                tb += `<td class="${extra} px-1 py-0.5" style="${style}">${val}</td>`;
-            }
-            for(let tgl of range) {
-                const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
-                let kode = dataTgl.kode, time = dataTgl.time;
-                let display = time ? time : (kode ? kode : "—");
-                let colorClass = "";
-                if(kode && !time) colorClass = "text-orange-500 font-semibold";
-                else if(time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
-                else if(time && time.includes('-')) colorClass = "text-green-600 font-bold";
-                tb += `<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`;
-            }
-            tb += `</tr>`;
-        }
-        if(filteredData.length > 2000) tb += `<tr><td colspan="${allCols.length}" class="p-1 text-center text-blue-500">Hanya 2000 baris pertama</td></tr>`;
-        tableBody.innerHTML = tb;
+    function highlightText(text, keyword) {
+        if (!keyword || keyword === "") return text;
+        const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<span class="highlight">$1</span>');
     }
 
-    // ================= SUMMARY & EXPORT (unchanged) ====================
+    function getAttendanceCodeClass(code) {
+        const upper = code.toUpperCase();
+        if (upper === "PR") return "att-code-pr";
+        if (upper === "PRS") return "att-code-prs";
+        if (upper === "PRP") return "att-code-prp";
+        if (upper === "PRM") return "att-code-prm";
+        if (upper === "AB" || upper === "LWP") return "att-code-ab";
+        if (upper === "AL" || upper === "OL") return "att-code-al";
+        if (upper === "ML") return "att-code-ml";
+        return "";
+    }
+
+    function scrollToFirstMatch() {
+        const firstRow = document.querySelector('#tableBody tr');
+        if (firstRow) {
+            const rowRect = firstRow.getBoundingClientRect();
+            const containerRect = tableContainer.getBoundingClientRect();
+            const offset = 70;
+            if (rowRect.top < containerRect.top + offset) {
+                tableContainer.scrollTop += rowRect.top - containerRect.top - offset;
+            }
+        }
+    }
+
+    let renderScheduled = false;
+    function renderTable() {
+        if (renderScheduled) return;
+        renderScheduled = true;
+        requestAnimationFrame(() => {
+            const filteredData = applyAllFilters();
+            updateRekapUtama(filteredData);
+            
+            const range = getTanggalRange();
+            const fixedColsCount = 7;
+            const totalCols = fixedColsCount + range.length;
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="${totalCols}" class="p-4 text-center">Tidak ada data yang sesuai filter</td></tr>`;
+                renderScheduled = false;
+                return;
+            }
+            
+            let tb = "";
+            const keyword = globalSearch.value.trim().toLowerCase();
+            for(let index=0; index<filteredData.length; index++) {
+                let row = filteredData[index];
+                tb += `<tr class="hover:bg-blue-50 border-b">`;
+                // Fixed columns
+                const fixedVals = [index+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
+                const fixedStyles = ["width:40px;", "width:70px;", "width:120px;", "width:100px;", "width:100px;", "width:85px;", "width:75px;"];
+                const fixedClasses = ["sticky-no", "sticky-id", "sticky-name", "col-section-fixed", "col-posisi-fixed", "col-join-fixed", "col-status-fixed"];
+                for(let i=0; i<fixedVals.length; i++) {
+                    let val = fixedVals[i];
+                    let extra = fixedClasses[i];
+                    let style = fixedStyles[i] + "background:white;";
+                    if(i===6) {
+                        if(val==="WORKER") val='<span class="bg-emerald-100 px-1 rounded">WORKER</span>';
+                        else if(val==="STAFF") val='<span class="bg-purple-100 px-1 rounded">STAFF</span>';
+                        else if(val==="SECURITY") val='<span class="bg-slate-700 text-white px-1 rounded">SECURITY</span>';
+                    }
+                    if (i === 1 || i === 2) {
+                        val = highlightText(val, keyword);
+                    }
+                    tb += `<td class="${extra} px-1 py-0.5" style="${style}">${val}</td>`;
+                }
+                // Date columns
+                for(let tgl of range) {
+                    const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
+                    let kode = dataTgl.kode, time = dataTgl.time;
+                    let display = time ? time : (kode ? kode : "—");
+                    let colorClass = "";
+                    let codeClass = "";
+                    if (kode && !time) {
+                        codeClass = getAttendanceCodeClass(kode);
+                        if (codeClass) display = `<span class="${codeClass}">${display}</span>`;
+                        else colorClass = "text-orange-500 font-semibold";
+                    } else if (time && !time.includes('-')) {
+                        colorClass = "text-blue-600 font-bold";
+                    } else if (time && time.includes('-')) {
+                        colorClass = "text-green-600 font-bold";
+                    }
+                    tb += `<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`;
+                }
+                tb += `</tr>`;
+            }
+            tableBody.innerHTML = tb;
+            if (keyword !== "" && filteredData.length > 0) {
+                setTimeout(() => scrollToFirstMatch(), 50);
+            }
+            renderScheduled = false;
+        });
+    }
+
     function openSummary() {
-        let filteredByColumn = getFilteredByColumn();
-        const range = getTanggalRange();
-        let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
+        const filteredData = applyAllFilters();
         if(!filteredData.length) { showAlert("Info","Tidak ada data","info"); return; }
         const summary = new Map();
         let gw=0,gs=0,gsec=0;
@@ -758,16 +1038,15 @@
         }
         let html = `<table class="w-full border text-[9px]"><thead><tr class="bg-slate-700 text-white"><th class="p-1">POSISI</th><th>WORKER</th><th>STAFF</th><th>SECURITY</th><th>TOTAL</th></tr></thead><tbody>`;
         for(let [pos,data] of [...summary.entries()].sort()) html += `<tr><td class="border p-1">${pos}</td><td class="border p-1 text-center">${data.WORKER}</td><td class="border p-1 text-center">${data.STAFF}</td><td class="border p-1 text-center">${data.SECURITY}</td><td class="border p-1 text-center font-bold">${data.TOTAL}</td></tr>`;
-        html += `<tr class="bg-indigo-100 font-bold"><td class="p-1">GRAND TOTAL</td><td class="text-center">${gw}</td><td class="text-center">${gs}</td><td class="text-center">${gsec}</td><td class="text-center">${gw+gs+gsec}</td></tr></tbody>`;
+        html += `<tr class="bg-indigo-100 font-bold"><td class="p-1">GRAND TOTAL</td><td class="text-center">${gw}</td><td class="text-center">${gs}</td><td class="text-center">${gsec}</td><td class="text-center">${gw+gs+gsec}</td></tr>`;
         document.getElementById('summaryContent').innerHTML = html;
         document.getElementById('summaryModal').classList.remove('hidden'); document.getElementById('summaryModal').classList.add('flex');
     }
     function closeSummary() { document.getElementById('summaryModal').classList.add('hidden'); }
     function exportToExcel() {
-        let filteredByColumn = getFilteredByColumn();
-        const range = getTanggalRange();
-        let filteredData = applyAttendanceDetailFilter(filteredByColumn, range);
+        const filteredData = applyAllFilters();
         if(!filteredData.length) { showAlert("Tidak ada data","","warning"); return; }
+        const range = getTanggalRange();
         const fixedCols = ["NO", "ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS"];
         const tanggalCols = range.map(t => `Tgl ${t}`);
         const headers = [...fixedCols, ...tanggalCols];
@@ -791,7 +1070,6 @@
 
     function readFileAsArrayBuffer(file) { return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(); fr.readAsArrayBuffer(file); }); }
     
-    // ================= EVENT LISTENERS ====================
     fileUpload.addEventListener('change', async (e) => { 
         if(e.target.files.length) {
             const filesArr = Array.from(e.target.files);
@@ -866,13 +1144,13 @@
         }
     });
     
-    globalSearch.addEventListener('input', () => renderTableWithFilters());
-    dateFrom.addEventListener('change', () => renderTableWithFilters());
-    dateTo.addEventListener('change', () => renderTableWithFilters());
-    filterAttendanceDetailSelect.addEventListener('change', () => renderTableWithFilters());
+    globalSearch.addEventListener('input', () => renderTable());
+    dateFrom.addEventListener('change', () => renderTable());
+    dateTo.addEventListener('change', () => renderTable());
+    filterAttendanceDetailSelect.addEventListener('change', () => renderTable());
     btnExport.addEventListener('click', exportToExcel);
     resetDataBtn.addEventListener('click', () => {
-        if(confirm("Hapus semua data?")) { localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; renderTableWithFilters(); dbStatus.innerHTML="Kosong"; clearLastUpdate(); showAlert("Reset","Data dihapus","success"); }
+        if(confirm("Hapus semua data?")) { localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; filters = {}; renderTable(); dbStatus.innerHTML="Kosong"; clearLastUpdate(); showAlert("Reset","Data dihapus","success"); }
     });
     
     (function loadStored() {
