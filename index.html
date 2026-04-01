@@ -154,6 +154,8 @@
         .att-code-ab, .att-code-lwp { color: #b91c1c; font-weight: bold; background-color: #fee2e2; border-radius: 2px; padding: 0 2px; display: inline-block; }
         .att-code-al, .att-code-ol { color: #2563eb; font-weight: bold; background-color: #eff6ff; border-radius: 2px; padding: 0 2px; display: inline-block; }
         .att-code-ml { color: #111827; font-weight: bold; background-color: #e5e7eb; border-radius: 2px; padding: 0 2px; display: inline-block; }
+        .att-code-sk { color: #9333ea; font-weight: bold; background-color: #f3e8ff; border-radius: 2px; padding: 0 2px; display: inline-block; }
+        .att-code-hl { color: #dc2626; font-weight: bold; background-color: #fef2f2; border-radius: 2px; padding: 0 2px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -162,7 +164,6 @@
     <!-- HEADER -->
     <div class="bg-slate-800 text-white p-2 flex justify-between items-center flex-wrap gap-2 shrink-0">
         <div class="flex items-center gap-2">
-            <!-- FIXED: atribut onerror sekarang memiliki kutip penutup tunggal -->
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
                 <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
@@ -216,11 +217,17 @@
                 <span class="text-[9px] text-slate-400">-</span>
                 <select id="dateTo" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Sampai</option></select>
             </div>
-            <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none shadow-sm font-medium cursor-pointer">
+            <!-- FIXED: Kriteria Kehadiran Sesuai Permintaan -->
+            <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none shadow-sm font-medium cursor-pointer max-w-[150px]">
                 <option value="ALL">Semua Kehadiran</option>
-                <option value="NO_TIME">Tdk ada clock in/out (Kosong)</option>
-                <option value="ONE_TIME">Satu waktu saja (Tdk ada in/out)</option>
-                <option value="FULL_TIME">Hadir Penuh (Time in & out)</option>
+                <option value="ONE_TIME">Time in / Time Out (Salah Satu)</option>
+                <option value="HADIR">Hadir (Ada Time In & Out)</option>
+                <option value="KOSONG">Kosong (-, Kosong, 0)</option>
+                <option value="PRESENT">Present (PR, PRP, PRS, PRM)</option>
+                <option value="MANGKIR">Mangkir (AB, LWP)</option>
+                <option value="CUTI">Cuti (AL, OL, ML, SK)</option>
+                <option value="MANGKIR_CUTI">Mangkir + Cuti (AB, LWP, AL, OL, ML, SK)</option>
+                <option value="HOLIDAY">Holiday (HL)</option>
             </select>
             <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export</button>
             <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
@@ -241,7 +248,7 @@
 </div>
 
 <!-- Modals -->
-<div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white rounded-xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl"><div class="p-3 border-b bg-slate-800 text-white rounded-t-xl flex justify-between items-center"><h2 class="text-sm font-bold">Summary Berdasarkan Posisi</h2><button onclick="closeSummary()" class="text-gray-300 hover:text-white bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center">✕</button></div><div class="p-3 overflow-auto" id="summaryContent"></div></div></div>
+<div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white rounded-xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl"><div class="p-3 border-b bg-slate-800 text-white rounded-t-xl flex justify-between items-center"><h2 id="summaryTitle" class="text-sm font-bold">Summary Berdasarkan Posisi</h2><button onclick="closeSummary()" class="text-gray-300 hover:text-white bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center">✕</button></div><div class="p-3 overflow-auto" id="summaryContent"></div></div></div>
 <div id="modernAlert" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center backdrop-blur-sm"><div class="bg-white rounded-xl p-4 max-w-xs text-center shadow-2xl transform scale-95 transition-transform"><h3 id="alertTitle" class="text-sm font-bold mb-2 text-slate-800"></h3><p id="alertMessage" class="text-xs mb-4 text-slate-600"></p><button onclick="closeAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-xs font-bold transition">Tutup</button></div></div>
 
 <!-- Modern Loading Overlay -->
@@ -269,8 +276,8 @@
     let cancelProcessing = false;
     const MAX_BARIS_PER_FILE = 2500;
     
-    let filters = {}; // { columnKey: Set(values) }
-    let filterOptions = {}; // { columnKey: { values: [], displayValues: [] } }
+    let filters = {}; 
+    let filterOptions = {}; 
     
     // DOM elements
     const globalSearch = document.getElementById('globalSearch');
@@ -293,7 +300,6 @@
     }
     function closeAlert() { document.getElementById('modernAlert').classList.add('hidden'); }
     
-    // Optimasi Debounce untuk pencarian super cepat
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -357,15 +363,12 @@
         return true;
     }
 
-    // YIELD function to prevent browser freeze
     const yieldToBrowser = () => new Promise(resolve => setTimeout(resolve, 5));
 
     async function bacaFileXLSB(file, forcedStatus) {
         return new Promise(async (resolve) => {
             try {
                 const data = await readFileAsArrayBuffer(file);
-                // OPTIMASI: dense: true mengurangi penggunaan RAM dan mempercepat parsing array
-                // cellDates dibiarkan jika masih dibutuhkan, namun raw/dense sangat membantu
                 const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: true });
                 let sheetName = workbook.SheetNames.find(s => s.toUpperCase().includes('ATTEND')) || workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
@@ -373,7 +376,6 @@
                 let range = XLSX.utils.decode_range(worksheet['!ref'] || "A1:AK1000");
                 if(range.e.r > MAX_BARIS_PER_FILE) range.e.r = MAX_BARIS_PER_FILE;
                 
-                // OPTIMASI: raw: true lebih cepat
                 const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "", blankrows: false, range: XLSX.utils.encode_range(range) });
                 if(!rawData.length) { resolve(null); return; }
                 
@@ -409,8 +411,6 @@
                 for(let c=0; c<headerRow.length; c++) {
                     let val = String(headerRow[c]||"").trim();
                     let numVal = parseInt(val, 10);
-                    // FIXED: Hanya ambil angka 1-31, dan ambil yang PERTAMA kali ketemu dari kiri 
-                    // (mencegah bentrok dengan kolom summary di ujung kanan tabel)
                     if(/^\d+$/.test(val) && numVal >= 1 && numVal <= 31) {
                         if (colTanggal[numVal] === undefined) {
                             colTanggal[numVal] = c;
@@ -446,17 +446,9 @@
                     for(let [tgl, colIdx] of Object.entries(colTanggal)) {
                         let val = row[colIdx];
                         if(val !== undefined && val !== null && val !== "") {
-                            // FIXED: Bersihkan karakter tersembunyi/aneh dari sumber asli
                             let cleanVal = String(val).replace(/[\r\n\t]+/g, ' ').replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '').trim();
-                            
-                            // FIXED: Jika ada kode seperti "H 4", "H 5", dll yang bocor ke data harian, kosongkan
-                            if (/^[A-Za-z]\s*\d+$/.test(cleanVal)) {
-                                cleanVal = "";
-                            }
-                            
-                            if (cleanVal !== "") {
-                                kodePerTanggal[tgl] = cleanVal;
-                            }
+                            if (/^[A-Za-z]\s*\d+$/.test(cleanVal)) { cleanVal = ""; }
+                            if (cleanVal !== "") { kodePerTanggal[tgl] = cleanVal; }
                         }
                     }
                     const personal = {
@@ -469,7 +461,6 @@
                     if(!karyawanMap.has(key)) karyawanMap.set(key, personal);
                 }
                 
-                // Allow UI to breathe after a heavy loop
                 await yieldToBrowser();
                 
                 if(karyawanMap.size) resolve({ map: karyawanMap, fileName: file.name });
@@ -491,6 +482,8 @@
         
         const totalFiles = valid.length;
         let processed = 0;
+        
+        // FIXED: Memastikan seluruh data lama ditimpa 100% dengan data baru saat upload folder
         const masterMap = new Map();
         
         const updateProgressUI = (filename, p_count) => {
@@ -502,15 +495,15 @@
         };
 
         try {
-            updateProgressUI("Mempersiapkan...", 0);
-            await yieldToBrowser(); // Force UI update before freezing loop
+            updateProgressUI("Mempersiapkan penimpaan data...", 0);
+            await yieldToBrowser(); 
             
             for(let i=0; i<valid.length; i++) {
                 if(cancelProcessing) { showAlert("Dibatalkan","Proses update absen dibatalkan."); break; }
                 const file = valid[i];
                 
-                updateProgressUI(file.name, i); // Show what we are about to process
-                await yieldToBrowser(); // YIELD TO UI THREAD
+                updateProgressUI(file.name, i); 
+                await yieldToBrowser(); 
 
                 const forcedStatus = getForcedStatus(file.name);
                 const result = await bacaFileXLSB(file, forcedStatus);
@@ -524,10 +517,12 @@
             }
             
             if(!cancelProcessing) {
-                loadingDetailText.innerText = "Menyusun Database Global...";
+                loadingDetailText.innerText = "Menyusun Database Global Baru...";
                 await yieldToBrowser();
                 
                 if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file."); return; }
+                
+                // FIXED: Replace data lama dengan yang baru
                 databaseKaryawan = Array.from(masterMap.values());
                 
                 semuaTanggal = [];
@@ -542,7 +537,7 @@
                 
                 gabungkanDanRender();
                 displayLastUpdate(valid);
-                showAlert("Sukses", `${databaseKaryawan.length} karyawan dimuat dengan cepat.`);
+                showAlert("Sukses", `${databaseKaryawan.length} Karyawan baru telah dimuat. Data lama 100% ditimpa.`);
             }
         } catch (err) {
             console.error(err); showAlert("Error", "Gagal memproses file: " + err.message);
@@ -690,7 +685,6 @@
         }
     }
 
-    // Menguraikan (un-minify) fungsi untuk mencegah error parsing yang sering muncul pada kode yang terlalu panjang 
     function createMultiSelect(container, values, displayValues, selectedSet, filterKey, onUpdate) {
         container.innerHTML = '';
         const btn = document.createElement('div');
@@ -942,24 +936,21 @@
         return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
     
-    // OPTIMASI: Single-Pass Filtering (Jauh lebih cepat dari multiple .filter())
+    // FIXED: Logika Filtering Kriteria Kehadiran Baru (Single-Pass Super Cepat)
     function applyAllFiltersFast() {
         if (!databaseGlobal.length) return [];
         const searchKeyword = globalSearch.value.trim().toLowerCase();
         const range = getTanggalRange();
         const mode = document.getElementById('filterAttendanceDetail').value;
         
-        // Pre-check which filters are active to avoid looping object keys in the main loop
         const activeFilters = [];
         for (let key in filters) { if(filters[key].size > 0) activeFilters.push({key, set: filters[key]}); }
         const hasSearch = searchKeyword !== "";
         const checkMode = mode !== "ALL";
 
         return databaseGlobal.filter(row => {
-            // 1. Check Global Search
             if (hasSearch && !(row.id.toLowerCase().includes(searchKeyword) || row.name.toLowerCase().includes(searchKeyword))) return false;
             
-            // 2. Check Multi-Select Filters
             for (let i = 0; i < activeFilters.length; i++) {
                 const {key, set} = activeFilters[i];
                 if (key.startsWith('date_')) {
@@ -973,14 +964,22 @@
                 }
             }
 
-            // 3. Check Time Mode
+            // FILTER KEHADIRAN SESUAI KRITERIA
             if (checkMode) {
                 let matchMode = false;
                 for (let i=0; i<range.length; i++) {
-                    const time = row.tanggalData[range[i]]?.time || "";
-                    if (mode === "NO_TIME" && !time) { matchMode = true; break; }
+                    const cell = row.tanggalData[range[i]] || { kode: "", time: "" };
+                    const time = cell.time;
+                    const kode = (cell.kode || "").toUpperCase();
+                    
                     if (mode === "ONE_TIME" && time && !time.includes('-')) { matchMode = true; break; }
-                    if (mode === "FULL_TIME" && time && time.includes('-')) { matchMode = true; break; }
+                    if (mode === "HADIR" && time && time.includes('-')) { matchMode = true; break; }
+                    if (mode === "KOSONG" && !time && (!kode || kode === "-" || kode === "0")) { matchMode = true; break; }
+                    if (mode === "PRESENT" && ["PR", "PRP", "PRS", "PRM"].includes(kode)) { matchMode = true; break; }
+                    if (mode === "MANGKIR" && ["AB", "LWP"].includes(kode)) { matchMode = true; break; }
+                    if (mode === "CUTI" && ["AL", "OL", "ML", "SK"].includes(kode)) { matchMode = true; break; }
+                    if (mode === "MANGKIR_CUTI" && ["AB", "LWP", "AL", "OL", "ML", "SK"].includes(kode)) { matchMode = true; break; }
+                    if (mode === "HOLIDAY" && kode === "HL") { matchMode = true; break; }
                 }
                 if (!matchMode) return false;
             }
@@ -1001,18 +1000,20 @@
         const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
         return text.replace(regex, '<span class="highlight">$1</span>');
     }
+    
     function getAttendanceCodeClass(code) {
         const u = code.toUpperCase();
         if (u==="PR") return "att-code-pr"; if (u==="PRS") return "att-code-prs"; if (u==="PRP") return "att-code-prp";
         if (u==="PRM") return "att-code-prm"; if (u==="AB"||u==="LWP") return "att-code-ab";
-        if (u==="AL"||u==="OL") return "att-code-al"; if (u==="ML") return "att-code-ml"; return "";
+        if (u==="AL"||u==="OL") return "att-code-al"; if (u==="ML") return "att-code-ml";
+        if (u==="SK") return "att-code-sk"; if (u==="HL") return "att-code-hl";
+        return "";
     }
 
-    // OPTIMASI: Chunked Rendering (Infinite Scroll) untuk mencegah lag saat load dan scroll
     let renderScheduled = false;
     let currentFilteredData = [];
     let currentRenderIndex = 0;
-    const CHUNK_SIZE = 75; // Hanya render 75 baris setiap kali
+    const CHUNK_SIZE = 75;
 
     function renderTable() {
         if (renderScheduled) return;
@@ -1027,14 +1028,9 @@
                 renderScheduled = false; return;
             }
             
-            // Bersihkan tabel dan reset index render
             tableBody.innerHTML = '';
             currentRenderIndex = 0;
-            
-            // Render potongan pertama (Sangat Cepat)
             renderNextChunk();
-            
-            // Kembalikan scroll ke paling atas tiap kali filter berubah
             tableContainer.scrollTop = 0;
             
             renderScheduled = false;
@@ -1089,19 +1085,26 @@
         currentRenderIndex = endIndex;
     }
 
-    // Deteksi Scroll ke Bawah (Infinite Scroll)
     tableContainer.addEventListener('scroll', () => {
-        // Jika scroll sudah mendekati bagian bawah tabel (sisa 400px), muat tabel berikutnya
         if (tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight - 400) {
             renderNextChunk();
         }
     });
 
+    // FIXED: Summary Menyesuaikan Data Filter Secara Dinamis
     function openSummary() {
         const filteredData = applyAllFiltersFast();
-        if(!filteredData.length) { showAlert("Info","Tidak ada data yang ditampilkan."); return; }
+        if(!filteredData.length) { showAlert("Info","Tidak ada data yang ditampilkan pada kriteria saat ini."); return; }
+        
+        const selectMode = document.getElementById('filterAttendanceDetail');
+        const modeText = selectMode.options[selectMode.selectedIndex].text;
+        
+        // Update Modal Title
+        document.getElementById('summaryTitle').innerText = `Summary Berdasarkan Posisi (${modeText})`;
+        
         const summary = new Map();
         let gw=0,gs=0,gsec=0;
+        
         for(const row of filteredData) {
             let pos = row.position || "UNKNOWN";
             if(!summary.has(pos)) summary.set(pos,{WORKER:0,STAFF:0,SECURITY:0,TOTAL:0});
@@ -1111,9 +1114,11 @@
             else if(row.status==="SECURITY") { d.SECURITY++; gsec++; }
             d.TOTAL++;
         }
+        
         let html = `<table class="w-full border-collapse border border-slate-300 text-[10px] text-left"><thead><tr class="bg-slate-700 text-white"><th class="p-2 border border-slate-600">POSISI JABATAN</th><th class="p-2 border border-slate-600 text-center">WORKER</th><th class="p-2 border border-slate-600 text-center">STAFF</th><th class="p-2 border border-slate-600 text-center">SECURITY</th><th class="p-2 border border-slate-600 text-center font-bold text-yellow-300">TOTAL</th></tr></thead><tbody>`;
         for(let [pos,data] of [...summary.entries()].sort()) html += `<tr class="hover:bg-slate-50"><td class="border border-slate-300 p-2 font-medium text-slate-700">${pos}</td><td class="border border-slate-300 p-2 text-center text-emerald-700 font-bold">${data.WORKER}</td><td class="border border-slate-300 p-2 text-center text-purple-700 font-bold">${data.STAFF}</td><td class="border border-slate-300 p-2 text-center text-slate-700 font-bold">${data.SECURITY}</td><td class="border border-slate-300 p-2 text-center font-bold text-blue-700 bg-blue-50">${data.TOTAL}</td></tr>`;
         html += `<tr class="bg-slate-800 text-white font-bold text-[11px]"><td class="p-2 border border-slate-700 text-right">GRAND TOTAL KESELURUHAN</td><td class="text-center p-2 border border-slate-700 text-emerald-300">${gw}</td><td class="text-center p-2 border border-slate-700 text-purple-300">${gs}</td><td class="text-center p-2 border border-slate-700 text-slate-300">${gsec}</td><td class="text-center p-2 border border-slate-700 text-yellow-300 text-[12px]">${gw+gs+gsec}</td></tr></tbody></table>`;
+        
         document.getElementById('summaryContent').innerHTML = html;
         document.getElementById('summaryModal').classList.remove('hidden'); document.getElementById('summaryModal').classList.add('flex');
     }
@@ -1141,7 +1146,6 @@
 
     function readFileAsArrayBuffer(file) { return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(new Error("Gagal membaca file")); fr.readAsArrayBuffer(file); }); }
     
-    // Event Listeners
     document.getElementById('fileUpload').addEventListener('change', async (e) => { 
         if(e.target.files.length) { await prosesFileExcel(Array.from(e.target.files)); e.target.value = ""; }
     });
@@ -1181,7 +1185,6 @@
         finally { loadingOverlay.classList.add('hidden'); e.target.value = ""; }
     });
     
-    // OPTIMASI: Pasang Debounce agar pencarian ID/Nama tidak freeze saat diketik cepat (Delay 250ms)
     globalSearch.addEventListener('input', debounce(() => renderTable(), 250));
     
     document.getElementById('dateFrom').addEventListener('change', () => { buildFilterHeader(); renderTable(); });
@@ -1194,7 +1197,6 @@
         }
     });
     
-    // Auto Load Data on Start
     (function loadStored() {
         const karyawan = localStorage.getItem('hoplun_karyawan');
         const tanggal = localStorage.getItem('hoplun_tanggal');
