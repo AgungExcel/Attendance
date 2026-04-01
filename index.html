@@ -408,7 +408,14 @@
                 const colTanggal = {};
                 for(let c=0; c<headerRow.length; c++) {
                     let val = String(headerRow[c]||"").trim();
-                    if(/^\d+$/.test(val)) colTanggal[val] = c;
+                    let numVal = parseInt(val, 10);
+                    // FIXED: Hanya ambil angka 1-31, dan ambil yang PERTAMA kali ketemu dari kiri 
+                    // (mencegah bentrok dengan kolom summary di ujung kanan tabel)
+                    if(/^\d+$/.test(val) && numVal >= 1 && numVal <= 31) {
+                        if (colTanggal[numVal] === undefined) {
+                            colTanggal[numVal] = c;
+                        }
+                    }
                 }
                 
                 const karyawanMap = new Map();
@@ -438,7 +445,19 @@
                     const kodePerTanggal = {};
                     for(let [tgl, colIdx] of Object.entries(colTanggal)) {
                         let val = row[colIdx];
-                        if(val !== undefined && val !== null && val !== "") kodePerTanggal[tgl] = String(val).trim();
+                        if(val !== undefined && val !== null && val !== "") {
+                            // FIXED: Bersihkan karakter tersembunyi/aneh dari sumber asli
+                            let cleanVal = String(val).replace(/[\r\n\t]+/g, ' ').replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '').trim();
+                            
+                            // FIXED: Jika ada kode seperti "H 4", "H 5", dll yang bocor ke data harian, kosongkan
+                            if (/^[A-Za-z]\s*\d+$/.test(cleanVal)) {
+                                cleanVal = "";
+                            }
+                            
+                            if (cleanVal !== "") {
+                                kodePerTanggal[tgl] = cleanVal;
+                            }
+                        }
                     }
                     const personal = {
                         id: id, name: name, section: String(row[colMap.section]||"").trim(),
@@ -988,72 +1007,95 @@
         if (u==="PRM") return "att-code-prm"; if (u==="AB"||u==="LWP") return "att-code-ab";
         if (u==="AL"||u==="OL") return "att-code-al"; if (u==="ML") return "att-code-ml"; return "";
     }
-    function scrollToFirstMatch() {
-        const row = document.querySelector('#tableBody tr');
-        if (row) tableContainer.scrollTop = Math.max(0, row.offsetTop - tableContainer.offsetTop - 70);
-    }
 
-    // OPTIMASI: Rendering menggunakan Array Join (Sangat Cepat untuk browser)
+    // OPTIMASI: Chunked Rendering (Infinite Scroll) untuk mencegah lag saat load dan scroll
     let renderScheduled = false;
+    let currentFilteredData = [];
+    let currentRenderIndex = 0;
+    const CHUNK_SIZE = 75; // Hanya render 75 baris setiap kali
+
     function renderTable() {
         if (renderScheduled) return;
         renderScheduled = true;
         requestAnimationFrame(() => {
-            const t0 = performance.now();
-            const filteredData = applyAllFiltersFast();
-            updateRekapUtama(filteredData);
+            currentFilteredData = applyAllFiltersFast();
+            updateRekapUtama(currentFilteredData);
             
             const range = getTanggalRange();
-            if (filteredData.length === 0) {
+            if (currentFilteredData.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="${7 + range.length}" class="p-4 text-center text-slate-500 font-bold">Tidak ada data yang sesuai filter</td></tr>`;
                 renderScheduled = false; return;
             }
             
-            const keyword = globalSearch.value.trim().toLowerCase();
-            const htmlChunks = []; // Using array for fast DOM string building
+            // Bersihkan tabel dan reset index render
+            tableBody.innerHTML = '';
+            currentRenderIndex = 0;
             
-            for(let index=0; index<filteredData.length; index++) {
-                let row = filteredData[index];
-                htmlChunks.push(`<tr class="hover:bg-blue-50 border-b transition-colors">`);
-                
-                let sBadge = row.status==="WORKER"?'<span class="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[9px]">WORKER</span>':
-                             row.status==="STAFF"?'<span class="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[9px]">STAFF</span>':
-                             '<span class="bg-slate-700 text-white font-bold px-1.5 py-0.5 rounded text-[9px]">SECURITY</span>';
-                
-                let rId = highlightText(row.id, keyword), rName = highlightText(row.name, keyword);
-                htmlChunks.push(
-                    `<td class="sticky-no px-1 py-0.5 text-slate-500 font-medium" style="width:40px;background:white;">${index+1}</td>`,
-                    `<td class="sticky-id px-1 py-0.5 font-bold text-slate-800" style="width:70px;background:white;">${rId}</td>`,
-                    `<td class="sticky-name px-1 py-0.5 text-slate-700 truncate" style="width:120px;background:white;" title="${row.name}">${rName}</td>`,
-                    `<td class="col-section-fixed px-1 py-0.5 text-slate-600 truncate" style="width:100px;">${row.section}</td>`,
-                    `<td class="col-posisi-fixed px-1 py-0.5 text-slate-600 truncate" style="width:100px;">${row.position}</td>`,
-                    `<td class="col-join-fixed px-1 py-0.5 text-slate-500" style="width:85px;">${row.joinDate}</td>`,
-                    `<td class="col-status-fixed px-1 py-0.5" style="width:75px;">${sBadge}</td>`
-                );
-
-                for(let i=0; i<range.length; i++) {
-                    const dataTgl = row.tanggalData[range[i]] || { kode: "", time: "" };
-                    let kode = dataTgl.kode, time = dataTgl.time, display = time ? time : (kode ? kode : "—");
-                    let colorClass = "", codeClass = "";
-                    if (kode && !time) {
-                        codeClass = getAttendanceCodeClass(kode);
-                        if (codeClass) display = `<span class="${codeClass} shadow-sm">${display}</span>`;
-                        else colorClass = "text-orange-500 font-bold";
-                    } else if (time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
-                    else if (time && time.includes('-')) colorClass = "text-emerald-600 font-bold";
-                    
-                    htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
-                }
-                htmlChunks.push(`</tr>`);
-            }
+            // Render potongan pertama (Sangat Cepat)
+            renderNextChunk();
             
-            // Apply ke DOM dalam 1 kali assign (Super Fast)
-            tableBody.innerHTML = htmlChunks.join('');
+            // Kembalikan scroll ke paling atas tiap kali filter berubah
+            tableContainer.scrollTop = 0;
             
-            if (keyword !== "" && filteredData.length > 0) setTimeout(scrollToFirstMatch, 10);
             renderScheduled = false;
         });
     }
+
+    function renderNextChunk() {
+        if (currentRenderIndex >= currentFilteredData.length) return;
+        
+        const range = getTanggalRange();
+        const keyword = globalSearch.value.trim().toLowerCase();
+        const htmlChunks = [];
+        
+        const endIndex = Math.min(currentRenderIndex + CHUNK_SIZE, currentFilteredData.length);
+        
+        for(let index = currentRenderIndex; index < endIndex; index++) {
+            let row = currentFilteredData[index];
+            htmlChunks.push(`<tr class="hover:bg-blue-50 border-b transition-colors">`);
+            
+            let sBadge = row.status==="WORKER"?'<span class="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[9px]">WORKER</span>':
+                         row.status==="STAFF"?'<span class="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[9px]">STAFF</span>':
+                         '<span class="bg-slate-700 text-white font-bold px-1.5 py-0.5 rounded text-[9px]">SECURITY</span>';
+            
+            let rId = highlightText(row.id, keyword), rName = highlightText(row.name, keyword);
+            htmlChunks.push(
+                `<td class="sticky-no px-1 py-0.5 text-slate-500 font-medium" style="width:40px;background:white;">${index+1}</td>`,
+                `<td class="sticky-id px-1 py-0.5 font-bold text-slate-800" style="width:70px;background:white;">${rId}</td>`,
+                `<td class="sticky-name px-1 py-0.5 text-slate-700 truncate" style="width:120px;background:white;" title="${row.name}">${rName}</td>`,
+                `<td class="col-section-fixed px-1 py-0.5 text-slate-600 truncate" style="width:100px;">${row.section}</td>`,
+                `<td class="col-posisi-fixed px-1 py-0.5 text-slate-600 truncate" style="width:100px;">${row.position}</td>`,
+                `<td class="col-join-fixed px-1 py-0.5 text-slate-500" style="width:85px;">${row.joinDate}</td>`,
+                `<td class="col-status-fixed px-1 py-0.5" style="width:75px;">${sBadge}</td>`
+            );
+
+            for(let i=0; i<range.length; i++) {
+                const dataTgl = row.tanggalData[range[i]] || { kode: "", time: "" };
+                let kode = dataTgl.kode, time = dataTgl.time, display = time ? time : (kode ? kode : "—");
+                let colorClass = "", codeClass = "";
+                if (kode && !time) {
+                    codeClass = getAttendanceCodeClass(kode);
+                    if (codeClass) display = `<span class="${codeClass} shadow-sm">${display}</span>`;
+                    else colorClass = "text-orange-500 font-bold";
+                } else if (time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
+                else if (time && time.includes('-')) colorClass = "text-emerald-600 font-bold";
+                
+                htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
+            }
+            htmlChunks.push(`</tr>`);
+        }
+        
+        tableBody.insertAdjacentHTML('beforeend', htmlChunks.join(''));
+        currentRenderIndex = endIndex;
+    }
+
+    // Deteksi Scroll ke Bawah (Infinite Scroll)
+    tableContainer.addEventListener('scroll', () => {
+        // Jika scroll sudah mendekati bagian bawah tabel (sisa 400px), muat tabel berikutnya
+        if (tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight - 400) {
+            renderNextChunk();
+        }
+    });
 
     function openSummary() {
         const filteredData = applyAllFiltersFast();
@@ -1142,8 +1184,8 @@
     // OPTIMASI: Pasang Debounce agar pencarian ID/Nama tidak freeze saat diketik cepat (Delay 250ms)
     globalSearch.addEventListener('input', debounce(() => renderTable(), 250));
     
-    document.getElementById('dateFrom').addEventListener('change', renderTable);
-    document.getElementById('dateTo').addEventListener('change', renderTable);
+    document.getElementById('dateFrom').addEventListener('change', () => { buildFilterHeader(); renderTable(); });
+    document.getElementById('dateTo').addEventListener('change', () => { buildFilterHeader(); renderTable(); });
     document.getElementById('filterAttendanceDetail').addEventListener('change', renderTable);
     document.getElementById('btnExport').addEventListener('click', exportToExcel);
     document.getElementById('resetDataBtn').addEventListener('click', () => {
