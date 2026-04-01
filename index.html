@@ -217,7 +217,6 @@
                 <span class="text-[9px] text-slate-400">-</span>
                 <select id="dateTo" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Sampai</option></select>
             </div>
-            <!-- FIXED: Kriteria Kehadiran Sesuai Permintaan -->
             <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none shadow-sm font-medium cursor-pointer max-w-[150px]">
                 <option value="ALL">Semua Kehadiran</option>
                 <option value="ONE_TIME">Time in / Time Out (Salah Satu)</option>
@@ -248,7 +247,18 @@
 </div>
 
 <!-- Modals -->
-<div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white rounded-xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl"><div class="p-3 border-b bg-slate-800 text-white rounded-t-xl flex justify-between items-center"><h2 id="summaryTitle" class="text-sm font-bold">Summary Berdasarkan Posisi</h2><button onclick="closeSummary()" class="text-gray-300 hover:text-white bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center">✕</button></div><div class="p-3 overflow-auto" id="summaryContent"></div></div></div>
+<div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
+        <div class="p-3 border-b bg-slate-800 text-white rounded-t-xl flex justify-between items-center">
+            <h2 id="summaryTitle" class="text-sm font-bold">Laporan Summary Kehadiran</h2>
+            <div class="flex items-center gap-3">
+                <button onclick="exportSummaryToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center gap-1">⬇ Export Excel</button>
+                <button onclick="closeSummary()" class="text-gray-300 hover:text-white bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center font-bold">✕</button>
+            </div>
+        </div>
+        <div class="p-4 overflow-auto" id="summaryContent"></div>
+    </div>
+</div>
 <div id="modernAlert" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center backdrop-blur-sm"><div class="bg-white rounded-xl p-4 max-w-xs text-center shadow-2xl transform scale-95 transition-transform"><h3 id="alertTitle" class="text-sm font-bold mb-2 text-slate-800"></h3><p id="alertMessage" class="text-xs mb-4 text-slate-600"></p><button onclick="closeAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-xs font-bold transition">Tutup</button></div></div>
 
 <!-- Modern Loading Overlay -->
@@ -368,8 +378,8 @@
     async function bacaFileXLSB(file, forcedStatus) {
         return new Promise(async (resolve) => {
             try {
-                const data = await readFileAsArrayBuffer(file);
-                const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: true });
+                const data = await readFileAsBinaryString(file);
+                const workbook = XLSX.read(data, { type: 'binary', cellDates: true, dense: true });
                 let sheetName = workbook.SheetNames.find(s => s.toUpperCase().includes('ATTEND')) || workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 
@@ -483,7 +493,6 @@
         const totalFiles = valid.length;
         let processed = 0;
         
-        // FIXED: Memastikan seluruh data lama ditimpa 100% dengan data baru saat upload folder
         const masterMap = new Map();
         
         const updateProgressUI = (filename, p_count) => {
@@ -522,7 +531,6 @@
                 
                 if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file."); return; }
                 
-                // FIXED: Replace data lama dengan yang baru
                 databaseKaryawan = Array.from(masterMap.values());
                 
                 semuaTanggal = [];
@@ -546,6 +554,7 @@
         }
     }
 
+    // FIXED: Pembacaan file time dikembalikan ke ArrayBuffer (Lebih tangguh untuk CSV dan .xlsx) untuk mencegah Crash.
     async function loadTimeFile(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -588,7 +597,10 @@
                         }
                     }
                     resolve(timeMapLocal);
-                } catch(err) { resolve(new Map()); }
+                } catch(err) { 
+                    console.error("Parse Error:", err);
+                    resolve(new Map()); 
+                }
             };
             reader.onerror = () => resolve(new Map());
             reader.readAsArrayBuffer(file);
@@ -936,7 +948,6 @@
         return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
     
-    // FIXED: Logika Filtering Kriteria Kehadiran Baru (Single-Pass Super Cepat)
     function applyAllFiltersFast() {
         if (!databaseGlobal.length) return [];
         const searchKeyword = globalSearch.value.trim().toLowerCase();
@@ -964,7 +975,6 @@
                 }
             }
 
-            // FILTER KEHADIRAN SESUAI KRITERIA
             if (checkMode) {
                 let matchMode = false;
                 for (let i=0; i<range.length; i++) {
@@ -1014,6 +1024,7 @@
     let currentFilteredData = [];
     let currentRenderIndex = 0;
     const CHUNK_SIZE = 75;
+    let currentSummaryData = null; 
 
     function renderTable() {
         if (renderScheduled) return;
@@ -1091,39 +1102,145 @@
         }
     });
 
-    // FIXED: Summary Menyesuaikan Data Filter Secara Dinamis
+    // FIXED: Summary Format Baru - Pengelompokan Mutlak (Sama dgn Total Karyawan)
     function openSummary() {
         const filteredData = applyAllFiltersFast();
         if(!filteredData.length) { showAlert("Info","Tidak ada data yang ditampilkan pada kriteria saat ini."); return; }
         
-        const selectMode = document.getElementById('filterAttendanceDetail');
-        const modeText = selectMode.options[selectMode.selectedIndex].text;
+        const range = getTanggalRange();
+        let dateText = range.length === 1 ? `Tgl ${range[0]}` : `Tgl ${range[0]} - ${range[range.length-1]}`;
         
-        // Update Modal Title
-        document.getElementById('summaryTitle').innerText = `Summary Berdasarkan Posisi (${modeText})`;
+        document.getElementById('summaryTitle').innerText = `Laporan Summary Kehadiran (${dateText})`;
         
-        const summary = new Map();
-        let gw=0,gs=0,gsec=0;
+        let hadir = { WORKER: 0, STAFF: 0, SECURITY: 0 };
+        let kosong = { WORKER: 0, STAFF: 0, SECURITY: 0 };
+        let lainLain = {}; // Untuk menampung breakdown kode absensi
+        let total = 0;
         
         for(const row of filteredData) {
-            let pos = row.position || "UNKNOWN";
-            if(!summary.has(pos)) summary.set(pos,{WORKER:0,STAFF:0,SECURITY:0,TOTAL:0});
-            const d = summary.get(pos);
-            if(row.status==="WORKER") { d.WORKER++; gw++; }
-            else if(row.status==="STAFF") { d.STAFF++; gs++; }
-            else if(row.status==="SECURITY") { d.SECURITY++; gsec++; }
-            d.TOTAL++;
+            let cat = row.status ? row.status.toUpperCase() : "WORKER";
+            if(!["WORKER", "STAFF", "SECURITY"].includes(cat)) cat = "WORKER";
+            
+            let hasTime = false;
+            let firstCode = "";
+            
+            // Cek status karyawan dalam rentang tanggal yg dipilih
+            for(let tgl of range) {
+                const cell = row.tanggalData[tgl];
+                if(cell && cell.time) {
+                    hasTime = true; 
+                    break;
+                }
+                if(cell && cell.kode && !firstCode) {
+                    let k = cell.kode.trim().toUpperCase();
+                    if(k && k !== "-" && k !== "0") firstCode = k;
+                }
+            }
+
+            // Aturan Prioritas: 1 Karyawan = 1 Status di Summary
+            if(hasTime) {
+                hadir[cat]++;
+            } else if(firstCode) {
+                if(!lainLain[firstCode]) lainLain[firstCode] = 0;
+                lainLain[firstCode]++;
+            } else {
+                kosong[cat]++;
+            }
+            total++;
         }
         
-        let html = `<table class="w-full border-collapse border border-slate-300 text-[10px] text-left"><thead><tr class="bg-slate-700 text-white"><th class="p-2 border border-slate-600">POSISI JABATAN</th><th class="p-2 border border-slate-600 text-center">WORKER</th><th class="p-2 border border-slate-600 text-center">STAFF</th><th class="p-2 border border-slate-600 text-center">SECURITY</th><th class="p-2 border border-slate-600 text-center font-bold text-yellow-300">TOTAL</th></tr></thead><tbody>`;
-        for(let [pos,data] of [...summary.entries()].sort()) html += `<tr class="hover:bg-slate-50"><td class="border border-slate-300 p-2 font-medium text-slate-700">${pos}</td><td class="border border-slate-300 p-2 text-center text-emerald-700 font-bold">${data.WORKER}</td><td class="border border-slate-300 p-2 text-center text-purple-700 font-bold">${data.STAFF}</td><td class="border border-slate-300 p-2 text-center text-slate-700 font-bold">${data.SECURITY}</td><td class="border border-slate-300 p-2 text-center font-bold text-blue-700 bg-blue-50">${data.TOTAL}</td></tr>`;
-        html += `<tr class="bg-slate-800 text-white font-bold text-[11px]"><td class="p-2 border border-slate-700 text-right">GRAND TOTAL KESELURUHAN</td><td class="text-center p-2 border border-slate-700 text-emerald-300">${gw}</td><td class="text-center p-2 border border-slate-700 text-purple-300">${gs}</td><td class="text-center p-2 border border-slate-700 text-slate-300">${gsec}</td><td class="text-center p-2 border border-slate-700 text-yellow-300 text-[12px]">${gw+gs+gsec}</td></tr></tbody></table>`;
+        currentSummaryData = { hadir, kosong, lainLain, total, dateText }; 
+        
+        let html = `<table class="w-full border-collapse border border-slate-300 text-[11px] text-left">
+            <thead>
+                <tr class="bg-slate-700 text-white">
+                    <th class="p-2 border border-slate-600">KATEGORI / KETERANGAN</th>
+                    <th class="p-2 border border-slate-600 text-center w-32">JUMLAH KARYAWAN</th>
+                </tr>
+            </thead>
+            <tbody>`;
+            
+        // KELOMPOK HADIR
+        let totalHadir = hadir.WORKER + hadir.STAFF + hadir.SECURITY;
+        html += `<tr class="bg-emerald-50"><td class="border border-slate-300 p-2 font-bold text-emerald-800">✅ HADIR (Ada Time In / Out)</td><td class="border border-slate-300 p-2 text-center font-bold text-emerald-800">${totalHadir}</td></tr>`;
+        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Worker</td><td class="border border-slate-300 p-2 text-center font-medium">${hadir.WORKER}</td></tr>`;
+        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Staff</td><td class="border border-slate-300 p-2 text-center font-medium">${hadir.STAFF}</td></tr>`;
+        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Security</td><td class="border border-slate-300 p-2 text-center font-medium">${hadir.SECURITY}</td></tr>`;
+        
+        // KELOMPOK KOSONG
+        let totalKosong = kosong.WORKER + kosong.STAFF + kosong.SECURITY;
+        html += `<tr class="bg-red-50"><td class="border border-slate-300 p-2 font-bold text-red-800">❌ KOSONG (Tidak Ada Data)</td><td class="border border-slate-300 p-2 text-center font-bold text-red-800">${totalKosong}</td></tr>`;
+        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Worker</td><td class="border border-slate-300 p-2 text-center font-medium">${kosong.WORKER}</td></tr>`;
+        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Staff</td><td class="border border-slate-300 p-2 text-center font-medium">${kosong.STAFF}</td></tr>`;
+        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Security</td><td class="border border-slate-300 p-2 text-center font-medium">${kosong.SECURITY}</td></tr>`;
+
+        // KELOMPOK LAIN-LAIN
+        let totalLain = Object.values(lainLain).reduce((a, b) => a + b, 0);
+        html += `<tr class="bg-amber-50"><td class="border border-slate-300 p-2 font-bold text-amber-800">⚠️ LAIN-LAIN (Kode Absensi)</td><td class="border border-slate-300 p-2 text-center font-bold text-amber-800">${totalLain}</td></tr>`;
+        if (totalLain === 0) {
+            html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-400 italic">Tidak ada</td><td class="border border-slate-300 p-2 text-center text-slate-400">-</td></tr>`;
+        } else {
+            for (let [kode, jumlah] of Object.entries(lainLain).sort()) {
+                html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-700 font-bold">↳ Kode: ${kode}</td><td class="border border-slate-300 p-2 text-center font-bold text-amber-700">${jumlah}</td></tr>`;
+            }
+        }
+        
+        // GRAND TOTAL MUTLAK
+        html += `<tr class="bg-slate-800 text-white font-bold text-[12px]">
+            <td class="p-2 border border-slate-700 text-right">GRAND TOTAL KESELURUHAN</td>
+            <td class="text-center p-2 border border-slate-700 text-yellow-400 text-[13px]">${total}</td>
+        </tr></tbody></table>`;
         
         document.getElementById('summaryContent').innerHTML = html;
-        document.getElementById('summaryModal').classList.remove('hidden'); document.getElementById('summaryModal').classList.add('flex');
+        document.getElementById('summaryModal').classList.remove('hidden'); 
+        document.getElementById('summaryModal').classList.add('flex');
     }
+    
     function closeSummary() { document.getElementById('summaryModal').classList.add('hidden'); }
     
+    function exportSummaryToExcel() {
+        if(!currentSummaryData) return;
+        const d = currentSummaryData;
+        let dateText = d.dateText.replace(/_/g, ' ');
+        
+        const wsData = [
+            ["LAPORAN SUMMARY KEHADIRAN"],
+            ["PERIODE:", dateText],
+            [],
+            ["KATEGORI / KETERANGAN", "JUMLAH KARYAWAN"]
+        ];
+
+        let totalHadir = d.hadir.WORKER + d.hadir.STAFF + d.hadir.SECURITY;
+        wsData.push(["HADIR (Ada Time In / Out)", totalHadir]);
+        wsData.push(["- Worker", d.hadir.WORKER]);
+        wsData.push(["- Staff", d.hadir.STAFF]);
+        wsData.push(["- Security", d.hadir.SECURITY]);
+        
+        let totalKosong = d.kosong.WORKER + d.kosong.STAFF + d.kosong.SECURITY;
+        wsData.push(["KOSONG (Tidak Ada Data)", totalKosong]);
+        wsData.push(["- Worker", d.kosong.WORKER]);
+        wsData.push(["- Staff", d.kosong.STAFF]);
+        wsData.push(["- Security", d.kosong.SECURITY]);
+
+        let totalLain = Object.values(d.lainLain).reduce((a, b) => a + b, 0);
+        wsData.push(["LAIN-LAIN (Kode Absensi)", totalLain]);
+        if (totalLain === 0) {
+            wsData.push(["- Tidak ada", 0]);
+        } else {
+            for (let [kode, jumlah] of Object.entries(d.lainLain).sort()) {
+                wsData.push([`- Kode: ${kode}`, jumlah]);
+            }
+        }
+        
+        wsData.push(["", ""]);
+        wsData.push(["GRAND TOTAL KESELURUHAN", d.total]);
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData); 
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Summary Kehadiran");
+        XLSX.writeFile(wb, `Hoplun_Summary_${d.dateText.replace(/\s/g,'_')}.xlsx`);
+    }
+
     function exportToExcel() {
         const filteredData = applyAllFiltersFast();
         if(!filteredData.length) { showAlert("Peringatan","Tidak ada data untuk diexport"); return; }
@@ -1144,7 +1261,7 @@
         XLSX.writeFile(wb, `Hoplun_Attendance_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
     }
 
-    function readFileAsArrayBuffer(file) { return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(new Error("Gagal membaca file")); fr.readAsArrayBuffer(file); }); }
+    function readFileAsBinaryString(file) { return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(new Error("Gagal membaca file")); fr.readAsBinaryString(file); }); }
     
     document.getElementById('fileUpload').addEventListener('change', async (e) => { 
         if(e.target.files.length) { await prosesFileExcel(Array.from(e.target.files)); e.target.value = ""; }
@@ -1163,6 +1280,7 @@
     
     document.getElementById('cancelLoadingBtn').addEventListener('click', () => { if(isProcessing) cancelProcessing = true; });
     
+    // FIXED: Pencegah Crash (Error Handler) pada Proses Update Time
     document.getElementById('hiddenTimeInput').addEventListener('change', async (e) => {
         try {
             if(!e.target.files.length) return;
@@ -1177,12 +1295,26 @@
             const newTimeMap = await loadTimeFile(file);
             if (newTimeMap.size) {
                 timeMap = newTimeMap;
-                localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
+                
+                // Mencegah error CRASH "QuotaExceededError" apabila data time terlalu besar
+                try {
+                    localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
+                } catch(storageErr) {
+                    console.warn("Penyimpanan lokal penuh, namun data tetap ada di memori sementara.");
+                }
+                
                 if (databaseKaryawan.length) gabungkanDanRender();
                 else showAlert("Info", `Data Time tersimpan. Silakan Update Absen (Folder) dulu.`);
-            } else { showAlert("Gagal", `File Time (${file.name}) kosong atau format salah.`); }
-        } catch (error) { showAlert("Error", "Gagal membaca file: " + error.message); } 
-        finally { loadingOverlay.classList.add('hidden'); e.target.value = ""; }
+            } else { 
+                showAlert("Gagal", `File Time (${file.name}) kosong atau format salah.`); 
+            }
+        } catch (error) { 
+            console.error("Terjadi Error Time:", error);
+            showAlert("Error", "Gagal memproses file time: " + error.message); 
+        } finally { 
+            loadingOverlay.classList.add('hidden'); 
+            e.target.value = ""; 
+        }
     });
     
     globalSearch.addEventListener('input', debounce(() => renderTable(), 250));
