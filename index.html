@@ -209,6 +209,11 @@
                 <select id="dateFrom" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Dari</option></select>
                 <span class="text-[9px] text-slate-400">-</span>
                 <select id="dateTo" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Sampai</option></select>
+                <div class="w-px h-3 bg-slate-300 mx-1"></div>
+                <button id="btnHapusTgl" class="text-red-600 hover:text-red-800 font-bold text-[9px] px-1 flex items-center gap-0.5" title="Hapus Data di Tanggal Terpilih">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    Hapus
+                </button>
             </div>
             <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none shadow-sm font-medium cursor-pointer max-w-[150px]">
                 <option value="ALL">Semua Kehadiran</option>
@@ -1347,6 +1352,53 @@
     
     document.getElementById('dateFrom').addEventListener('change', () => { buildFilterHeader(); renderTable(); });
     document.getElementById('dateTo').addEventListener('change', () => { buildFilterHeader(); renderTable(); });
+    
+    // Fitur Baru: Menghapus Data Sesuai Tanggal Terpilih
+    document.getElementById('btnHapusTgl').addEventListener('click', () => {
+        const range = getTanggalRange();
+        if (!databaseKaryawan.length) {
+            showAlert("Info", "Belum ada data untuk dihapus.");
+            return;
+        }
+        
+        let dateText = range.length === 1 ? `tanggal ${range[0]}` : `tanggal ${range[0]} sampai ${range[range.length-1]}`;
+        if (range.length === semuaTanggal.length) dateText = "SEMUA TANGGAL";
+        
+        if (confirm(`PENTING: Anda yakin ingin menghapus SELURUH data (Time & Absen) pada ${dateText}?\n\n(Kolom ini akan dikosongkan dan Anda bisa melakukan Update data baru)`)) {
+            
+            // 1. Hapus dari memori Time
+            for (const key of timeMap.keys()) {
+                const tgl = parseInt(key.split('_')[1]);
+                if (range.includes(tgl)) {
+                    timeMap.delete(key);
+                }
+            }
+            
+            // 2. Hapus dari memori File Absen (Kode PR, AL, dll)
+            for (let k of databaseKaryawan) {
+                if (k.kodePerTanggal) {
+                    for (let tgl of range) {
+                        if (k.kodePerTanggal[tgl] !== undefined) {
+                            delete k.kodePerTanggal[tgl];
+                        }
+                    }
+                }
+            }
+            
+            // 3. Timpa/Update penyimpanan di browser
+            try {
+                localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
+                localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
+            } catch(e) {
+                console.warn("Gagal update storage", e);
+            }
+            
+            // 4. Render Ulang
+            gabungkanDanRender();
+            showAlert("Sukses", `Semua data pada ${dateText} telah dikosongkan! Silakan upload file Time/Absen yang baru.`);
+        }
+    });
+
     document.getElementById('filterAttendanceDetail').addEventListener('change', renderTable);
     document.getElementById('btnExport').addEventListener('click', exportToExcel);
     document.getElementById('resetDataBtn').addEventListener('click', () => {
