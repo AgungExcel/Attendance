@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hoplun - Attendance Dashboard (Super Fast)</title>
+    <title>Hoplun - Attendance Dashboard (Integrated Time View)</title>
     <link rel="icon" type="image/png" href="hoplun128.png">
     <link rel="shortcut icon" href="hoplun128.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -72,6 +72,10 @@
             border-top: 1px solid #e5e7eb;
             overflow: visible;
         }
+        /* Time In/Out Highlight Header */
+        th.time-header { background-color: #c2410c !important; }
+        th.time-filter { background-color: #ffedd5 !important; border-color: #fdba74 !important; }
+        
         td { 
             padding: 4px 4px; 
             border-bottom: 1px solid #e2e8f0;
@@ -91,9 +95,9 @@
             background-color: white;
             z-index: 10;
         }
-        .sticky-no { left: 0; width: 40px !important; min-width: 40px !important; max-width: 40px !important; text-align: center; }
-        .sticky-id { left: 40px; width: 70px !important; min-width: 70px !important; max-width: 70px !important; }
-        .sticky-name { left: 110px; width: 120px !important; min-width: 120px !important; max-width: 120px !important; }
+        .sticky-no { left: 0; width: 40px !important; min-width: 40px !important; max-width: 40px !important; text-align: center; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        .sticky-id { left: 40px; width: 70px !important; min-width: 70px !important; max-width: 70px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        .sticky-name { left: 110px; width: 120px !important; min-width: 120px !important; max-width: 120px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
         .col-section-fixed { width: 100px !important; min-width: 100px !important; }
         .col-posisi-fixed { width: 100px !important; min-width: 100px !important; }
         .col-join-fixed { width: 85px !important; min-width: 85px !important; }
@@ -120,13 +124,11 @@
         
         .btn-export { background: #059669; transition: 0.2s; }
         .btn-export:hover { background: #047857; }
-        .btn-reset { background: #dc2626; }
         .rekap-box { background: #f1f5f9; border-radius: 6px; padding: 4px 8px; display: inline-block; margin-right: 8px; }
         .rekap-label { font-size: 9px; font-weight: bold; color: #334155; }
         .rekap-value { font-size: 12px; font-weight: bold; margin-left: 4px; }
         .last-update-panel { background: #fef9e3; border-left: 4px solid #f59e0b; font-size: 9px; max-height: 70px; overflow-y: auto; }
         
-        /* Modern Loading Overlay */
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.85); z-index: 1000;
@@ -160,38 +162,52 @@
 </head>
 <body>
 
-<div class="dashboard-container">
-    <!-- HEADER -->
+<script>
+    // ======================== GLOBAL OVERRIDES ========================
+    // Mencegah console.error dan console.warn bawaan ZIP Size sheetjs muncul dan membingungkan user/playground
+    const originalConsoleError = console.error;
+    console.error = function(...args) {
+        if (args.length > 0 && String(args[0]).includes('Bad uncompressed size')) return;
+        originalConsoleError.apply(console, args);
+    };
+    const originalConsoleWarn = console.warn;
+    console.warn = function(...args) {
+        if (args.length > 0 && String(args[0]).includes('Bad uncompressed size')) return;
+        originalConsoleWarn.apply(console, args);
+    };
+</script>
+
+<input type="file" id="hiddenFolderInput" webkitdirectory directory multiple class="hidden">
+<input type="file" id="hiddenTimeInput" accept=".csv,.xlsx,.xls" class="hidden">
+
+<!-- MAIN DASHBOARD -->
+<div class="dashboard-container" id="mainDashboard">
     <div class="bg-slate-800 text-white p-2 flex justify-between items-center flex-wrap gap-2 shrink-0">
         <div class="flex items-center gap-2">
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
                 <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
-                <p class="text-[9px] text-emerald-400">Super Fast Engine | Filter Indicators</p>
+                <p class="text-[9px] text-emerald-400">Integrated Time View | Super Fast Engine</p>
             </div>
         </div>
 
-        <!-- Tombol Reset dipindahkan ke samping Update Time & Input Header dihapus -->
         <div class="flex items-center gap-1 bg-slate-700 p-1 rounded-lg border border-slate-600 flex-wrap">
-            <input type="file" id="hiddenFolderInput" webkitdirectory directory multiple class="hidden">
-            <input type="file" id="hiddenTimeInput" accept=".csv,.xlsx,.xls" class="hidden">
             <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold text-blue-300">📂 Folder Absen:</span>
-                <input type="text" id="folderXlsbDisplay" readonly placeholder="Pilih folder .xlsb..." class="text-[9px] px-1.5 py-1 rounded w-28 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenFolderInput').click()">
-                <button id="btnUpdateXlsb" onclick="document.getElementById('hiddenFolderInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Absen</button>
+                <input type="text" id="folderXlsbDisplay" readonly placeholder="Pilih folder..." class="text-[9px] px-1.5 py-1 rounded w-24 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenFolderInput').click()">
+                <button onclick="document.getElementById('hiddenFolderInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Absen</button>
             </div>
             <div class="w-px h-5 bg-slate-500 mx-1"></div>
             <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold text-yellow-400">📄 File Time:</span>
-                <input type="text" id="fileTimeDisplay" readonly placeholder="Pilih file time..." class="text-[9px] px-1.5 py-1 rounded w-28 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenTimeInput').click()">
-                <button id="btnUpdateTime" onclick="document.getElementById('hiddenTimeInput').click()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Time</button>
+                <input type="text" id="fileTimeDisplay" readonly placeholder="Pilih file time..." class="text-[9px] px-1.5 py-1 rounded w-24 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenTimeInput').click()">
+                <button onclick="document.getElementById('hiddenTimeInput').click()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Time In/Out</button>
             </div>
             <div class="w-px h-5 bg-slate-500 mx-1"></div>
             <button id="resetDataBtn" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[9px] font-bold shadow-sm transition" title="Hapus Seluruh Data Browser">Reset Data</button>
         </div>
     </div>
 
-    <!-- REKAP & FILTER UTAMA -->
     <div class="p-2 bg-slate-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div class="flex flex-wrap gap-2 items-center">
             <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value text-emerald-700">0</span></div>
@@ -202,7 +218,7 @@
         <div class="flex gap-2 items-center flex-wrap">
             <div class="flex items-center gap-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-sm">
                 <span class="text-[10px]">🔍</span>
-                <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[10px] border-none outline-none w-36 bg-transparent font-medium text-slate-800">
+                <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[10px] border-none outline-none w-32 bg-transparent font-medium text-slate-800">
             </div>
             <div class="flex items-center gap-1 bg-white border rounded px-1 py-0.5 shadow-sm">
                 <span class="text-[9px] font-semibold text-slate-600">Tgl:</span>
@@ -215,27 +231,26 @@
                     Hapus
                 </button>
             </div>
-            <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none shadow-sm font-medium cursor-pointer max-w-[150px]">
+            <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none shadow-sm font-medium cursor-pointer max-w-[120px]">
                 <option value="ALL">Semua Kehadiran</option>
-                <option value="ONE_TIME">Time in / Time Out (Salah Satu)</option>
-                <option value="HADIR">Hadir (Ada Time In & Out)</option>
+                <option value="ONE_TIME">Time in / Out (Salah Satu)</option>
+                <option value="HADIR">Hadir (Ada In & Out)</option>
                 <option value="KOSONG">Kosong (-, Kosong, 0)</option>
                 <option value="PRESENT">Present (PR, PRP, PRS, PRM)</option>
                 <option value="MANGKIR">Mangkir (AB, LWP)</option>
                 <option value="CUTI">Cuti (AL, OL, ML, SK)</option>
-                <option value="MANGKIR_CUTI">Mangkir + Cuti (AB, LWP, AL, OL, ML, SK)</option>
+                <option value="MANGKIR_CUTI">Mangkir + Cuti</option>
                 <option value="HOLIDAY">Holiday (HL)</option>
             </select>
-            <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export</button>
+            <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export Excel</button>
             <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
+            
             <span id="dbStatus" class="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-1 rounded border border-blue-200">Menunggu Data...</span>
         </div>
     </div>
 
-    <!-- PANEL LAST UPDATE -->
     <div id="lastUpdateInfo" class="last-update-panel hidden p-2 text-[10px] border-t border-gray-200 shrink-0 bg-amber-50 flex-wrap gap-x-4 gap-y-1 items-center"></div>
 
-    <!-- TABEL -->
     <div class="table-container" id="tableContainer">
         <table id="attendanceTable">
             <thead id="tableHeader"></thead>
@@ -244,9 +259,9 @@
     </div>
 </div>
 
-<!-- Modals -->
+<!-- Modals Summary -->
 <div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
+    <div class="bg-white rounded-xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl">
         <div class="p-3 border-b bg-slate-800 text-white rounded-t-xl flex justify-between items-center">
             <h2 id="summaryTitle" class="text-sm font-bold">Laporan Summary Kehadiran</h2>
             <div class="flex items-center gap-3">
@@ -257,6 +272,7 @@
         <div class="p-4 overflow-auto" id="summaryContent"></div>
     </div>
 </div>
+
 <div id="modernAlert" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center backdrop-blur-sm"><div class="bg-white rounded-xl p-4 max-w-xs text-center shadow-2xl transform scale-95 transition-transform"><h3 id="alertTitle" class="text-sm font-bold mb-2 text-slate-800"></h3><p id="alertMessage" class="text-xs mb-4 text-slate-600"></p><button onclick="closeAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-xs font-bold transition">Tutup</button></div></div>
 
 <!-- Modern Loading Overlay -->
@@ -275,7 +291,7 @@
 </div>
 
 <script>
-    // ======================== GLOBAL ========================
+    // ======================== GLOBAL VARIABLES ========================
     let databaseKaryawan = [];      
     let timeMap = new Map();         
     let semuaTanggal = [];
@@ -286,27 +302,21 @@
     
     let filters = {}; 
     let filterOptions = {}; 
-    
-    // DOM elements
-    const globalSearch = document.getElementById('globalSearch');
-    const tableHeader = document.getElementById('tableHeader');
-    const tableBody = document.getElementById('tableBody');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingProgressFill = document.getElementById('loadingProgressFill');
-    const loadingProgressText = document.getElementById('loadingProgressText');
-    const loadingFileCount = document.getElementById('loadingFileCount');
-    const loadingDetailText = document.getElementById('loadingDetailText');
-    const tableContainer = document.getElementById('tableContainer');
+    let currentSummaryData = null;
 
-    // Helper functions
     function showAlert(title, msg) {
         const modal = document.getElementById('modernAlert');
-        document.getElementById('alertTitle').innerText = title;
-        document.getElementById('alertMessage').innerText = msg;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+        if (modal) {
+            document.getElementById('alertTitle').innerText = title;
+            document.getElementById('alertMessage').innerText = msg;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
     }
-    function closeAlert() { document.getElementById('modernAlert').classList.add('hidden'); }
+    function closeAlert() { 
+        const modal = document.getElementById('modernAlert');
+        if (modal) modal.classList.add('hidden'); 
+    }
     
     function debounce(func, wait) {
         let timeout;
@@ -316,7 +326,6 @@
         };
     }
 
-    // Tabel tetap menggunakan dd-MMM-yyyy
     function formatDateToString(d) {
         if(!d) return "";
         let date;
@@ -327,8 +336,7 @@
         const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         return `${String(date.getDate()).padStart(2,'0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
     }
-    
-    // Helper Extract MMM-yyyy untuk Filter
+
     function getYearMonth(dateStr) {
         if(!dateStr) return "";
         const parts = dateStr.split('-');
@@ -336,7 +344,6 @@
         return dateStr;
     }
     
-    // Helper untuk mengurutkan MMM-yyyy (Terbaru - Terlama)
     const monthMap = {"Jan":0, "Feb":1, "Mar":2, "Apr":3, "May":4, "Jun":5, "Jul":6, "Aug":7, "Sep":8, "Oct":9, "Nov":10, "Dec":11};
     function parseYearMonth(ym) {
         if(ym === "__EMPTY__" || !ym) return 0;
@@ -344,7 +351,7 @@
         if(p.length !== 2) return 0;
         return parseInt(p[1])*100 + (monthMap[p[0]] || 0);
     }
-
+    
     function formatTimeRange(record) {
         if(!record) return "";
         const parts = record.split(';').map(p=>p.trim()).filter(p=>p);
@@ -355,6 +362,7 @@
 
     function displayLastUpdate(filesArray) {
         const panel = document.getElementById('lastUpdateInfo');
+        if (!panel) return;
         if(!filesArray || filesArray.length === 0) { panel.classList.add('hidden'); return; }
         const validFiles = filesArray.filter(f => f && f.name && f.name.toLowerCase().endsWith('.xlsb'));
         if(validFiles.length === 0) { panel.classList.add('hidden'); return; }
@@ -362,7 +370,6 @@
         for(let file of validFiles) {
             let modDate = new Date(file.lastModified);
             let dateStr = modDate.toLocaleString('id-ID', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
-            // Highlight Jam dan Tanggal Update
             let highlightDate = `<span class="bg-yellow-300 text-yellow-900 font-bold px-1.5 py-0.5 rounded shadow-sm border border-yellow-400">${dateStr}</span>`;
             let fileType = "📄";
             if(file.name.toUpperCase().includes('WORKER')) fileType = "👷 WORKER";
@@ -374,7 +381,11 @@
         panel.innerHTML = html;
         panel.classList.remove('hidden');
     }
-    function clearLastUpdate() { const panel = document.getElementById('lastUpdateInfo'); panel.classList.add('hidden'); panel.innerHTML = ''; }
+    
+    function clearLastUpdate() { 
+        const panel = document.getElementById('lastUpdateInfo'); 
+        if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
+    }
 
     function isFileValid(file) { 
         if (!file || file.size === 0) return false;
@@ -393,11 +404,20 @@
 
     const yieldToBrowser = () => new Promise(resolve => setTimeout(resolve, 5));
 
+    function readFileAsArrayBuffer(file) { 
+        return new Promise((resolve,reject)=>{ 
+            const fr=new FileReader(); 
+            fr.onload=e=>resolve(e.target.result); 
+            fr.onerror=()=>reject(new Error("Gagal membaca file")); 
+            fr.readAsArrayBuffer(file); 
+        }); 
+    }
+
     async function bacaFileXLSB(file, forcedStatus) {
         return new Promise(async (resolve) => {
             try {
-                const data = await readFileAsBinaryString(file);
-                const workbook = XLSX.read(data, { type: 'binary', cellDates: true, dense: true });
+                const data = await readFileAsArrayBuffer(file);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: true });
                 let sheetName = workbook.SheetNames.find(s => s.toUpperCase().includes('ATTEND')) || workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 
@@ -431,7 +451,7 @@
                     }
                 }
                 if(headerRowIdx === -1) {
-                    headerRowIdx = 5; // Default logic ke Header Baris ke-6
+                    headerRowIdx = 5; 
                     colMap = { id:0, name:1, section:2, position:3, join:4 };
                 }
                 const headerRow = rawData[headerRowIdx];
@@ -482,7 +502,7 @@
                     const personal = {
                         id: id, name: name, section: String(row[colMap.section]||"").trim(),
                         position: String(row[colMap.position]||"").trim(),
-                        joinDate: row[colMap.join] ? formatDateToString(row[colMap.join]) : "", // Table display
+                        joinDate: row[colMap.join] ? formatDateToString(row[colMap.join]) : "",
                         status: forcedStatus, kodePerTanggal: kodePerTanggal
                     };
                     let key = id !== "" ? id.toUpperCase() : name.toUpperCase();
@@ -506,19 +526,25 @@
         if(isProcessing) { showAlert("Info","Sedang memproses data, harap tunggu"); return; }
         
         isProcessing = true; cancelProcessing = false;
-        loadingOverlay.classList.remove('hidden');
+        
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingDetailText = document.getElementById('loadingDetailText');
+        const loadingProgressFill = document.getElementById('loadingProgressFill');
+        const loadingProgressText = document.getElementById('loadingProgressText');
+        const loadingFileCount = document.getElementById('loadingFileCount');
+
+        if(loadingOverlay) loadingOverlay.classList.remove('hidden');
         
         const totalFiles = valid.length;
         let processed = 0;
-        
         const masterMap = new Map();
         
         const updateProgressUI = (filename, p_count) => {
             const percent = Math.round((p_count / totalFiles) * 100);
-            loadingDetailText.innerText = filename ? `Mengekstrak: ${filename}` : "Menyatukan data...";
-            loadingProgressFill.style.width = percent + '%';
-            loadingProgressText.innerText = percent + '%';
-            loadingFileCount.innerText = `${p_count} / ${totalFiles} file`;
+            if(loadingDetailText) loadingDetailText.innerText = filename ? `Mengekstrak: ${filename}` : "Menyatukan data...";
+            if(loadingProgressFill) loadingProgressFill.style.width = percent + '%';
+            if(loadingProgressText) loadingProgressText.innerText = percent + '%';
+            if(loadingFileCount) loadingFileCount.innerText = `${p_count} / ${totalFiles} file`;
         };
 
         try {
@@ -544,7 +570,7 @@
             }
             
             if(!cancelProcessing) {
-                loadingDetailText.innerText = "Menyusun Database Global Baru...";
+                if(loadingDetailText) loadingDetailText.innerText = "Menyusun Database Global Baru...";
                 await yieldToBrowser();
                 
                 if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file."); return; }
@@ -555,73 +581,127 @@
                 for(let i=26;i<=31;i++) semuaTanggal.push(i);
                 for(let i=1;i<=25;i++) semuaTanggal.push(i);
                 
-                localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
-                localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
+                try {
+                    localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
+                    localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
+                } catch(e) { console.warn(e); }
                 
-                loadingDetailText.innerText = "Merender Tabel...";
+                if(loadingDetailText) loadingDetailText.innerText = "Merender Tabel...";
                 await yieldToBrowser();
                 
                 gabungkanDanRender();
                 displayLastUpdate(valid);
-                showAlert("Sukses", `${databaseKaryawan.length} Karyawan baru telah dimuat. Data lama 100% ditimpa.`);
+                showAlert("Sukses", `${databaseKaryawan.length} Karyawan baru telah dimuat secara instan.`);
             }
         } catch (err) {
             console.error(err); showAlert("Error", "Gagal memproses file: " + err.message);
         } finally {
-            isProcessing = false; loadingOverlay.classList.add('hidden');
+            isProcessing = false; 
+            if(loadingOverlay) loadingOverlay.classList.add('hidden');
         }
     }
 
     async function loadTimeFile(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array', dense: true });
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-                    if(!rows.length) { resolve(new Map()); return; }
-                    let idCol=-1, dateCol=-1, recordCol=-1;
-                    for(let i=0;i<Math.min(rows.length,20);i++) {
-                        const row = rows[i];
-                        for(let c=0;c<row.length;c++) {
-                            let cell = String(row[c]||"").toUpperCase();
-                            if(cell.includes("ID")) idCol = c;
-                            if(cell.includes("DATE")) dateCol = c;
-                            if(cell.includes("RECORD")) recordCol = c;
-                        }
-                        if(idCol!==-1 && dateCol!==-1 && recordCol!==-1) break;
+        return new Promise(async (resolve) => {
+            try {
+                const data = await readFileAsArrayBuffer(file);
+                const workbook = XLSX.read(data, { type: 'array', dense: true });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+                if(!rows.length) { resolve(new Map()); return; }
+                
+                let idCol=-1, dateCol=-1, recordCol=-1;
+                for(let i=0;i<Math.min(rows.length,20);i++) {
+                    const row = rows[i];
+                    for(let c=0;c<row.length;c++) {
+                        let cell = String(row[c]||"").toUpperCase().replace(/\s/g,'');
+                        if(cell.includes("ID") || cell === "BADGENUMBER") idCol = c;
+                        if(cell.includes("DATE") || cell === "TANGGAL") dateCol = c;
+                        if(cell.includes("RECORD") || cell === "TIME" || cell === "WAKTU" || cell === "CLOCK") recordCol = c;
                     }
-                    if(idCol===-1 || dateCol===-1 || recordCol===-1) { resolve(new Map()); return; }
-                    const timeMapLocal = new Map();
-                    for(let r=1; r<rows.length; r++) {
-                        const row = rows[r];
-                        if(!row) continue;
-                        let id = String(row[idCol]||"").trim();
-                        let dateRaw = row[dateCol];
-                        let dateStr = "";
-                        if(dateRaw instanceof Date) dateStr = dateRaw.toISOString().slice(0,10);
-                        else if(typeof dateRaw === 'number') dateStr = new Date((dateRaw-25569)*86400*1000).toISOString().slice(0,10);
-                        else dateStr = String(dateRaw).trim();
-                        let record = String(row[recordCol]||"").trim();
-                        if(id && dateStr && record) {
-                            let tgl = parseInt(dateStr.split('-')[2], 10);
-                            if(!isNaN(tgl)) {
-                                const formattedTime = formatTimeRange(record);
-                                if(formattedTime) timeMapLocal.set(`${id}_${tgl}`, formattedTime);
+                    if(idCol!==-1 && dateCol!==-1 && recordCol!==-1) break;
+                }
+                
+                if(idCol===-1 || dateCol===-1 || recordCol===-1) { 
+                    console.warn("Format Time File Salah");
+                    resolve(new Map()); 
+                    return; 
+                }
+                
+                const timeMapLocal = new Map();
+                for(let r=1; r<rows.length; r++) {
+                    const row = rows[r];
+                    if(!row) continue;
+                    let id = String(row[idCol]||"").trim();
+                    let dateRaw = row[dateCol];
+                    let record = String(row[recordCol]||"").trim();
+                    
+                    if(id && dateRaw && record) {
+                        let tgl = NaN;
+                        if(dateRaw instanceof Date) {
+                            tgl = dateRaw.getDate();
+                        } else if(typeof dateRaw === 'number') {
+                            tgl = new Date((dateRaw-25569)*86400*1000).getDate();
+                        } else {
+                            let dateStr = String(dateRaw).trim();
+                            if (dateStr.includes('/')) {
+                                const p = dateStr.split('/');
+                                if (p[2] && p[2].length === 4) tgl = parseInt(p[0], 10);
+                                else if (p[0] && p[0].length === 4) tgl = parseInt(p[2], 10);
+                                else tgl = parseInt(p[0], 10);
+                            } else if (dateStr.includes('-')) {
+                                const p = dateStr.split('-');
+                                if (p[0] && p[0].length === 4) tgl = parseInt(p[2], 10);
+                                else tgl = parseInt(p[0], 10);
+                            } else {
+                                const parsed = new Date(dateStr);
+                                if (!isNaN(parsed.getTime())) tgl = parsed.getDate();
                             }
                         }
+                        
+                        if(!isNaN(tgl)) {
+                            const formattedTime = formatTimeRange(record);
+                            if(formattedTime) timeMapLocal.set(`${id}_${tgl}`, formattedTime);
+                        }
                     }
-                    resolve(timeMapLocal);
-                } catch(err) { 
-                    console.error("Parse Error:", err);
-                    resolve(new Map()); 
                 }
-            };
-            reader.onerror = () => resolve(new Map());
-            reader.readAsArrayBuffer(file);
+                resolve(timeMapLocal);
+            } catch(err) { 
+                console.error("Parse Error:", err);
+                resolve(new Map()); 
+            }
         });
+    }
+
+    function getDerivedTime(row, range) {
+        if (!range || range.length === 0) return { timeIn: "", timeOut: "", ket: "" };
+        const t1 = range[0];
+        const t2 = range[range.length - 1];
+
+        const d1 = row.tanggalData[t1] || { kode: "", time: "" };
+        const d2 = row.tanggalData[t2] || { kode: "", time: "" };
+
+        let timeIn = "";
+        let timeOut = "";
+
+        if (d1.time) {
+            timeIn = d1.time.split('-')[0].trim();
+        } else if (t1 !== t2 && d2.time) {
+            timeIn = d2.time.split('-')[0].trim();
+        }
+
+        if (t1 !== t2 && d2.time) {
+            let parts = d2.time.split('-');
+            timeOut = parts[parts.length - 1].trim();
+        } else if (d1.time) {
+            let parts = d1.time.split('-');
+            timeOut = parts[parts.length - 1].trim();
+        }
+
+        if (timeIn === timeOut && d2.time === "") timeOut = "";
+        if (t1 === t2 && timeIn === timeOut && d1.time && !d1.time.includes('-')) timeOut = "";
+
+        return { timeIn, timeOut, ket: "" };
     }
 
     function gabungkanDanRender() {
@@ -636,22 +716,34 @@
             return { id: karyawan.id, name: karyawan.name, section: karyawan.section, position: karyawan.position, joinDate: karyawan.joinDate, status: karyawan.status, tanggalData };
         });
         databaseGlobal = finalData;
-        const dateFromEl = document.getElementById('dateFrom'); const dateToEl = document.getElementById('dateTo');
-        const optFrom = ['<option value="ALL">Dari</option>']; const optTo = ['<option value="ALL">Sampai</option>'];
-        for(let t of semuaTanggal) { optFrom.push(`<option value="${t}">${t}</option>`); optTo.push(`<option value="${t}">${t}</option>`); }
-        dateFromEl.innerHTML = optFrom.join(''); dateToEl.innerHTML = optTo.join('');
-        dateFromEl.value = "ALL"; dateToEl.value = "ALL";
+        
+        const dateFromEl = document.getElementById('dateFrom'); 
+        const dateToEl = document.getElementById('dateTo');
+        
+        if (dateFromEl && dateFromEl.options.length <= 1) { 
+            const optFrom = ['<option value="ALL">Dari</option>']; 
+            const optTo = ['<option value="ALL">Sampai</option>'];
+            for(let t of semuaTanggal) { 
+                optFrom.push(`<option value="${t}">${t}</option>`); 
+                optTo.push(`<option value="${t}">${t}</option>`); 
+            }
+            dateFromEl.innerHTML = optFrom.join(''); 
+            if (dateToEl) dateToEl.innerHTML = optTo.join(''); 
+        }
+        
         filters = {};
         precomputeFilterOptions();
         buildFilterHeader();
         renderTable();
-        document.getElementById('dbStatus').innerHTML = `✅ DB Karyawan: ${databaseKaryawan.length} | DB Time: ${timeMap.size}`;
+        
+        const dbStatusEl = document.getElementById('dbStatus');
+        if (dbStatusEl) dbStatusEl.innerHTML = `✅ DB Karyawan: ${databaseKaryawan.length} | DB Time: ${timeMap.size}`;
     }
 
-    // FIXED: Konversi MMM-yyyy untuk Join Date Filter & Urutan Terbaru-Terlama
     function precomputeFilterOptions() {
         filterOptions = {};
         const fixedColumns = ['id', 'name', 'section', 'position', 'joinDate', 'status'];
+
         for (let col of fixedColumns) {
             const valueSet = new Set();
             for (let row of databaseGlobal) {
@@ -664,36 +756,61 @@
                 values.sort((a,b) => {
                     if(a === "__EMPTY__") return 1;
                     if(b === "__EMPTY__") return -1;
-                    return parseYearMonth(b) - parseYearMonth(a); // Descending
+                    return parseYearMonth(b) - parseYearMonth(a); 
                 });
             } else {
                 values.sort((a,b) => (a==="__EMPTY__"?-1:b==="__EMPTY__"?1:String(a).localeCompare(String(b))));
             }
             filterOptions[col] = { values, displayValues: values.map(v => v === "__EMPTY__" ? "Kosong" : v) };
         }
+
+        const range = getTanggalRange();
+        
         for (let tgl of semuaTanggal) {
             const key = `date_${tgl}`;
             const valueSet = new Set();
             for (let row of databaseGlobal) {
-                const val = getCellDisplayValue(row.tanggalData[tgl]);
+                const cell = row.tanggalData[tgl];
+                let val = cell ? cell.kode : "";
+                if(val === "-") val = "";
                 valueSet.add((val && val !== "") ? val : "__EMPTY__");
             }
             const values = Array.from(valueSet).sort((a,b) => (a==="__EMPTY__"?-1:b==="__EMPTY__"?1:String(a).localeCompare(String(b))));
             filterOptions[key] = { values, displayValues: values.map(v => v === "__EMPTY__" ? "Kosong" : v) };
         }
+
+        ['timeIn', 'timeOut', 'ket'].forEach(key => {
+            const valueSet = new Set();
+            for (let row of databaseGlobal) {
+                const d = getDerivedTime(row, range);
+                let val = d[key];
+                valueSet.add((val && val !== "") ? val : "__EMPTY__");
+            }
+            const values = Array.from(valueSet).sort((a,b) => (a==="__EMPTY__"?-1:b==="__EMPTY__"?1:String(a).localeCompare(String(b))));
+            filterOptions[key] = { values, displayValues: values.map(v => v === "__EMPTY__" ? "Kosong" : v) };
+        });
     }
 
-    function getCellDisplayValue(cell) { return !cell ? "" : (cell.time ? cell.time : (cell.kode ? cell.kode : "")); }
-
     function buildFilterHeader() {
+        const thead = document.getElementById('tableHeader');
+        if (!thead) return;
+        
         const fixedCols = [
             { name: "NO", width: 40, filterKey: null }, { name: "ID", width: 70, filterKey: "id" },
             { name: "NAMA", width: 120, filterKey: "name" }, { name: "SECTION", width: 100, filterKey: "section" },
             { name: "POSISI", width: 100, filterKey: "position" }, { name: "JOIN DATE", width: 85, filterKey: "joinDate" },
             { name: "STATUS", width: 75, filterKey: "status" }
         ];
+        
+        let allCols = [...fixedCols];
         const range = getTanggalRange();
-        const allCols = [...fixedCols, ...range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: `date_${t}` }))];
+        
+        const dateCols = range.map(t => ({ name: `Tgl ${t}`, width: 60, filterKey: `date_${t}` }));
+        allCols = allCols.concat(dateCols);
+
+        allCols.push({ name: `TIME IN`, width: 80, filterKey: `timeIn` });
+        allCols.push({ name: `TIME OUT`, width: 80, filterKey: `timeOut` });
+        allCols.push({ name: `KETERANGAN`, width: 120, filterKey: `ket` });
         
         let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
         for(let i=0; i<allCols.length; i++) {
@@ -701,6 +818,9 @@
             if(i===0) cls += " sticky left-0 z-20 bg-slate-800";
             if(i===1) cls += " sticky left-[40px] z-20 bg-slate-800";
             if(i===2) cls += " sticky left-[110px] z-20 bg-slate-800";
+            
+            if (col.name === "TIME IN" || col.name === "TIME OUT") cls += " time-header";
+            
             th += `<th style="${ws}" class="${cls}">${col.name}</th>`;
         }
         th += `</tr><tr class="bg-gray-100 text-[9px]">`;
@@ -709,17 +829,23 @@
             if(i===0) { cls += " sticky left-0 z-10 bg-gray-100"; ws += "width:40px;"; }
             if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; ws += "width:70px;"; }
             if(i===2) { cls += " sticky left-[110px] z-10 bg-gray-100"; ws += "width:120px;"; }
+            
+            if (col.name === "TIME IN" || col.name === "TIME OUT") cls += " time-filter";
+
             th += `<th style="${ws}" class="${cls}" data-colkey="${col.filterKey || ''}"><div class="filter-container" id="filter_${col.filterKey || ''}"></div></th>`;
         }
-        th += `</tr>`; tableHeader.innerHTML = th;
+        th += `</tr>`; 
+        thead.innerHTML = th;
         
         for(let col of allCols) {
             if (!col.filterKey) continue;
             const container = document.getElementById(`filter_${col.filterKey}`);
+            if (!container) continue;
             const options = filterOptions[col.filterKey];
-            if (!container || !options) continue;
+            if (!options) continue;
             if (!filters[col.filterKey]) filters[col.filterKey] = new Set();
-            const set = filters[col.filterKey], isSearchable = (col.filterKey === 'position' || col.filterKey.startsWith('date_'));
+            const set = filters[col.filterKey];
+            const isSearchable = (col.filterKey === 'position' || col.filterKey === 'timeIn' || col.filterKey === 'timeOut' || col.filterKey === 'ket' || col.filterKey.startsWith('date_'));
             if (isSearchable) createSearchableMultiSelect(container, options.values, options.displayValues, set, col.filterKey, () => renderTable());
             else createMultiSelect(container, options.values, options.displayValues, set, col.filterKey, () => renderTable());
         }
@@ -968,7 +1094,11 @@
     }
 
     function getTanggalRange() {
-        let from = document.getElementById('dateFrom').value, to = document.getElementById('dateTo').value;
+        const fromEl = document.getElementById('dateFrom');
+        const toEl = document.getElementById('dateTo');
+        let from = fromEl ? fromEl.value : "ALL";
+        let to = toEl ? toEl.value : "ALL";
+        
         if(from === "ALL" || to === "ALL") return semuaTanggal;
         let fromIdx = semuaTanggal.indexOf(parseInt(from)), toIdx = semuaTanggal.indexOf(parseInt(to));
         if(fromIdx === -1 || toIdx === -1) return semuaTanggal;
@@ -976,28 +1106,42 @@
         return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
     
+    // SUPER FAST SINGLE-PASS FILTER
     function applyAllFiltersFast() {
         if (!databaseGlobal.length) return [];
-        const searchKeyword = globalSearch.value.trim().toLowerCase();
-        const range = getTanggalRange();
-        const mode = document.getElementById('filterAttendanceDetail').value;
+        
+        const searchInput = document.getElementById('globalSearch');
+        const searchKeyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
+        
+        const filterEl = document.getElementById('filterAttendanceDetail');
+        const mode = filterEl ? filterEl.value : "ALL"; 
         
         const activeFilters = [];
         for (let key in filters) { if(filters[key].size > 0) activeFilters.push({key, set: filters[key]}); }
         const hasSearch = searchKeyword !== "";
         const checkMode = mode !== "ALL";
 
+        const range = getTanggalRange();
+
         return databaseGlobal.filter(row => {
             if (hasSearch && !(row.id.toLowerCase().includes(searchKeyword) || row.name.toLowerCase().includes(searchKeyword))) return false;
             
+            const d = getDerivedTime(row, range);
+
             for (let i = 0; i < activeFilters.length; i++) {
                 const {key, set} = activeFilters[i];
-                if (key.startsWith('date_')) {
+                if (key === 'timeIn') {
+                    if (!set.has(d.timeIn) && !(d.timeIn === "" && set.has("__EMPTY__"))) return false;
+                } else if (key === 'timeOut') {
+                    if (!set.has(d.timeOut) && !(d.timeOut === "" && set.has("__EMPTY__"))) return false;
+                } else if (key === 'ket') {
+                    if (!set.has(d.ket) && !(d.ket === "" && set.has("__EMPTY__"))) return false;
+                } else if (key.startsWith('date_')) {
                     const tgl = parseInt(key.split('_')[1]);
-                    const cellVal = getCellDisplayValue(row.tanggalData[tgl]);
+                    let cellVal = row.tanggalData[tgl] ? row.tanggalData[tgl].kode : "";
+                    if(cellVal==='-') cellVal = ""; 
                     if (!set.has(cellVal) && !(cellVal === "" && set.has("__EMPTY__"))) return false;
                 } else if (key === 'joinDate') {
-                    // FIXED: Logika filter untuk mencocokkan MMM-yyyy saja
                     let rowVal = getYearMonth(row.joinDate);
                     let isEmp = (rowVal === "");
                     if (!set.has(rowVal) && !(isEmp && set.has("__EMPTY__"))) return false;
@@ -1034,8 +1178,10 @@
     function updateRekapUtama(dataList) {
         let w=0,s=0,sec=0;
         for(let r of dataList) { if(r.status==="WORKER") w++; else if(r.status==="STAFF") s++; else if(r.status==="SECURITY") sec++; }
-        document.getElementById('totalWorker').innerText = w; document.getElementById('totalStaff').innerText = s;
-        document.getElementById('totalSecurity').innerText = sec; document.getElementById('totalSemua').innerText = dataList.length;
+        const wEl = document.getElementById('totalWorker'); if (wEl) wEl.innerText = w;
+        const sEl = document.getElementById('totalStaff'); if (sEl) sEl.innerText = s;
+        const secEl = document.getElementById('totalSecurity'); if (secEl) secEl.innerText = sec;
+        const allEl = document.getElementById('totalSemua'); if (allEl) allEl.innerText = dataList.length;
     }
 
     function highlightText(text, keyword) {
@@ -1056,12 +1202,12 @@
     let renderScheduled = false;
     let currentFilteredData = [];
     let currentRenderIndex = 0;
-    const CHUNK_SIZE = 150; // Diperbesar agar pasti mencetak baris yang banyak untuk menimbulkan Scrollbar
-    let currentSummaryData = null; 
+    const CHUNK_SIZE = 150; 
 
-    // FIXED: Fungsi untuk mengisi kontainer sampai bawah
     function fillContainer() {
-        while (tableContainer.scrollHeight <= tableContainer.clientHeight + 100 && currentRenderIndex < currentFilteredData.length) {
+        const tContainer = document.getElementById('tableContainer');
+        if (!tContainer) return;
+        while (tContainer.scrollHeight <= tContainer.clientHeight + 100 && currentRenderIndex < currentFilteredData.length) {
             renderNextChunk();
         }
     }
@@ -1073,20 +1219,26 @@
             currentFilteredData = applyAllFiltersFast();
             updateRekapUtama(currentFilteredData);
             
+            const tBody = document.getElementById('tableBody');
+            const tContainer = document.getElementById('tableContainer');
             const range = getTanggalRange();
+            
+            if (!tBody) { renderScheduled = false; return; }
+            
             if (currentFilteredData.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="${7 + range.length}" class="p-4 text-center text-slate-500 font-bold">Tidak ada data yang sesuai filter</td></tr>`;
-                renderScheduled = false; return;
+                const colspan = 10 + range.length; // 7 fixed + range + 3 extra
+                tBody.innerHTML = `<tr><td colspan="${colspan}" class="p-4 text-center text-slate-500 font-bold">Tidak ada data yang sesuai filter</td></tr>`;
+                renderScheduled = false; 
+                return;
             }
             
-            tableBody.innerHTML = '';
+            tBody.innerHTML = '';
             currentRenderIndex = 0;
             renderNextChunk();
-            tableContainer.scrollTop = 0;
             
-            // Loop ekstra jika monitor user sangat besar sehingga 1 chunk belum memunculkan scrollbar
+            if (tContainer) tContainer.scrollTop = 0;
+            
             setTimeout(() => { fillContainer(); }, 10);
-            
             renderScheduled = false;
         });
     }
@@ -1094,15 +1246,16 @@
     function renderNextChunk() {
         if (currentRenderIndex >= currentFilteredData.length) return;
         
-        const range = getTanggalRange();
-        const keyword = globalSearch.value.trim().toLowerCase();
+        let range = getTanggalRange();
+        const searchInput = document.getElementById('globalSearch');
+        const keyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
         const htmlChunks = [];
         
         const endIndex = Math.min(currentRenderIndex + CHUNK_SIZE, currentFilteredData.length);
         
         for(let index = currentRenderIndex; index < endIndex; index++) {
             let row = currentFilteredData[index];
-            htmlChunks.push(`<tr class="hover:bg-blue-50 border-b transition-colors">`);
+            htmlChunks.push(`<tr class="hover:bg-blue-50 border-b border-slate-200">`);
             
             let sBadge = row.status==="WORKER"?'<span class="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[9px]">WORKER</span>':
                          row.status==="STAFF"?'<span class="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[9px]">STAFF</span>':
@@ -1119,32 +1272,66 @@
                 `<td class="col-status-fixed px-1 py-0.5" style="width:75px;">${sBadge}</td>`
             );
 
+            // Render kolom tanggal (HANYA KODE ASLI, TANPA JAM)
             for(let i=0; i<range.length; i++) {
                 const dataTgl = row.tanggalData[range[i]] || { kode: "", time: "" };
-                let kode = dataTgl.kode, time = dataTgl.time, display = time ? time : (kode ? kode : "—");
-                let colorClass = "", codeClass = "";
-                if (kode && !time) {
-                    codeClass = getAttendanceCodeClass(kode);
+                let kode = dataTgl.kode;
+                let display = kode ? kode : "—";
+                let colorClass = "";
+                
+                if (kode) {
+                    let codeClass = getAttendanceCodeClass(kode);
                     if (codeClass) display = `<span class="${codeClass} shadow-sm">${display}</span>`;
                     else colorClass = "text-orange-500 font-bold";
-                } else if (time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
-                else if (time && time.includes('-')) colorClass = "text-emerald-600 font-bold";
+                }
                 
-                htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
+                htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center ${colorClass}" style="width:60px;">${display}</td>`);
             }
+
+            // Ekstrak Time In dan Time Out
+            const d = getDerivedTime(row, range);
+            htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell font-bold text-blue-600 bg-blue-50/50 border-l border-slate-300" style="width:80px;">${d.timeIn}</td>`);
+            htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell font-bold text-emerald-600 bg-emerald-50/50 border-x border-slate-300" style="width:80px;">${d.timeOut}</td>`);
+            htmlChunks.push(`<td class="px-1 py-0.5 text-slate-500 font-semibold truncate bg-orange-50/30" style="width:120px;" title="${d.ket}">${d.ket}</td>`);
+            
             htmlChunks.push(`</tr>`);
         }
         
-        tableBody.insertAdjacentHTML('beforeend', htmlChunks.join(''));
+        const tBody = document.getElementById('tableBody');
+        if (tBody) tBody.insertAdjacentHTML('beforeend', htmlChunks.join(''));
         currentRenderIndex = endIndex;
     }
 
-    // FIXED: Margin deteksi scroll yang jauh lebih responsif
-    tableContainer.addEventListener('scroll', () => {
-        if (tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight - 800) {
-            renderNextChunk();
+    function exportToExcel() {
+        const filteredData = applyAllFiltersFast();
+        if(!filteredData.length) { showAlert("Peringatan","Tidak ada data untuk diexport"); return; }
+        
+        const headers = ["NO", "ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS"];
+        let range = getTanggalRange();
+        headers.push(...range.map(t => `Tgl ${t}`));
+        headers.push("TIME IN", "TIME OUT", "KETERANGAN");
+        
+        const wsData = [headers];
+        for(let i=0; i<filteredData.length; i++) {
+            const row = filteredData[i];
+            const rowArr = [i+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
+            
+            for(let tgl of range) {
+                const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
+                rowArr.push(dataTgl.kode ? dataTgl.kode : "");
+            }
+            
+            const d = getDerivedTime(row, range);
+            rowArr.push(d.timeIn, d.timeOut, d.ket);
+            
+            wsData.push(rowArr);
         }
-    });
+        
+        const ws = XLSX.utils.aoa_to_sheet(wsData); const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+        const suffix = `Attendance_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}`;
+        XLSX.writeFile(wb, `Hoplun_${suffix}.xlsx`);
+    }
 
     function openSummary() {
         const filteredData = applyAllFiltersFast();
@@ -1241,87 +1428,110 @@
         let dateText = d.dateText.replace(/_/g, ' ');
         
         const wsData = [
-            ["LAPORAN SUMMARY KEHADIRAN"],
-            ["PERIODE:", dateText],
-            [],
+            ["LAPORAN SUMMARY KEHADIRAN"], ["PERIODE:", dateText], [],
             ["KATEGORI / KETERANGAN", "JUMLAH KARYAWAN"]
         ];
 
         let totalHadir = d.hadir.WORKER + d.hadir.STAFF + d.hadir.SECURITY;
         wsData.push(["HADIR (Ada Time In / Out)", totalHadir]);
-        wsData.push(["- Worker", d.hadir.WORKER]);
-        wsData.push(["- Staff", d.hadir.STAFF]);
-        wsData.push(["- Security", d.hadir.SECURITY]);
+        wsData.push(["- Worker", d.hadir.WORKER]); wsData.push(["- Staff", d.hadir.STAFF]); wsData.push(["- Security", d.hadir.SECURITY]);
         
         let totalKosong = d.kosong.WORKER + d.kosong.STAFF + d.kosong.SECURITY;
         wsData.push(["KOSONG (Tidak Ada Data)", totalKosong]);
-        wsData.push(["- Worker", d.kosong.WORKER]);
-        wsData.push(["- Staff", d.kosong.STAFF]);
-        wsData.push(["- Security", d.kosong.SECURITY]);
+        wsData.push(["- Worker", d.kosong.WORKER]); wsData.push(["- Staff", d.kosong.STAFF]); wsData.push(["- Security", d.kosong.SECURITY]);
 
         let totalLain = Object.values(d.lainLain).reduce((a, b) => a + b, 0);
         wsData.push(["LAIN-LAIN (Kode Absensi)", totalLain]);
-        if (totalLain === 0) {
-            wsData.push(["- Tidak ada", 0]);
-        } else {
-            for (let [kode, jumlah] of Object.entries(d.lainLain).sort()) {
-                wsData.push([`- Kode: ${kode}`, jumlah]);
-            }
-        }
+        if (totalLain === 0) wsData.push(["- Tidak ada", 0]);
+        else for (let [kode, jumlah] of Object.entries(d.lainLain).sort()) wsData.push([`- Kode: ${kode}`, jumlah]);
         
-        wsData.push(["", ""]);
-        wsData.push(["GRAND TOTAL KESELURUHAN", d.total]);
+        wsData.push(["", ""]); wsData.push(["GRAND TOTAL KESELURUHAN", d.total]);
 
-        const ws = XLSX.utils.aoa_to_sheet(wsData); 
-        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(wsData); const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Summary Kehadiran");
         XLSX.writeFile(wb, `Hoplun_Summary_${d.dateText.replace(/\s/g,'_')}.xlsx`);
     }
 
-    function exportToExcel() {
-        const filteredData = applyAllFiltersFast();
-        if(!filteredData.length) { showAlert("Peringatan","Tidak ada data untuk diexport"); return; }
-        const range = getTanggalRange();
-        const headers = ["NO", "ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS", ...range.map(t => `Tgl ${t}`)];
-        const wsData = [headers];
-        for(let i=0; i<filteredData.length; i++) {
-            const row = filteredData[i];
-            const rowArr = [i+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
-            for(let tgl of range) {
-                const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
-                rowArr.push(dataTgl.time ? dataTgl.time : (dataTgl.kode ? dataTgl.kode : ""));
-            }
-            wsData.push(rowArr);
-        }
-        const ws = XLSX.utils.aoa_to_sheet(wsData); const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-        XLSX.writeFile(wb, `Hoplun_Attendance_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
+    // EVENT LISTENERS SECURE BINDING
+    function safeAddListener(id, event, handler) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener(event, handler);
     }
 
-    function readFileAsBinaryString(file) { return new Promise((resolve,reject)=>{ const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=()=>reject(new Error("Gagal membaca file")); fr.readAsBinaryString(file); }); }
+    safeAddListener('globalSearch', 'input', debounce(() => renderTable(), 250));
+    safeAddListener('dateFrom', 'change', () => { precomputeFilterOptions(); buildFilterHeader(); renderTable(); });
+    safeAddListener('dateTo', 'change', () => { precomputeFilterOptions(); buildFilterHeader(); renderTable(); });
+    safeAddListener('filterAttendanceDetail', 'change', renderTable);
+    safeAddListener('btnExport', 'click', exportToExcel);
+
+    safeAddListener('btnHapusTgl', 'click', () => {
+        const range = getTanggalRange();
+        if (!databaseKaryawan.length) {
+            showAlert("Info", "Belum ada data untuk dihapus.");
+            return;
+        }
+        
+        let dateText = range.length === 1 ? `tanggal ${range[0]}` : `tanggal ${range[0]} sampai ${range[range.length-1]}`;
+        if (range.length === semuaTanggal.length) dateText = "SEMUA TANGGAL";
+        
+        if (confirm(`PENTING: Anda yakin ingin menghapus SELURUH data (Time & Absen) pada ${dateText}?\n\n(Kolom ini akan dikosongkan dan Anda bisa melakukan Update data baru)`)) {
+            for (const key of timeMap.keys()) {
+                const tgl = parseInt(key.split('_')[1]);
+                if (range.includes(tgl)) { timeMap.delete(key); }
+            }
+            for (let k of databaseKaryawan) {
+                if (k.kodePerTanggal) {
+                    for (let tgl of range) {
+                        if (k.kodePerTanggal[tgl] !== undefined) { delete k.kodePerTanggal[tgl]; }
+                    }
+                }
+            }
+            try {
+                localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
+                localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
+            } catch(e) { console.warn("Gagal update storage", e); }
+            
+            gabungkanDanRender();
+            showAlert("Sukses", `Semua data pada ${dateText} telah dikosongkan!`);
+        }
+    });
+
+    safeAddListener('resetDataBtn', 'click', () => {
+        if(confirm("Yakin ingin menghapus seluruh data database dari browser?")) { 
+            localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; filters={}; renderTable(); 
+            const dbStatus = document.getElementById('dbStatus');
+            if (dbStatus) dbStatus.innerHTML="Menunggu Data..."; 
+            clearLastUpdate(); 
+            showAlert("Reset","Data berhasil dihapus dari memori."); 
+        }
+    });
     
-    document.getElementById('hiddenFolderInput').addEventListener('change', async (e) => {
+    safeAddListener('hiddenFolderInput', 'change', async (e) => {
         try {
             const files = Array.from(e.target.files);
             if(files.length === 0) return;
-            document.getElementById('folderXlsbDisplay').value = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : "Folder terpilih";
+            const folderDisplay = document.getElementById('folderXlsbDisplay');
+            if (folderDisplay) folderDisplay.value = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : "Folder terpilih";
             const xlsbFiles = files.filter(file => isFileValid(file));
             if (xlsbFiles.length === 0) { showAlert("Peringatan", "File .xlsb valid (Worker/Staff/Security) tidak ditemukan di folder."); return; }
             await prosesFileExcel(xlsbFiles);
         } catch (error) { showAlert("Error", "Gagal membaca folder: " + error.message); } finally { e.target.value = ""; }
     });
     
-    document.getElementById('cancelLoadingBtn').addEventListener('click', () => { if(isProcessing) cancelProcessing = true; });
+    safeAddListener('cancelLoadingBtn', 'click', () => { if(isProcessing) cancelProcessing = true; });
     
-    document.getElementById('hiddenTimeInput').addEventListener('change', async (e) => {
+    safeAddListener('hiddenTimeInput', 'change', async (e) => {
         try {
             if(!e.target.files.length) return;
             const file = e.target.files[0];
             if (!isTimeFileValid(file)) { showAlert("Error", "File time tidak valid."); e.target.value = ""; return; }
             
-            document.getElementById('fileTimeDisplay').value = file.name;
-            loadingOverlay.classList.remove('hidden');
-            loadingDetailText.innerText = `Memproses Data Time: ${file.name}`;
+            const fileDisplay = document.getElementById('fileTimeDisplay');
+            if (fileDisplay) fileDisplay.value = file.name;
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+            const loadingDetailText = document.getElementById('loadingDetailText');
+            if (loadingDetailText) loadingDetailText.innerText = `Memproses Data Time: ${file.name}`;
             await yieldToBrowser();
             
             const newTimeMap = await loadTimeFile(file);
@@ -1334,8 +1544,10 @@
                     console.warn("Penyimpanan lokal penuh, namun data tetap ada di memori sementara.");
                 }
                 
-                if (databaseKaryawan.length) gabungkanDanRender();
-                else showAlert("Info", `Data Time tersimpan. Silakan Update Absen (Folder) dulu.`);
+                if (databaseKaryawan.length) {
+                    gabungkanDanRender();
+                }
+                else { showAlert("Info", `Data Time tersimpan. Silakan Update Absen (Folder) dulu.`); }
             } else { 
                 showAlert("Gagal", `File Time (${file.name}) kosong atau format salah.`); 
             }
@@ -1343,70 +1555,19 @@
             console.error("Terjadi Error Time:", error);
             showAlert("Error", "Gagal memproses file time: " + error.message); 
         } finally { 
-            loadingOverlay.classList.add('hidden'); 
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) loadingOverlay.classList.add('hidden'); 
             e.target.value = ""; 
         }
     });
-    
-    globalSearch.addEventListener('input', debounce(() => renderTable(), 250));
-    
-    document.getElementById('dateFrom').addEventListener('change', () => { buildFilterHeader(); renderTable(); });
-    document.getElementById('dateTo').addEventListener('change', () => { buildFilterHeader(); renderTable(); });
-    
-    // Fitur Baru: Menghapus Data Sesuai Tanggal Terpilih
-    document.getElementById('btnHapusTgl').addEventListener('click', () => {
-        const range = getTanggalRange();
-        if (!databaseKaryawan.length) {
-            showAlert("Info", "Belum ada data untuk dihapus.");
-            return;
-        }
-        
-        let dateText = range.length === 1 ? `tanggal ${range[0]}` : `tanggal ${range[0]} sampai ${range[range.length-1]}`;
-        if (range.length === semuaTanggal.length) dateText = "SEMUA TANGGAL";
-        
-        if (confirm(`PENTING: Anda yakin ingin menghapus SELURUH data (Time & Absen) pada ${dateText}?\n\n(Kolom ini akan dikosongkan dan Anda bisa melakukan Update data baru)`)) {
-            
-            // 1. Hapus dari memori Time
-            for (const key of timeMap.keys()) {
-                const tgl = parseInt(key.split('_')[1]);
-                if (range.includes(tgl)) {
-                    timeMap.delete(key);
-                }
-            }
-            
-            // 2. Hapus dari memori File Absen (Kode PR, AL, dll)
-            for (let k of databaseKaryawan) {
-                if (k.kodePerTanggal) {
-                    for (let tgl of range) {
-                        if (k.kodePerTanggal[tgl] !== undefined) {
-                            delete k.kodePerTanggal[tgl];
-                        }
-                    }
-                }
-            }
-            
-            // 3. Timpa/Update penyimpanan di browser
-            try {
-                localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
-                localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
-            } catch(e) {
-                console.warn("Gagal update storage", e);
-            }
-            
-            // 4. Render Ulang
-            gabungkanDanRender();
-            showAlert("Sukses", `Semua data pada ${dateText} telah dikosongkan! Silakan upload file Time/Absen yang baru.`);
+
+    safeAddListener('tableContainer', 'scroll', () => {
+        const tableContainer = document.getElementById('tableContainer');
+        if (tableContainer && tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight - 800) {
+            renderNextChunk();
         }
     });
 
-    document.getElementById('filterAttendanceDetail').addEventListener('change', renderTable);
-    document.getElementById('btnExport').addEventListener('click', exportToExcel);
-    document.getElementById('resetDataBtn').addEventListener('click', () => {
-        if(confirm("Yakin ingin menghapus seluruh data database dari browser?")) { 
-            localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; filters={}; renderTable(); document.getElementById('dbStatus').innerHTML="Menunggu Data..."; clearLastUpdate(); showAlert("Reset","Data berhasil dihapus dari memori."); 
-        }
-    });
-    
     (function loadStored() {
         const karyawan = localStorage.getItem('hoplun_karyawan');
         const tanggal = localStorage.getItem('hoplun_tanggal');
