@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hoplun - Attendance Dashboard (Integrated Time View)</title>
+    <title>Hoplun - Attendance Dashboard (Super Fast)</title>
     <link rel="icon" type="image/png" href="hoplun128.png">
     <link rel="shortcut icon" href="hoplun128.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -72,10 +72,6 @@
             border-top: 1px solid #e5e7eb;
             overflow: visible;
         }
-        /* Time In/Out Highlight Header */
-        th.time-header { background-color: #c2410c !important; }
-        th.time-filter { background-color: #ffedd5 !important; border-color: #fdba74 !important; }
-        
         td { 
             padding: 4px 4px; 
             border-bottom: 1px solid #e2e8f0;
@@ -187,7 +183,7 @@
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
                 <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
-                <p class="text-[9px] text-emerald-400">Integrated Time View | Super Fast Engine</p>
+                <p class="text-[9px] text-emerald-400">Super Fast Engine</p>
             </div>
         </div>
 
@@ -201,7 +197,7 @@
             <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold text-yellow-400">📄 File Time:</span>
                 <input type="text" id="fileTimeDisplay" readonly placeholder="Pilih file time..." class="text-[9px] px-1.5 py-1 rounded w-24 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenTimeInput').click()">
-                <button onclick="document.getElementById('hiddenTimeInput').click()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Time In/Out</button>
+                <button onclick="document.getElementById('hiddenTimeInput').click()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Time</button>
             </div>
             <div class="w-px h-5 bg-slate-500 mx-1"></div>
             <button id="resetDataBtn" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[9px] font-bold shadow-sm transition" title="Hapus Seluruh Data Browser">Reset Data</button>
@@ -242,7 +238,7 @@
                 <option value="MANGKIR_CUTI">Mangkir + Cuti</option>
                 <option value="HOLIDAY">Holiday (HL)</option>
             </select>
-            <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export Excel</button>
+            <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export</button>
             <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
             
             <span id="dbStatus" class="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-1 rounded border border-blue-200">Menunggu Data...</span>
@@ -404,20 +400,21 @@
 
     const yieldToBrowser = () => new Promise(resolve => setTimeout(resolve, 5));
 
-    function readFileAsArrayBuffer(file) { 
+    // MEMASTIKAN PENGGUNAAN BINARY STRING UNTUK MENGHINDARI ERROR ZIP / UNCOMPRESSED SIZE
+    function readFileAsBinaryString(file) { 
         return new Promise((resolve,reject)=>{ 
             const fr=new FileReader(); 
             fr.onload=e=>resolve(e.target.result); 
             fr.onerror=()=>reject(new Error("Gagal membaca file")); 
-            fr.readAsArrayBuffer(file); 
+            fr.readAsBinaryString(file); 
         }); 
     }
 
     async function bacaFileXLSB(file, forcedStatus) {
         return new Promise(async (resolve) => {
             try {
-                const data = await readFileAsArrayBuffer(file);
-                const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: true });
+                const data = await readFileAsBinaryString(file);
+                const workbook = XLSX.read(data, { type: 'binary', cellDates: true, dense: true });
                 let sheetName = workbook.SheetNames.find(s => s.toUpperCase().includes('ATTEND')) || workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 
@@ -604,8 +601,8 @@
     async function loadTimeFile(file) {
         return new Promise(async (resolve) => {
             try {
-                const data = await readFileAsArrayBuffer(file);
-                const workbook = XLSX.read(data, { type: 'array', dense: true });
+                const data = await readFileAsBinaryString(file);
+                const workbook = XLSX.read(data, { type: 'binary', dense: true });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
                 if(!rows.length) { resolve(new Map()); return; }
@@ -638,6 +635,7 @@
                     
                     if(id && dateRaw && record) {
                         let tgl = NaN;
+                        // Deteksi dan perbaikan Format Tanggal Cerdas
                         if(dateRaw instanceof Date) {
                             tgl = dateRaw.getDate();
                         } else if(typeof dateRaw === 'number') {
@@ -651,7 +649,7 @@
                                 else tgl = parseInt(p[0], 10);
                             } else if (dateStr.includes('-')) {
                                 const p = dateStr.split('-');
-                                if (p[0] && p[0].length === 4) tgl = parseInt(p[2], 10);
+                                if (p[0].length === 4) tgl = parseInt(p[2], 10);
                                 else tgl = parseInt(p[0], 10);
                             } else {
                                 const parsed = new Date(dateStr);
@@ -671,37 +669,6 @@
                 resolve(new Map()); 
             }
         });
-    }
-
-    function getDerivedTime(row, range) {
-        if (!range || range.length === 0) return { timeIn: "", timeOut: "", ket: "" };
-        const t1 = range[0];
-        const t2 = range[range.length - 1];
-
-        const d1 = row.tanggalData[t1] || { kode: "", time: "" };
-        const d2 = row.tanggalData[t2] || { kode: "", time: "" };
-
-        let timeIn = "";
-        let timeOut = "";
-
-        if (d1.time) {
-            timeIn = d1.time.split('-')[0].trim();
-        } else if (t1 !== t2 && d2.time) {
-            timeIn = d2.time.split('-')[0].trim();
-        }
-
-        if (t1 !== t2 && d2.time) {
-            let parts = d2.time.split('-');
-            timeOut = parts[parts.length - 1].trim();
-        } else if (d1.time) {
-            let parts = d1.time.split('-');
-            timeOut = parts[parts.length - 1].trim();
-        }
-
-        if (timeIn === timeOut && d2.time === "") timeOut = "";
-        if (t1 === t2 && timeIn === timeOut && d1.time && !d1.time.includes('-')) timeOut = "";
-
-        return { timeIn, timeOut, ket: "" };
     }
 
     function gabungkanDanRender() {
@@ -764,32 +731,19 @@
             filterOptions[col] = { values, displayValues: values.map(v => v === "__EMPTY__" ? "Kosong" : v) };
         }
 
-        const range = getTanggalRange();
-        
         for (let tgl of semuaTanggal) {
             const key = `date_${tgl}`;
             const valueSet = new Set();
             for (let row of databaseGlobal) {
-                const cell = row.tanggalData[tgl];
-                let val = cell ? cell.kode : "";
-                if(val === "-") val = "";
+                const val = getCellDisplayValue(row.tanggalData[tgl]);
                 valueSet.add((val && val !== "") ? val : "__EMPTY__");
             }
             const values = Array.from(valueSet).sort((a,b) => (a==="__EMPTY__"?-1:b==="__EMPTY__"?1:String(a).localeCompare(String(b))));
             filterOptions[key] = { values, displayValues: values.map(v => v === "__EMPTY__" ? "Kosong" : v) };
         }
-
-        ['timeIn', 'timeOut', 'ket'].forEach(key => {
-            const valueSet = new Set();
-            for (let row of databaseGlobal) {
-                const d = getDerivedTime(row, range);
-                let val = d[key];
-                valueSet.add((val && val !== "") ? val : "__EMPTY__");
-            }
-            const values = Array.from(valueSet).sort((a,b) => (a==="__EMPTY__"?-1:b==="__EMPTY__"?1:String(a).localeCompare(String(b))));
-            filterOptions[key] = { values, displayValues: values.map(v => v === "__EMPTY__" ? "Kosong" : v) };
-        });
     }
+
+    function getCellDisplayValue(cell) { return !cell ? "" : (cell.time ? cell.time : (cell.kode ? cell.kode : "")); }
 
     function buildFilterHeader() {
         const thead = document.getElementById('tableHeader');
@@ -804,13 +758,8 @@
         
         let allCols = [...fixedCols];
         const range = getTanggalRange();
-        
-        const dateCols = range.map(t => ({ name: `Tgl ${t}`, width: 60, filterKey: `date_${t}` }));
+        const dateCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: `date_${t}` }));
         allCols = allCols.concat(dateCols);
-
-        allCols.push({ name: `TIME IN`, width: 80, filterKey: `timeIn` });
-        allCols.push({ name: `TIME OUT`, width: 80, filterKey: `timeOut` });
-        allCols.push({ name: `KETERANGAN`, width: 120, filterKey: `ket` });
         
         let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
         for(let i=0; i<allCols.length; i++) {
@@ -818,9 +767,6 @@
             if(i===0) cls += " sticky left-0 z-20 bg-slate-800";
             if(i===1) cls += " sticky left-[40px] z-20 bg-slate-800";
             if(i===2) cls += " sticky left-[110px] z-20 bg-slate-800";
-            
-            if (col.name === "TIME IN" || col.name === "TIME OUT") cls += " time-header";
-            
             th += `<th style="${ws}" class="${cls}">${col.name}</th>`;
         }
         th += `</tr><tr class="bg-gray-100 text-[9px]">`;
@@ -829,9 +775,6 @@
             if(i===0) { cls += " sticky left-0 z-10 bg-gray-100"; ws += "width:40px;"; }
             if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; ws += "width:70px;"; }
             if(i===2) { cls += " sticky left-[110px] z-10 bg-gray-100"; ws += "width:120px;"; }
-            
-            if (col.name === "TIME IN" || col.name === "TIME OUT") cls += " time-filter";
-
             th += `<th style="${ws}" class="${cls}" data-colkey="${col.filterKey || ''}"><div class="filter-container" id="filter_${col.filterKey || ''}"></div></th>`;
         }
         th += `</tr>`; 
@@ -845,7 +788,7 @@
             if (!options) continue;
             if (!filters[col.filterKey]) filters[col.filterKey] = new Set();
             const set = filters[col.filterKey];
-            const isSearchable = (col.filterKey === 'position' || col.filterKey === 'timeIn' || col.filterKey === 'timeOut' || col.filterKey === 'ket' || col.filterKey.startsWith('date_'));
+            const isSearchable = (col.filterKey === 'position' || col.filterKey.startsWith('date_'));
             if (isSearchable) createSearchableMultiSelect(container, options.values, options.displayValues, set, col.filterKey, () => renderTable());
             else createMultiSelect(container, options.values, options.displayValues, set, col.filterKey, () => renderTable());
         }
@@ -1125,21 +1068,12 @@
 
         return databaseGlobal.filter(row => {
             if (hasSearch && !(row.id.toLowerCase().includes(searchKeyword) || row.name.toLowerCase().includes(searchKeyword))) return false;
-            
-            const d = getDerivedTime(row, range);
 
             for (let i = 0; i < activeFilters.length; i++) {
                 const {key, set} = activeFilters[i];
-                if (key === 'timeIn') {
-                    if (!set.has(d.timeIn) && !(d.timeIn === "" && set.has("__EMPTY__"))) return false;
-                } else if (key === 'timeOut') {
-                    if (!set.has(d.timeOut) && !(d.timeOut === "" && set.has("__EMPTY__"))) return false;
-                } else if (key === 'ket') {
-                    if (!set.has(d.ket) && !(d.ket === "" && set.has("__EMPTY__"))) return false;
-                } else if (key.startsWith('date_')) {
+                if (key.startsWith('date_')) {
                     const tgl = parseInt(key.split('_')[1]);
-                    let cellVal = row.tanggalData[tgl] ? row.tanggalData[tgl].kode : "";
-                    if(cellVal==='-') cellVal = ""; 
+                    let cellVal = getCellDisplayValue(row.tanggalData[tgl]);
                     if (!set.has(cellVal) && !(cellVal === "" && set.has("__EMPTY__"))) return false;
                 } else if (key === 'joinDate') {
                     let rowVal = getYearMonth(row.joinDate);
@@ -1226,7 +1160,7 @@
             if (!tBody) { renderScheduled = false; return; }
             
             if (currentFilteredData.length === 0) {
-                const colspan = 10 + range.length; // 7 fixed + range + 3 extra
+                const colspan = 7 + range.length; 
                 tBody.innerHTML = `<tr><td colspan="${colspan}" class="p-4 text-center text-slate-500 font-bold">Tidak ada data yang sesuai filter</td></tr>`;
                 renderScheduled = false; 
                 return;
@@ -1272,27 +1206,21 @@
                 `<td class="col-status-fixed px-1 py-0.5" style="width:75px;">${sBadge}</td>`
             );
 
-            // Render kolom tanggal (HANYA KODE ASLI, TANPA JAM)
+            // Render kolom tanggal DENGAN JAM tergabung kembali
             for(let i=0; i<range.length; i++) {
                 const dataTgl = row.tanggalData[range[i]] || { kode: "", time: "" };
-                let kode = dataTgl.kode;
-                let display = kode ? kode : "—";
-                let colorClass = "";
+                let kode = dataTgl.kode, time = dataTgl.time, display = time ? time : (kode ? kode : "—");
+                let colorClass = "", codeClass = "";
                 
-                if (kode) {
-                    let codeClass = getAttendanceCodeClass(kode);
+                if (kode && !time) {
+                    codeClass = getAttendanceCodeClass(kode);
                     if (codeClass) display = `<span class="${codeClass} shadow-sm">${display}</span>`;
                     else colorClass = "text-orange-500 font-bold";
-                }
+                } else if (time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
+                else if (time && time.includes('-')) colorClass = "text-emerald-600 font-bold";
                 
-                htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center ${colorClass}" style="width:60px;">${display}</td>`);
+                htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
             }
-
-            // Ekstrak Time In dan Time Out
-            const d = getDerivedTime(row, range);
-            htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell font-bold text-blue-600 bg-blue-50/50 border-l border-slate-300" style="width:80px;">${d.timeIn}</td>`);
-            htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell font-bold text-emerald-600 bg-emerald-50/50 border-x border-slate-300" style="width:80px;">${d.timeOut}</td>`);
-            htmlChunks.push(`<td class="px-1 py-0.5 text-slate-500 font-semibold truncate bg-orange-50/30" style="width:120px;" title="${d.ket}">${d.ket}</td>`);
             
             htmlChunks.push(`</tr>`);
         }
@@ -1309,7 +1237,6 @@
         const headers = ["NO", "ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS"];
         let range = getTanggalRange();
         headers.push(...range.map(t => `Tgl ${t}`));
-        headers.push("TIME IN", "TIME OUT", "KETERANGAN");
         
         const wsData = [headers];
         for(let i=0; i<filteredData.length; i++) {
@@ -1318,12 +1245,8 @@
             
             for(let tgl of range) {
                 const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
-                rowArr.push(dataTgl.kode ? dataTgl.kode : "");
+                rowArr.push(dataTgl.time ? dataTgl.time : (dataTgl.kode ? dataTgl.kode : ""));
             }
-            
-            const d = getDerivedTime(row, range);
-            rowArr.push(d.timeIn, d.timeOut, d.ket);
-            
             wsData.push(rowArr);
         }
         
