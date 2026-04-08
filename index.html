@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hoplun - Attendance Dashboard (Super Fast)</title>
+    <title>Hoplun - Attendance & Overtime Dashboard</title>
     <link rel="icon" type="image/png" href="hoplun128.png">
     <link rel="shortcut icon" href="hoplun128.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -83,7 +83,7 @@
         }
         .time-cell { 
             font-family: monospace; 
-            font-size: 9px; 
+            font-size: 10px; 
             white-space: pre-line; 
         }
         .sticky-no, .sticky-id, .sticky-name {
@@ -154,13 +154,19 @@
         .att-code-ml { color: #111827; font-weight: bold; background-color: #e5e7eb; border-radius: 2px; padding: 0 2px; display: inline-block; }
         .att-code-sk { color: #9333ea; font-weight: bold; background-color: #f3e8ff; border-radius: 2px; padding: 0 2px; display: inline-block; }
         .att-code-hl { color: #dc2626; font-weight: bold; background-color: #fef2f2; border-radius: 2px; padding: 0 2px; display: inline-block; }
+        
+        /* Tab Toggle Styles */
+        .view-tab { padding: 4px 12px; font-size: 10px; font-weight: bold; border-radius: 6px; transition: all 0.2s; cursor: pointer; }
+        .view-tab.active-attend { background-color: white; color: #1d4ed8; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .view-tab.active-ot { background-color: #7e22ce; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .view-tab.inactive { background-color: transparent; color: #64748b; }
+        .view-tab.inactive:hover { color: #334155; }
     </style>
 </head>
 <body>
 
 <script>
     // ======================== GLOBAL OVERRIDES ========================
-    // Mencegah console.error dan console.warn bawaan ZIP Size sheetjs muncul dan membingungkan user/playground
     const originalConsoleError = console.error;
     console.error = function(...args) {
         if (args.length > 0 && String(args[0]).includes('Bad uncompressed size')) return;
@@ -182,8 +188,8 @@
         <div class="flex items-center gap-2">
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
-                <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
-                <p class="text-[9px] text-emerald-400">Super Fast Engine</p>
+                <h1 class="text-base font-bold tracking-wider">HOPLUN DASHBOARD</h1>
+                <p class="text-[9px] text-emerald-400">Attendance & Overtime System</p>
             </div>
         </div>
 
@@ -191,7 +197,7 @@
             <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold text-blue-300">📂 Folder Absen:</span>
                 <input type="text" id="folderXlsbDisplay" readonly placeholder="Pilih folder..." class="text-[9px] px-1.5 py-1 rounded w-24 bg-slate-800 border border-slate-600 text-white cursor-pointer" onclick="document.getElementById('hiddenFolderInput').click()">
-                <button onclick="document.getElementById('hiddenFolderInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Absen</button>
+                <button onclick="document.getElementById('hiddenFolderInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Absen & OT</button>
             </div>
             <div class="w-px h-5 bg-slate-500 mx-1"></div>
             <div class="flex items-center gap-1">
@@ -206,10 +212,15 @@
 
     <div class="p-2 bg-slate-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div class="flex flex-wrap gap-2 items-center">
+            <!-- View Mode Toggle -->
+            <div class="flex items-center bg-slate-200 rounded-lg p-0.5 shadow-inner border border-slate-300 mr-2">
+                <button id="tabAttend" class="view-tab active-attend">Kehadiran (Absen)</button>
+                <button id="tabOT" class="view-tab inactive">Lembur (Overtime)</button>
+            </div>
+
             <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value text-emerald-700">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Staff:</span><span id="totalStaff" class="rekap-value text-purple-700">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Security:</span><span id="totalSecurity" class="rekap-value text-slate-700">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">Total Semua:</span><span id="totalSemua" class="rekap-value text-blue-700">0</span></div>
         </div>
         <div class="flex gap-2 items-center flex-wrap">
             <div class="flex items-center gap-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-sm">
@@ -223,7 +234,6 @@
                 <select id="dateTo" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Sampai</option></select>
                 <div class="w-px h-3 bg-slate-300 mx-1"></div>
                 <button id="btnHapusTgl" class="text-red-600 hover:text-red-800 font-bold text-[9px] px-1 flex items-center gap-0.5" title="Hapus Data di Tanggal Terpilih">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     Hapus
                 </button>
             </div>
@@ -239,7 +249,7 @@
                 <option value="HOLIDAY">Holiday (HL)</option>
             </select>
             <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export</button>
-            <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
+            <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary Absen</button>
             
             <span id="dbStatus" class="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-1 rounded border border-blue-200">Menunggu Data...</span>
         </div>
@@ -275,7 +285,7 @@
 <div id="loadingOverlay" class="loading-overlay hidden">
     <div class="loading-content">
         <div class="spinner"></div>
-        <div class="text-slate-800 font-bold text-sm mb-1">Memproses Data Absensi</div>
+        <div class="text-slate-800 font-bold text-sm mb-1">Memproses Data Absensi & Lembur</div>
         <div id="loadingDetailText" class="text-xs text-slate-500 mb-2 truncate max-w-[260px] mx-auto font-mono">Menyiapkan...</div>
         <div class="progress-bar-container"><div id="loadingProgressFill" class="progress-fill"></div></div>
         <div class="flex justify-between items-center mt-1">
@@ -290,10 +300,11 @@
     // ======================== GLOBAL VARIABLES ========================
     let databaseKaryawan = [];      
     let timeMap = new Map();         
-    let semuaTanggal = [];
+    let semuaTanggal = [26, 27, 28, 29, 30, 31, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
     let databaseGlobal = [];
     let isProcessing = false;
     let cancelProcessing = false;
+    let currentViewMode = 'ATTENDANCE'; // 'ATTENDANCE' atau 'OVERTIME'
     const MAX_BARIS_PER_FILE = 2500;
     
     let filters = {}; 
@@ -362,7 +373,7 @@
         if(!filesArray || filesArray.length === 0) { panel.classList.add('hidden'); return; }
         const validFiles = filesArray.filter(f => f && f.name && f.name.toLowerCase().endsWith('.xlsb'));
         if(validFiles.length === 0) { panel.classList.add('hidden'); return; }
-        let html = '<div class="flex items-center gap-2 flex-wrap"><span class="font-bold text-amber-800">📅 LAST UPDATE (Absen Files):</span>';
+        let html = '<div class="flex items-center gap-2 flex-wrap"><span class="font-bold text-amber-800">📅 LAST UPDATE:</span>';
         for(let file of validFiles) {
             let modDate = new Date(file.lastModified);
             let dateStr = modDate.toLocaleString('id-ID', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
@@ -400,7 +411,6 @@
 
     const yieldToBrowser = () => new Promise(resolve => setTimeout(resolve, 5));
 
-    // MEMASTIKAN PENGGUNAAN BINARY STRING UNTUK MENGHINDARI ERROR ZIP / UNCOMPRESSED SIZE
     function readFileAsBinaryString(file) { 
         return new Promise((resolve,reject)=>{ 
             const fr=new FileReader(); 
@@ -415,6 +425,8 @@
             try {
                 const data = await readFileAsBinaryString(file);
                 const workbook = XLSX.read(data, { type: 'binary', cellDates: true, dense: true });
+                
+                // 1. Ekstrak Data Kehadiran (Attendance)
                 let sheetName = workbook.SheetNames.find(s => s.toUpperCase().includes('ATTEND')) || workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 
@@ -478,14 +490,6 @@
                     
                     let idLow = id.toLowerCase(), nameLow = name.toLowerCase();
                     if (idLow.includes("new id") || idLow.includes("id no") || idLow === "id" || nameLow === "name" || nameLow === "nama" || nameLow.includes("department")) continue;
-                    const monthYearRegex = /^(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{4}$/i;
-                    if (monthYearRegex.test(name) || monthYearRegex.test(id)) continue;
-                    
-                    let cleanIdLow = idLow.replace(/\s+/g, ' '); let cleanNameLow = nameLow.replace(/\s+/g, ' ');
-                    const summaryContains = ["hadir penuh", "full day", "mangkir", "absent w/o", "sakit (sick)", "cuti tahunan", "annual leave", "cuti lain", "other leave"];
-                    const summaryExact = ["sakit", "cuti", "total", "hadir"];
-                    if (summaryExact.includes(cleanIdLow) || summaryExact.includes(cleanNameLow)) continue;
-                    if (summaryContains.some(kw => cleanIdLow.includes(kw) || cleanNameLow.includes(kw))) continue;
                     
                     const kodePerTanggal = {};
                     for(let [tgl, colIdx] of Object.entries(colTanggal)) {
@@ -500,10 +504,111 @@
                         id: id, name: name, section: String(row[colMap.section]||"").trim(),
                         position: String(row[colMap.position]||"").trim(),
                         joinDate: row[colMap.join] ? formatDateToString(row[colMap.join]) : "",
-                        status: forcedStatus, kodePerTanggal: kodePerTanggal
+                        status: forcedStatus, kodePerTanggal: kodePerTanggal, otPerTanggal: {}
                     };
                     let key = id !== "" ? id.toUpperCase() : name.toUpperCase();
                     if(!karyawanMap.has(key)) karyawanMap.set(key, personal);
+                }
+                
+                await yieldToBrowser();
+
+                // 2. Ekstrak Data Lembur (OVERTIME)
+                const dates26to25 = [26, 27, 28, 29, 30, 31, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
+                
+                const extractOT = (sheetNameQuery, startColIdx) => {
+                    const query = sheetNameQuery.toUpperCase().trim();
+                    const sName = workbook.SheetNames.find(s => s.toUpperCase().trim().includes(query));
+                    if(!sName) return null;
+                    
+                    const wsOT = workbook.Sheets[sName];
+                    const rawDataOT = XLSX.utils.sheet_to_json(wsOT, { header: 1, defval: "", blankrows: false });
+                    if(!rawDataOT.length) return null;
+
+                    let otIdCol = -1, otNameCol = -1;
+                    for(let r=0; r<Math.min(rawDataOT.length, 20); r++) {
+                        const row = rawDataOT[r];
+                        if(!row) continue;
+                        for(let c=0; c<15; c++) {
+                            let val = String(row[c]||"").toUpperCase().replace(/\s/g,'');
+                            if(val.includes("NEWID")||val==="IDNO"||val==="ID") otIdCol = c;
+                            if(val==="NAME"||val==="NAMA") otNameCol = c;
+                        }
+                        if(otIdCol !== -1 && otNameCol !== -1) break;
+                    }
+                    if(otIdCol === -1) otIdCol = 0; 
+                    if(otNameCol === -1) otNameCol = 1;
+
+                    const otMap = new Map();
+                    for(let r=0; r<rawDataOT.length; r++) {
+                        const row = rawDataOT[r];
+                        if(!row) continue;
+                        
+                        let id = String(row[otIdCol]||"").trim();
+                        let name = String(row[otNameCol]||"").trim();
+                        if(!id && !name) continue;
+                        if (/total|grand|summary/i.test(id) || /total|grand|summary/i.test(name)) continue;
+
+                        let rowOT = {};
+                        let hasData = false;
+                        
+                        for(let i=0; i<31; i++) {
+                            let val = row[startColIdx + i]; // Mengambil dari index kolom persis sesuai Request (M/N/K)
+                            if(val !== undefined && val !== "" && val !== null && val !== "-") {
+                                let num = parseFloat(val);
+                                if(!isNaN(num) && num > 0) {
+                                    rowOT[dates26to25[i]] = num;
+                                    hasData = true;
+                                } else if (typeof val === 'string' && val.trim() !== "" && val.trim() !== "-") {
+                                    rowOT[dates26to25[i]] = val.trim();
+                                    hasData = true;
+                                }
+                            }
+                        }
+                        if(hasData) {
+                            let key = id !== "" ? id.toUpperCase() : name.toUpperCase();
+                            otMap.set(key, rowOT);
+                        }
+                    }
+                    return otMap;
+                };
+
+                let otData1 = null;
+                let otData2 = null;
+
+                if (forcedStatus === "SECURITY") {
+                    otData1 = extractOT("OVERTIME", 13); // Kolom N (Index 13)
+                } else if (forcedStatus === "WORKER") {
+                    otData1 = extractOT("OVERTIME", 12); // Kolom M (Index 12)
+                } else if (forcedStatus === "STAFF") {
+                    otData1 = extractOT("OVERTIME INCENTIVE", 10); // Kolom K (Index 10)
+                    otData2 = extractOT("OT HOLIDAY", 10);         // Kolom K (Index 10)
+                }
+
+                // Gabungkan Data Lembur ke Data Personal
+                for (let [key, person] of karyawanMap) {
+                    let ot1 = otData1 ? otData1.get(key) : null;
+                    let ot2 = otData2 ? otData2.get(key) : null;
+                    
+                    for(let d of dates26to25) {
+                        let val1 = ot1 ? ot1[d] : undefined;
+                        let val2 = ot2 ? ot2[d] : undefined;
+                        
+                        let totalNum = 0;
+                        let hasNum = false;
+                        let strVal = "";
+
+                        if(typeof val1 === 'number') { totalNum += val1; hasNum = true; }
+                        else if(val1) { strVal += val1 + " "; }
+
+                        if(typeof val2 === 'number') { totalNum += val2; hasNum = true; }
+                        else if(val2) { strVal += val2; }
+
+                        if(hasNum && totalNum > 0) {
+                            person.otPerTanggal[d] = totalNum;
+                        } else if (strVal.trim() !== "") {
+                            person.otPerTanggal[d] = strVal.trim();
+                        }
+                    }
                 }
                 
                 await yieldToBrowser();
@@ -574,13 +679,8 @@
                 
                 databaseKaryawan = Array.from(masterMap.values());
                 
-                semuaTanggal = [];
-                for(let i=26;i<=31;i++) semuaTanggal.push(i);
-                for(let i=1;i<=25;i++) semuaTanggal.push(i);
-                
                 try {
                     localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
-                    localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
                 } catch(e) { console.warn(e); }
                 
                 if(loadingDetailText) loadingDetailText.innerText = "Merender Tabel...";
@@ -588,7 +688,7 @@
                 
                 gabungkanDanRender();
                 displayLastUpdate(valid);
-                showAlert("Sukses", `${databaseKaryawan.length} Karyawan baru telah dimuat secara instan.`);
+                showAlert("Sukses", `${databaseKaryawan.length} Karyawan baru telah dimuat (Absen & Lembur).`);
             }
         } catch (err) {
             console.error(err); showAlert("Error", "Gagal memproses file: " + err.message);
@@ -620,9 +720,7 @@
                 }
                 
                 if(idCol===-1 || dateCol===-1 || recordCol===-1) { 
-                    console.warn("Format Time File Salah");
-                    resolve(new Map()); 
-                    return; 
+                    resolve(new Map()); return; 
                 }
                 
                 const timeMapLocal = new Map();
@@ -635,7 +733,6 @@
                     
                     if(id && dateRaw && record) {
                         let tgl = NaN;
-                        // Deteksi dan perbaikan Format Tanggal Cerdas
                         if(dateRaw instanceof Date) {
                             tgl = dateRaw.getDate();
                         } else if(typeof dateRaw === 'number') {
@@ -678,7 +775,8 @@
             for(let tgl of semuaTanggal) {
                 const kode = karyawan.kodePerTanggal?.[String(tgl)] || "";
                 const time = timeMap.get(`${karyawan.id}_${tgl}`) || "";
-                tanggalData[tgl] = { kode, time };
+                const ot = karyawan.otPerTanggal?.[String(tgl)] || "";
+                tanggalData[tgl] = { kode, time, ot };
             }
             return { id: karyawan.id, name: karyawan.name, section: karyawan.section, position: karyawan.position, joinDate: karyawan.joinDate, status: karyawan.status, tanggalData };
         });
@@ -743,7 +841,14 @@
         }
     }
 
-    function getCellDisplayValue(cell) { return !cell ? "" : (cell.time ? cell.time : (cell.kode ? cell.kode : "")); }
+    function getCellDisplayValue(cell) { 
+        if(!cell) return "";
+        if (currentViewMode === 'ATTENDANCE') {
+            return cell.time ? cell.time : (cell.kode ? cell.kode : ""); 
+        } else {
+            return cell.ot ? String(cell.ot) : "";
+        }
+    }
 
     function buildFilterHeader() {
         const thead = document.getElementById('tableHeader');
@@ -761,12 +866,14 @@
         const dateCols = range.map(t => ({ name: `Tgl ${t}`, width: 90, filterKey: `date_${t}` }));
         allCols = allCols.concat(dateCols);
         
-        let th = `<tr class="bg-slate-800 text-white text-[10px]">`;
+        let headerBgClass = currentViewMode === 'ATTENDANCE' ? 'bg-slate-800' : 'bg-purple-900';
+
+        let th = `<tr class="${headerBgClass} text-white text-[10px]">`;
         for(let i=0; i<allCols.length; i++) {
-            let col = allCols[i], cls = "px-1 py-1 border-r", ws = `width: ${col.width}px; min-width: ${col.width}px;`;
-            if(i===0) cls += " sticky left-0 z-20 bg-slate-800";
-            if(i===1) cls += " sticky left-[40px] z-20 bg-slate-800";
-            if(i===2) cls += " sticky left-[110px] z-20 bg-slate-800";
+            let col = allCols[i], cls = "px-1 py-1 border-r border-slate-600/50", ws = `width: ${col.width}px; min-width: ${col.width}px;`;
+            if(i===0) cls += ` sticky left-0 z-20 ${headerBgClass}`;
+            if(i===1) cls += ` sticky left-[40px] z-20 ${headerBgClass}`;
+            if(i===2) cls += ` sticky left-[110px] z-20 ${headerBgClass}`;
             th += `<th style="${ws}" class="${cls}">${col.name}</th>`;
         }
         th += `</tr><tr class="bg-gray-100 text-[9px]">`;
@@ -1049,7 +1156,6 @@
         return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
     }
     
-    // SUPER FAST SINGLE-PASS FILTER
     function applyAllFiltersFast() {
         if (!databaseGlobal.length) return [];
         
@@ -1057,7 +1163,7 @@
         const searchKeyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
         
         const filterEl = document.getElementById('filterAttendanceDetail');
-        const mode = filterEl ? filterEl.value : "ALL"; 
+        const mode = (filterEl && currentViewMode === 'ATTENDANCE') ? filterEl.value : "ALL"; 
         
         const activeFilters = [];
         for (let key in filters) { if(filters[key].size > 0) activeFilters.push({key, set: filters[key]}); }
@@ -1086,7 +1192,7 @@
                 }
             }
 
-            if (checkMode) {
+            if (checkMode && currentViewMode === 'ATTENDANCE') {
                 let matchMode = false;
                 for (let i=0; i<range.length; i++) {
                     const cell = row.tanggalData[range[i]] || { kode: "", time: "" };
@@ -1115,7 +1221,6 @@
         const wEl = document.getElementById('totalWorker'); if (wEl) wEl.innerText = w;
         const sEl = document.getElementById('totalStaff'); if (sEl) sEl.innerText = s;
         const secEl = document.getElementById('totalSecurity'); if (secEl) secEl.innerText = sec;
-        const allEl = document.getElementById('totalSemua'); if (allEl) allEl.innerText = dataList.length;
     }
 
     function highlightText(text, keyword) {
@@ -1206,18 +1311,32 @@
                 `<td class="col-status-fixed px-1 py-0.5" style="width:75px;">${sBadge}</td>`
             );
 
-            // Render kolom tanggal DENGAN JAM tergabung kembali
+            // Render kolom (Attendance ATAU Overtime)
             for(let i=0; i<range.length; i++) {
-                const dataTgl = row.tanggalData[range[i]] || { kode: "", time: "" };
-                let kode = dataTgl.kode, time = dataTgl.time, display = time ? time : (kode ? kode : "—");
-                let colorClass = "", codeClass = "";
+                const dataTgl = row.tanggalData[range[i]] || { kode: "", time: "", ot: "" };
+                let display = "—", colorClass = "", codeClass = "";
                 
-                if (kode && !time) {
-                    codeClass = getAttendanceCodeClass(kode);
-                    if (codeClass) display = `<span class="${codeClass} shadow-sm">${display}</span>`;
-                    else colorClass = "text-orange-500 font-bold";
-                } else if (time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
-                else if (time && time.includes('-')) colorClass = "text-emerald-600 font-bold";
+                if (currentViewMode === 'ATTENDANCE') {
+                    let kode = dataTgl.kode, time = dataTgl.time;
+                    display = time ? time : (kode ? kode : "—");
+                    
+                    if (kode && !time) {
+                        codeClass = getAttendanceCodeClass(kode);
+                        if (codeClass) display = `<span class="${codeClass} shadow-sm">${display}</span>`;
+                        else colorClass = "text-orange-500 font-bold";
+                    } else if (time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
+                    else if (time && time.includes('-')) colorClass = "text-emerald-600 font-bold";
+                    
+                } else if (currentViewMode === 'OVERTIME') {
+                    display = dataTgl.ot ? dataTgl.ot : "—";
+                    if(dataTgl.ot && Number(dataTgl.ot) > 0) {
+                        colorClass = "text-purple-700 font-bold bg-purple-50 rounded px-1";
+                    } else if (dataTgl.ot) {
+                        colorClass = "text-slate-700 font-bold bg-slate-100 rounded px-1";
+                    } else {
+                        colorClass = "text-slate-300";
+                    }
+                }
                 
                 htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
             }
@@ -1244,19 +1363,29 @@
             const rowArr = [i+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
             
             for(let tgl of range) {
-                const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
-                rowArr.push(dataTgl.time ? dataTgl.time : (dataTgl.kode ? dataTgl.kode : ""));
+                const dataTgl = row.tanggalData[tgl] || { kode: "", time: "", ot: "" };
+                if (currentViewMode === 'ATTENDANCE') {
+                    rowArr.push(dataTgl.time ? dataTgl.time : (dataTgl.kode ? dataTgl.kode : ""));
+                } else {
+                    rowArr.push(dataTgl.ot ? dataTgl.ot : "");
+                }
             }
             wsData.push(rowArr);
         }
         
         const ws = XLSX.utils.aoa_to_sheet(wsData); const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-        const suffix = `Attendance_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}`;
+        const sheetName = currentViewMode === 'ATTENDANCE' ? "Attendance" : "Overtime";
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        const suffix = `${sheetName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}`;
         XLSX.writeFile(wb, `Hoplun_${suffix}.xlsx`);
     }
 
     function openSummary() {
+        if(currentViewMode === 'OVERTIME') {
+            showAlert("Info", "Summary saat ini hanya tersedia untuk data Kehadiran (Absen). Silakan beralih ke tab Kehadiran.");
+            return;
+        }
+
         const filteredData = applyAllFiltersFast();
         if(!filteredData.length) { showAlert("Info","Tidak ada data yang ditampilkan pada kriteria saat ini."); return; }
         
@@ -1381,6 +1510,25 @@
         if (el) el.addEventListener(event, handler);
     }
 
+    // --- TAB VIEW LISTENERS ---
+    safeAddListener('tabAttend', 'click', () => {
+        if(currentViewMode === 'ATTENDANCE') return;
+        currentViewMode = 'ATTENDANCE';
+        document.getElementById('tabAttend').className = "view-tab active-attend";
+        document.getElementById('tabOT').className = "view-tab inactive";
+        document.getElementById('filterAttendanceDetail').style.display = 'block';
+        gabungkanDanRender();
+    });
+
+    safeAddListener('tabOT', 'click', () => {
+        if(currentViewMode === 'OVERTIME') return;
+        currentViewMode = 'OVERTIME';
+        document.getElementById('tabOT').className = "view-tab active-ot";
+        document.getElementById('tabAttend').className = "view-tab inactive";
+        document.getElementById('filterAttendanceDetail').style.display = 'none'; // Sembunyikan filter khusus absen
+        gabungkanDanRender();
+    });
+
     safeAddListener('globalSearch', 'input', debounce(() => renderTable(), 250));
     safeAddListener('dateFrom', 'change', () => { precomputeFilterOptions(); buildFilterHeader(); renderTable(); });
     safeAddListener('dateTo', 'change', () => { precomputeFilterOptions(); buildFilterHeader(); renderTable(); });
@@ -1397,7 +1545,7 @@
         let dateText = range.length === 1 ? `tanggal ${range[0]}` : `tanggal ${range[0]} sampai ${range[range.length-1]}`;
         if (range.length === semuaTanggal.length) dateText = "SEMUA TANGGAL";
         
-        if (confirm(`PENTING: Anda yakin ingin menghapus SELURUH data (Time & Absen) pada ${dateText}?\n\n(Kolom ini akan dikosongkan dan Anda bisa melakukan Update data baru)`)) {
+        if (confirm(`PENTING: Anda yakin ingin menghapus SELURUH data (Time, Absen & OT) pada ${dateText}?\n\n(Kolom ini akan dikosongkan dan Anda bisa melakukan Update data baru)`)) {
             for (const key of timeMap.keys()) {
                 const tgl = parseInt(key.split('_')[1]);
                 if (range.includes(tgl)) { timeMap.delete(key); }
@@ -1406,6 +1554,11 @@
                 if (k.kodePerTanggal) {
                     for (let tgl of range) {
                         if (k.kodePerTanggal[tgl] !== undefined) { delete k.kodePerTanggal[tgl]; }
+                    }
+                }
+                if (k.otPerTanggal) {
+                    for (let tgl of range) {
+                        if (k.otPerTanggal[tgl] !== undefined) { delete k.otPerTanggal[tgl]; }
                     }
                 }
             }
@@ -1493,11 +1646,9 @@
 
     (function loadStored() {
         const karyawan = localStorage.getItem('hoplun_karyawan');
-        const tanggal = localStorage.getItem('hoplun_tanggal');
         const timeObj = localStorage.getItem('hoplun_time');
-        if(karyawan && tanggal) {
+        if(karyawan) {
             databaseKaryawan = JSON.parse(karyawan);
-            semuaTanggal = JSON.parse(tanggal);
             if(timeObj) timeMap = new Map(Object.entries(JSON.parse(timeObj)));
             if(databaseKaryawan.length) gabungkanDanRender();
         }
