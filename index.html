@@ -168,6 +168,7 @@
 
 <script>
     // ======================== GLOBAL OVERRIDES ========================
+    // Mencegah console.error dan console.warn bawaan ZIP Size sheetjs muncul dan membingungkan user/playground
     const originalConsoleError = console.error;
     console.error = function(...args) {
         if (args.length > 0 && String(args[0]).includes('Bad uncompressed size')) return;
@@ -189,8 +190,8 @@
         <div class="flex items-center gap-2">
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
-                <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
-                <p class="text-[9px] text-emerald-400">Super Fast Engine</p>
+                <h1 class="text-base font-bold tracking-wider">HOPLUN CLOUD DASHBOARD</h1>
+                <p class="text-[9px] text-emerald-400">Powered by Firebase Realtime Sync</p>
             </div>
         </div>
 
@@ -278,7 +279,7 @@
             </select>
             
             <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export</button>
-            <button id="btnSummary" onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
+            <button id="btnSummary" onclick="window.openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
             
             <span id="dbStatus" class="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-1 rounded border border-blue-200">Menunggu Data...</span>
         </div>
@@ -300,15 +301,15 @@
         <div class="p-3 border-b bg-slate-800 text-white rounded-t-xl flex justify-between items-center">
             <h2 id="summaryTitle" class="text-sm font-bold">Laporan Summary Kehadiran</h2>
             <div class="flex items-center gap-3">
-                <button onclick="exportSummaryToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center gap-1">⬇ Export Excel</button>
-                <button onclick="closeSummary()" class="text-gray-300 hover:text-white bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center font-bold">✕</button>
+                <button onclick="window.exportSummaryToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center gap-1">⬇ Export Excel</button>
+                <button onclick="window.closeSummary()" class="text-gray-300 hover:text-white bg-slate-700 rounded-full w-6 h-6 flex items-center justify-center font-bold">✕</button>
             </div>
         </div>
         <div class="p-4 overflow-auto" id="summaryContent"></div>
     </div>
 </div>
 
-<div id="modernAlert" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center backdrop-blur-sm"><div class="bg-white rounded-xl p-4 max-w-xs text-center shadow-2xl transform scale-95 transition-transform"><h3 id="alertTitle" class="text-sm font-bold mb-2 text-slate-800"></h3><p id="alertMessage" class="text-xs mb-4 text-slate-600"></p><button onclick="closeAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-xs font-bold transition">Tutup</button></div></div>
+<div id="modernAlert" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center backdrop-blur-sm"><div class="bg-white rounded-xl p-4 max-w-xs text-center shadow-2xl transform scale-95 transition-transform"><h3 id="alertTitle" class="text-sm font-bold mb-2 text-slate-800"></h3><p id="alertMessage" class="text-xs mb-4 text-slate-600"></p><button onclick="window.closeAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-xs font-bold transition">Tutup</button></div></div>
 
 <!-- Modern Loading Overlay -->
 <div id="loadingOverlay" class="loading-overlay hidden">
@@ -325,20 +326,228 @@
     </div>
 </div>
 
+<script type="module">
+    // ===================================================================================
+    // === GOOGLE FIREBASE REALTIME SYNC (SOLUSI UNTUK DATA BESAR) =======================
+    // ===================================================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, doc, writeBatch, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const myFirebaseConfig = {
+        apiKey: "AIzaSyDA8UM_1RGYlHi0hZUKQ66U-GF-LDMHHmI",
+        authDomain: "hoplun-attend.firebaseapp.com",
+        projectId: "hoplun-attend",
+        storageBucket: "hoplun-attend.firebasestorage.app",
+        messagingSenderId: "798070391220",
+        appId: "1:798070391220:web:ffe6c99bb8baf70f2532e1",
+        measurementId: "G-BR3RFNBEG4"
+    };
+
+    let db, auth, isFirebaseActive = false;
+    const APP_ID = "hoplun-app-v2";
+    let lastCloudUpdateId = null;
+
+    async function initFirebase() {
+        try {
+            const app = initializeApp(myFirebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            await signInAnonymously(auth);
+            isFirebaseActive = true;
+            document.getElementById('dbStatus').innerHTML = `🔄 Terhubung ke Cloud Firebase...`;
+            setupRealtimeListener();
+        } catch (e) {
+            console.warn("Gagal inisiasi Firebase:", e);
+            document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal Aktif`;
+            window.loadFromLocalStorage();
+        }
+    }
+
+    function setupRealtimeListener() {
+        const metaDocRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_meta', 'sync');
+        onSnapshot(metaDocRef, async (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                if (data.updateId !== lastCloudUpdateId) {
+                    document.getElementById('dbStatus').innerHTML = `⬇️ Mendownload Update Realtime...`;
+                    await downloadFromCloud(data.type);
+                    lastCloudUpdateId = data.updateId;
+                }
+            } else {
+                document.getElementById('dbStatus').innerHTML = `☁️ Cloud Ready (Data Kosong)`;
+                window.loadFromLocalStorage();
+            }
+        }, (error) => {
+            console.error("Realtime listen error:", error);
+            document.getElementById('dbStatus').innerHTML = `⚠️ Database Terkunci (Cek Rules Firebase)`;
+            window.loadFromLocalStorage();
+        });
+    }
+
+    async function downloadFromCloud(type) {
+        if (!isFirebaseActive) return;
+        try {
+            if (type === 'reset') {
+                window.databaseKaryawan = []; window.timeMap.clear(); window.semuaTanggal = []; window.databaseGlobal = [];
+                window.gabungkanDanRender();
+                window.showAlert("Reset Cloud", "Data telah dikosongkan oleh pengguna lain.");
+                document.getElementById('dbStatus').innerHTML = `☁️ Cloud Ready (Data Kosong)`;
+                return;
+            }
+
+            if (type === 'karyawan' || type === 'all') {
+                const karCol = collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_karyawan');
+                const snap = await getDocs(karCol);
+                let newData = [];
+                snap.forEach(doc => { if (doc.data().data) newData = newData.concat(JSON.parse(doc.data().data)); });
+                if (newData.length > 0) window.databaseKaryawan = newData;
+
+                const tglDoc = await getDocs(collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_tanggal'));
+                tglDoc.forEach(doc => { if (doc.id === 'data_tgl' && doc.data().data) window.semuaTanggal = JSON.parse(doc.data().data); });
+            }
+
+            if (type === 'time' || type === 'all') {
+                const timeCol = collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_time');
+                const snap = await getDocs(timeCol);
+                let newTimeObj = {};
+                snap.forEach(doc => { if (doc.data().data) Object.assign(newTimeObj, JSON.parse(doc.data().data)); });
+                window.timeMap = new Map(Object.entries(newTimeObj));
+            }
+            
+            if (window.databaseKaryawan.length > 0) {
+                window.gabungkanDanRender();
+                document.getElementById('dbStatus').innerHTML = `✅ DB Karyawan: ${window.databaseKaryawan.length} | DB Time: ${window.timeMap.size} (Online)`;
+                window.saveToLocalStorage(); // Backup ke lokal
+            }
+        } catch (e) {
+            console.error("Gagal Download Cloud:", e);
+            document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal Aktif`;
+        }
+    }
+
+    window.saveToCloud = async function(type) {
+        window.saveToLocalStorage(); // Backup lokal terlebih dahulu
+        if (!isFirebaseActive) return;
+
+        try {
+            document.getElementById('dbStatus').innerHTML = `⬆️ Menyimpan ke Cloud...`;
+            const batch = writeBatch(db);
+            const newUpdateId = window.generateUUID();
+            lastCloudUpdateId = newUpdateId;
+
+            if (type === 'karyawan' || type === 'all') {
+                const karCol = collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_karyawan');
+                for (let i = 0; i < 15; i++) batch.set(doc(karCol, `chunk_${i}`), { data: null }); 
+                
+                const chunkSize = 500; 
+                for (let i = 0; i < window.databaseKaryawan.length; i += chunkSize) {
+                    const chunk = window.databaseKaryawan.slice(i, i + chunkSize);
+                    batch.set(doc(karCol, `chunk_${i/chunkSize}`), { data: JSON.stringify(chunk) });
+                }
+                
+                batch.set(doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_tanggal', 'data_tgl'), { data: JSON.stringify(window.semuaTanggal) });
+            }
+
+            if (type === 'time' || type === 'all') {
+                const timeCol = collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_time');
+                for (let i = 0; i < 20; i++) batch.set(doc(timeCol, `chunk_${i}`), { data: null }); 
+                
+                const timeEntries = Object.entries(Object.fromEntries(window.timeMap));
+                const chunkSize = 1500; 
+                for (let i = 0; i < timeEntries.length; i += chunkSize) {
+                    const chunk = timeEntries.slice(i, i + chunkSize);
+                    batch.set(doc(timeCol, `chunk_${i/chunkSize}`), { data: JSON.stringify(Object.fromEntries(chunk)) });
+                }
+            }
+
+            if (type === 'reset') {
+                const karCol = collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_karyawan');
+                for (let i = 0; i < 15; i++) batch.set(doc(karCol, `chunk_${i}`), { data: null });
+                const timeCol = collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_time');
+                for (let i = 0; i < 20; i++) batch.set(doc(timeCol, `chunk_${i}`), { data: null });
+                batch.set(doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_tanggal', 'data_tgl'), { data: null });
+            }
+
+            const metaDocRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_meta', 'sync');
+            batch.set(metaDocRef, { updateId: newUpdateId, timestamp: Date.now(), type: type });
+
+            await batch.commit(); 
+            
+            document.getElementById('dbStatus').innerHTML = `✅ Tersimpan & Tersinkronisasi Realtime`;
+            setTimeout(() => {
+                if(window.databaseKaryawan.length) {
+                    document.getElementById('dbStatus').innerHTML = `✅ DB Karyawan: ${window.databaseKaryawan.length} | DB Time: ${window.timeMap.size} (Online)`;
+                } else {
+                    document.getElementById('dbStatus').innerHTML = `☁️ Cloud Ready (Data Kosong)`;
+                }
+            }, 3000);
+
+        } catch (e) {
+            console.error("Gagal Upload:", e);
+            window.showAlert("Cloud Sync Error", "Gagal menyimpan ke server: " + e.message);
+            document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal Aktif`;
+        }
+    }
+
+    initFirebase();
+</script>
+
 <script>
     // ======================== GLOBAL VARIABLES ========================
-    let databaseKaryawan = [];      
-    let timeMap = new Map();         
-    let semuaTanggal = [];
-    let databaseGlobal = [];
+    window.databaseKaryawan = [];      
+    window.timeMap = new Map();         
+    window.semuaTanggal = [];
+    window.databaseGlobal = [];
     let isProcessing = false;
     let cancelProcessing = false;
-    let currentViewMode = 'ATTENDANCE'; // 'ATTENDANCE', 'OVERTIME', 'SALARY'
+    let currentViewMode = 'ATTENDANCE'; 
     const MAX_BARIS_PER_FILE = 2500;
     
     let filters = {}; 
     let filterOptions = {}; 
     let currentSummaryData = null;
+
+    window.generateUUID = function() {
+        return crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+    }
+
+    // === CADANGAN LOKAL (LOCAL STORAGE) ===
+    window.saveToLocalStorage = function() {
+        try {
+            localStorage.setItem('hoplun_karyawan', JSON.stringify(window.databaseKaryawan));
+            localStorage.setItem('hoplun_tanggal', JSON.stringify(window.semuaTanggal));
+            localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(window.timeMap)));
+        } catch(e) { console.warn("Local storage penuh", e); }
+    }
+
+    window.loadFromLocalStorage = function() {
+        const karyawan = localStorage.getItem('hoplun_karyawan');
+        const tanggal = localStorage.getItem('hoplun_tanggal');
+        const timeObj = localStorage.getItem('hoplun_time');
+        let hasData = false;
+        
+        if(karyawan && tanggal) {
+            window.databaseKaryawan = JSON.parse(karyawan);
+            window.semuaTanggal = JSON.parse(tanggal);
+            hasData = true;
+        }
+        if(timeObj) {
+            window.timeMap = new Map(Object.entries(JSON.parse(timeObj)));
+            hasData = true;
+        }
+        
+        if(hasData && window.databaseKaryawan.length > 0) {
+            window.gabungkanDanRender();
+            const dbStatus = document.getElementById('dbStatus');
+            if(dbStatus && (dbStatus.innerHTML.includes('Menunggu') || dbStatus.innerHTML.includes('Mode Lokal') || dbStatus.innerHTML.includes('Menyiapkan'))) {
+                dbStatus.innerHTML = `⚠️ Mode Lokal: ${window.databaseKaryawan.length} Karyawan`;
+            }
+        }
+    }
+
+    // ======================== FUNGSI UTAMA ========================
 
     // Fungsi Mengambil Pengaturan Gaji Langsung dari Input UI
     function getSalaryConfig() {
@@ -355,7 +564,7 @@
         };
     }
 
-    function showAlert(title, msg) {
+    window.showAlert = function(title, msg) {
         const modal = document.getElementById('modernAlert');
         if (modal) {
             document.getElementById('alertTitle').innerText = title;
@@ -364,7 +573,7 @@
             modal.classList.add('flex');
         }
     }
-    function closeAlert() { 
+    window.closeAlert = function() { 
         const modal = document.getElementById('modernAlert');
         if (modal) modal.classList.add('hidden'); 
     }
@@ -478,6 +687,7 @@
         
         let years = targetDate.getFullYear() - joinDateObj.getFullYear();
         let mDiff = targetDate.getMonth() - joinDateObj.getMonth();
+        // Jika belum melewati bulan atau tanggal join pada tahun target, kurangi 1 tahun
         if (mDiff < 0 || (mDiff === 0 && targetDate.getDate() < joinDateObj.getDate())) {
             years--;
         }
@@ -701,8 +911,8 @@
     async function prosesFileExcel(files) {
         if(!files.length) return;
         const valid = files.filter(f => isFileValid(f));
-        if(!valid.length) { showAlert("Peringatan","Tidak ada file .xlsb valid (Harus mengandung kata Worker/Staff/Security)"); return; }
-        if(isProcessing) { showAlert("Info","Sedang memproses data, harap tunggu"); return; }
+        if(!valid.length) { window.showAlert("Peringatan","Tidak ada file .xlsb valid (Harus mengandung kata Worker/Staff/Security)"); return; }
+        if(isProcessing) { window.showAlert("Info","Sedang memproses data, harap tunggu"); return; }
         
         isProcessing = true; cancelProcessing = false;
         
@@ -731,7 +941,7 @@
             await yieldToBrowser(); 
             
             for(let i=0; i<valid.length; i++) {
-                if(cancelProcessing) { showAlert("Dibatalkan","Proses update absen dibatalkan."); break; }
+                if(cancelProcessing) { window.showAlert("Dibatalkan","Proses update absen dibatalkan."); break; }
                 const file = valid[i];
                 
                 updateProgressUI(file.name, i); 
@@ -752,28 +962,32 @@
                 if(loadingDetailText) loadingDetailText.innerText = "Menyusun Database Global Baru...";
                 await yieldToBrowser();
                 
-                if(!masterMap.size) { showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file."); return; }
+                if(!masterMap.size) { window.showAlert("Gagal","Tidak ada data karyawan ditemukan. Periksa format file."); return; }
                 
-                databaseKaryawan = Array.from(masterMap.values());
+                window.databaseKaryawan = Array.from(masterMap.values());
                 
-                semuaTanggal = [];
-                for(let i=26;i<=31;i++) semuaTanggal.push(i);
-                for(let i=1;i<=25;i++) semuaTanggal.push(i);
-                
-                try {
-                    localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
-                    localStorage.setItem('hoplun_tanggal', JSON.stringify(semuaTanggal));
-                } catch(e) { console.warn(e); }
+                window.semuaTanggal = [];
+                for(let i=26;i<=31;i++) window.semuaTanggal.push(i);
+                for(let i=1;i<=25;i++) window.semuaTanggal.push(i);
                 
                 if(loadingDetailText) loadingDetailText.innerText = "Merender Tabel...";
                 await yieldToBrowser();
                 
-                gabungkanDanRender();
+                window.gabungkanDanRender();
                 displayLastUpdate(valid);
-                showAlert("Sukses", `${databaseKaryawan.length} Karyawan baru telah dimuat secara instan.`);
+                
+                // MENGUNGGAH KE CLOUD FIREBASE
+                if(window.saveToCloud) {
+                    if(loadingDetailText) loadingDetailText.innerText = "Mengunggah Data Karyawan (Chunking) ke Firebase Cloud...";
+                    await window.saveToCloud('karyawan');
+                } else {
+                    window.saveToLocalStorage();
+                }
+
+                window.showAlert("Sukses", `${window.databaseKaryawan.length} Karyawan baru telah dimuat.`);
             }
         } catch (err) {
-            console.error(err); showAlert("Error", "Gagal memproses file: " + err.message);
+            console.error(err); window.showAlert("Error", "Gagal memproses file: " + err.message);
         } finally {
             isProcessing = false; 
             if(loadingOverlay) loadingOverlay.classList.add('hidden');
@@ -853,16 +1067,16 @@
         });
     }
 
-    function gabungkanDanRender() {
-        if(!databaseKaryawan.length) return;
+    window.gabungkanDanRender = function() {
+        if(!window.databaseKaryawan.length) return;
         const configGaji = getSalaryConfig();
 
-        const finalData = databaseKaryawan.map(karyawan => {
+        const finalData = window.databaseKaryawan.map(karyawan => {
             const tanggalData = {};
 
-            for(let tgl of semuaTanggal) {
+            for(let tgl of window.semuaTanggal) {
                 const kode = karyawan.kodePerTanggal?.[String(tgl)] || "";
-                const time = timeMap.get(`${karyawan.id}_${tgl}`) || "";
+                const time = window.timeMap.get(`${karyawan.id}_${tgl}`) || "";
                 const ot = karyawan.otPerTanggal?.[String(tgl)] || "";
                 tanggalData[tgl] = { kode, time, ot };
             }
@@ -880,7 +1094,7 @@
                 tanggalData, mkLalu, mkIni, gajiLalu, gajiIni, selisih 
             };
         });
-        databaseGlobal = finalData;
+        window.databaseGlobal = finalData;
         
         const dateFromEl = document.getElementById('dateFrom'); 
         const dateToEl = document.getElementById('dateTo');
@@ -888,7 +1102,7 @@
         if (dateFromEl && dateFromEl.options.length <= 1) { 
             const optFrom = ['<option value="ALL">Dari</option>']; 
             const optTo = ['<option value="ALL">Sampai</option>'];
-            for(let t of semuaTanggal) { 
+            for(let t of window.semuaTanggal) { 
                 optFrom.push(`<option value="${t}">${t}</option>`); 
                 optTo.push(`<option value="${t}">${t}</option>`); 
             }
@@ -902,7 +1116,9 @@
         renderTable();
         
         const dbStatusEl = document.getElementById('dbStatus');
-        if (dbStatusEl) dbStatusEl.innerHTML = `✅ DB Karyawan: ${databaseKaryawan.length} | DB Time: ${timeMap.size}`;
+        if (dbStatusEl && !dbStatusEl.innerHTML.includes('Mode Lokal') && !dbStatusEl.innerHTML.includes('Menunggu') && !dbStatusEl.innerHTML.includes('Gagal') && !dbStatusEl.innerHTML.includes('Terkunci')) {
+            dbStatusEl.innerHTML = `✅ DB Karyawan: ${window.databaseKaryawan.length} | DB Time: ${window.timeMap.size} (Online)`;
+        }
     }
 
     function precomputeFilterOptions() {
@@ -914,7 +1130,7 @@
 
         for (let col of fixedColumns) {
             const valueSet = new Set();
-            for (let row of databaseGlobal) {
+            for (let row of window.databaseGlobal) {
                 let val = row[col];
                 if (col === 'joinDate') val = getYearMonth(val);
                 valueSet.add((val === undefined || val === null || val === "") ? "__EMPTY__" : val);
@@ -943,10 +1159,10 @@
             };
         }
 
-        for (let tgl of semuaTanggal) {
+        for (let tgl of window.semuaTanggal) {
             const key = `date_${tgl}`;
             const valueSet = new Set();
-            for (let row of databaseGlobal) {
+            for (let row of window.databaseGlobal) {
                 const val = getCellDisplayValue(row.tanggalData[tgl]);
                 valueSet.add((val && val !== "") ? val : "__EMPTY__");
             }
@@ -1282,16 +1498,16 @@
         let from = fromEl ? fromEl.value : "ALL";
         let to = toEl ? toEl.value : "ALL";
         
-        if(from === "ALL" || to === "ALL") return semuaTanggal;
-        let fromIdx = semuaTanggal.indexOf(parseInt(from)), toIdx = semuaTanggal.indexOf(parseInt(to));
-        if(fromIdx === -1 || toIdx === -1) return semuaTanggal;
-        if(fromIdx <= toIdx) return semuaTanggal.slice(fromIdx, toIdx+1);
-        return [...semuaTanggal.slice(fromIdx), ...semuaTanggal.slice(0, toIdx+1)];
+        if(from === "ALL" || to === "ALL") return window.semuaTanggal;
+        let fromIdx = window.semuaTanggal.indexOf(parseInt(from)), toIdx = window.semuaTanggal.indexOf(parseInt(to));
+        if(fromIdx === -1 || toIdx === -1) return window.semuaTanggal;
+        if(fromIdx <= toIdx) return window.semuaTanggal.slice(fromIdx, toIdx+1);
+        return [...window.semuaTanggal.slice(fromIdx), ...window.semuaTanggal.slice(0, toIdx+1)];
     }
     
     // SUPER FAST SINGLE-PASS FILTER
     function applyAllFiltersFast() {
-        if (!databaseGlobal.length) return [];
+        if (!window.databaseGlobal.length) return [];
         
         const searchInput = document.getElementById('globalSearch');
         const searchKeyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
@@ -1306,7 +1522,7 @@
 
         const range = getTanggalRange();
 
-        return databaseGlobal.filter(row => {
+        return window.databaseGlobal.filter(row => {
             // MENYEMBUNYIKAN STATUS 'STAFF' SAAT BERADA DI MENU KENAIKAN GAJI
             if (currentViewMode === 'SALARY' && row.status === 'STAFF') return false;
 
@@ -1507,7 +1723,7 @@
 
     function exportToExcel() {
         const filteredData = applyAllFiltersFast();
-        if(!filteredData.length) { showAlert("Peringatan","Tidak ada data untuk diexport"); return; }
+        if(!filteredData.length) { window.showAlert("Peringatan","Tidak ada data untuk diexport"); return; }
         
         const configGaji = getSalaryConfig();
         const headers = ["NO", "ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS"];
@@ -1574,14 +1790,14 @@
         XLSX.writeFile(wb, `Hoplun_${suffix}.xlsx`);
     }
 
-    function openSummary() {
+    window.openSummary = function() {
         if(currentViewMode !== 'ATTENDANCE') {
-            showAlert("Info", "Summary saat ini hanya tersedia untuk data Kehadiran (Absen). Silakan beralih ke tab Kehadiran.");
+            window.showAlert("Info", "Summary saat ini hanya tersedia untuk data Kehadiran (Absen). Silakan beralih ke tab Kehadiran.");
             return;
         }
         
         const filteredData = applyAllFiltersFast();
-        if(!filteredData.length) { showAlert("Info","Tidak ada data yang ditampilkan pada kriteria saat ini."); return; }
+        if(!filteredData.length) { window.showAlert("Info","Tidak ada data yang ditampilkan pada kriteria saat ini."); return; }
         
         const range = getTanggalRange();
         let dateText = range.length === 1 ? `Tgl ${range[0]}` : `Tgl ${range[0]} - ${range[range.length-1]}`;
@@ -1666,9 +1882,9 @@
         document.getElementById('summaryModal').classList.add('flex');
     }
     
-    function closeSummary() { document.getElementById('summaryModal').classList.add('hidden'); }
+    window.closeSummary = function() { document.getElementById('summaryModal').classList.add('hidden'); }
     
-    function exportSummaryToExcel() {
+    window.exportSummaryToExcel = function() {
         if(!currentSummaryData) return;
         const d = currentSummaryData;
         let dateText = d.dateText.replace(/_/g, ' ');
@@ -1718,7 +1934,7 @@
         
         document.getElementById('dateFrom').disabled = false;
         document.getElementById('dateTo').disabled = false;
-        gabungkanDanRender();
+        window.gabungkanDanRender();
     });
 
     safeAddListener('tabOT', 'click', () => {
@@ -1735,7 +1951,7 @@
         
         document.getElementById('dateFrom').disabled = false;
         document.getElementById('dateTo').disabled = false;
-        gabungkanDanRender();
+        window.gabungkanDanRender();
     });
     
     safeAddListener('tabSalary', 'click', () => {
@@ -1750,35 +1966,35 @@
         document.getElementById('dateFilterGroup').style.display = 'none';
         document.getElementById('btnSummary').style.display = 'none';
         
-        gabungkanDanRender();
+        window.gabungkanDanRender();
     });
 
     safeAddListener('btnApplySalary', 'click', () => {
-        gabungkanDanRender();
+        window.gabungkanDanRender();
     });
 
-    safeAddListener('globalSearch', 'input', debounce(() => renderTable(), 250));
-    safeAddListener('dateFrom', 'change', () => { precomputeFilterOptions(); buildFilterHeader(); renderTable(); });
-    safeAddListener('dateTo', 'change', () => { precomputeFilterOptions(); buildFilterHeader(); renderTable(); });
-    safeAddListener('filterAttendanceDetail', 'change', renderTable);
+    safeAddListener('globalSearch', 'input', debounce(() => window.gabungkanDanRender(), 250));
+    safeAddListener('dateFrom', 'change', () => { window.gabungkanDanRender(); });
+    safeAddListener('dateTo', 'change', () => { window.gabungkanDanRender(); });
+    safeAddListener('filterAttendanceDetail', 'change', () => window.gabungkanDanRender());
     safeAddListener('btnExport', 'click', exportToExcel);
 
-    safeAddListener('btnHapusTgl', 'click', () => {
+    safeAddListener('btnHapusTgl', 'click', async () => {
         const range = getTanggalRange();
-        if (!databaseKaryawan.length) {
-            showAlert("Info", "Belum ada data untuk dihapus.");
+        if (!window.databaseKaryawan.length) {
+            window.showAlert("Info", "Belum ada data untuk dihapus.");
             return;
         }
         
         let dateText = range.length === 1 ? `tanggal ${range[0]}` : `tanggal ${range[0]} sampai ${range[range.length-1]}`;
-        if (range.length === semuaTanggal.length) dateText = "SEMUA TANGGAL";
+        if (range.length === window.semuaTanggal.length) dateText = "SEMUA TANGGAL";
         
-        if (confirm(`PENTING: Anda yakin ingin menghapus SELURUH data (Time, Absen & OT) pada ${dateText}?\n\n(Kolom ini akan dikosongkan dan Anda bisa melakukan Update data baru)`)) {
-            for (const key of timeMap.keys()) {
+        if (confirm(`PENTING: Anda yakin ingin menghapus SELURUH data (Time, Absen & OT) pada ${dateText}?\n\n(Data di seluruh perangkat juga akan terhapus jika terhubung Cloud!)`)) {
+            for (const key of window.timeMap.keys()) {
                 const tgl = parseInt(key.split('_')[1]);
-                if (range.includes(tgl)) { timeMap.delete(key); }
+                if (range.includes(tgl)) { window.timeMap.delete(key); }
             }
-            for (let k of databaseKaryawan) {
+            for (let k of window.databaseKaryawan) {
                 if (k.kodePerTanggal) {
                     for (let tgl of range) {
                         if (k.kodePerTanggal[tgl] !== undefined) { delete k.kodePerTanggal[tgl]; }
@@ -1790,23 +2006,32 @@
                     }
                 }
             }
-            try {
-                localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
-                localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
-            } catch(e) { console.warn("Gagal update storage", e); }
             
-            gabungkanDanRender();
-            showAlert("Sukses", `Semua data pada ${dateText} telah dikosongkan!`);
+            window.gabungkanDanRender();
+            if(window.saveToCloud) {
+                await window.saveToCloud('all');
+            } else {
+                window.saveToLocalStorage();
+            }
+            
+            window.showAlert("Sukses", `Semua data pada ${dateText} telah dikosongkan secara global!`);
         }
     });
 
-    safeAddListener('resetDataBtn', 'click', () => {
-        if(confirm("Yakin ingin menghapus seluruh data database dari browser?")) { 
-            localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; filters={}; renderTable(); 
+    safeAddListener('resetDataBtn', 'click', async () => {
+        if(confirm("Yakin ingin MENGHAPUS SELURUH DATA DARI SERVER CLOUD? Semua pengguna akan kehilangan akses ke data saat ini.")) { 
+            window.databaseKaryawan=[]; window.timeMap.clear(); window.databaseGlobal=[]; filters={}; window.gabungkanDanRender(); 
             const dbStatus = document.getElementById('dbStatus');
-            if (dbStatus) dbStatus.innerHTML="Menunggu Data..."; 
+            if (dbStatus) dbStatus.innerHTML="Mengosongkan Data Server..."; 
             clearLastUpdate(); 
-            showAlert("Reset","Data berhasil dihapus dari memori."); 
+            
+            if(window.saveToCloud) {
+                await window.saveToCloud('reset');
+            } else {
+                localStorage.clear();
+                document.getElementById('dbStatus').innerHTML="⚠️ Mode Lokal (Data Kosong)"; 
+            }
+            window.showAlert("Reset","Data berhasil dihapus bersih."); 
         }
     });
     
@@ -1817,9 +2042,9 @@
             const folderDisplay = document.getElementById('folderXlsbDisplay');
             if (folderDisplay) folderDisplay.value = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : "Folder terpilih";
             const xlsbFiles = files.filter(file => isFileValid(file));
-            if (xlsbFiles.length === 0) { showAlert("Peringatan", "File .xlsb valid (Worker/Staff/Security) tidak ditemukan di folder."); return; }
+            if (xlsbFiles.length === 0) { window.showAlert("Peringatan", "File .xlsb valid (Worker/Staff/Security) tidak ditemukan di folder."); return; }
             await prosesFileExcel(xlsbFiles);
-        } catch (error) { showAlert("Error", "Gagal membaca folder: " + error.message); } finally { e.target.value = ""; }
+        } catch (error) { window.showAlert("Error", "Gagal membaca folder: " + error.message); } finally { e.target.value = ""; }
     });
     
     safeAddListener('cancelLoadingBtn', 'click', () => { if(isProcessing) cancelProcessing = true; });
@@ -1828,7 +2053,7 @@
         try {
             if(!e.target.files.length) return;
             const file = e.target.files[0];
-            if (!isTimeFileValid(file)) { showAlert("Error", "File time tidak valid."); e.target.value = ""; return; }
+            if (!isTimeFileValid(file)) { window.showAlert("Error", "File time tidak valid."); e.target.value = ""; return; }
             
             const fileDisplay = document.getElementById('fileTimeDisplay');
             if (fileDisplay) fileDisplay.value = file.name;
@@ -1840,24 +2065,26 @@
             
             const newTimeMap = await loadTimeFile(file);
             if (newTimeMap.size) {
-                timeMap = newTimeMap;
+                window.timeMap = newTimeMap;
                 
-                try {
-                    localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
-                } catch(storageErr) {
-                    console.warn("Penyimpanan lokal penuh, namun data tetap ada di memori sementara.");
+                if (window.databaseKaryawan.length) {
+                    window.gabungkanDanRender();
                 }
                 
-                if (databaseKaryawan.length) {
-                    gabungkanDanRender();
+                // MENGUNGGAH KE CLOUD FIREBASE
+                if(window.saveToCloud) {
+                    if(loadingDetailText) loadingDetailText.innerText = "Mengunggah Data Time ke Firebase Cloud...";
+                    await window.saveToCloud('time');
+                } else {
+                    window.saveToLocalStorage();
                 }
-                else { showAlert("Info", `Data Time tersimpan. Silakan Update Absen (Folder) dulu.`); }
+                
             } else { 
-                showAlert("Gagal", `File Time (${file.name}) kosong atau format salah.`); 
+                window.showAlert("Gagal", `File Time (${file.name}) kosong atau format salah.`); 
             }
         } catch (error) { 
             console.error("Terjadi Error Time:", error);
-            showAlert("Error", "Gagal memproses file time: " + error.message); 
+            window.showAlert("Error", "Gagal memproses file time: " + error.message); 
         } finally { 
             const loadingOverlay = document.getElementById('loadingOverlay');
             if (loadingOverlay) loadingOverlay.classList.add('hidden'); 
@@ -1872,18 +2099,9 @@
         }
     });
 
-    (function loadStored() {
-        const karyawan = localStorage.getItem('hoplun_karyawan');
-        const tanggal = localStorage.getItem('hoplun_tanggal');
-        const timeObj = localStorage.getItem('hoplun_time');
-        if(karyawan && tanggal) {
-            databaseKaryawan = JSON.parse(karyawan);
-            semuaTanggal = JSON.parse(tanggal);
-            if(timeObj) timeMap = new Map(Object.entries(JSON.parse(timeObj)));
-            if(databaseKaryawan.length) gabungkanDanRender();
-        }
-        clearLastUpdate();
-    })();
+    // Panggil fungsi load storage saat pertama dimuat
+    window.loadFromLocalStorage();
+    clearLastUpdate();
 </script>
 </body>
 </html>
