@@ -120,9 +120,6 @@
         
         .btn-export { background: #059669; transition: 0.2s; }
         .btn-export:hover { background: #047857; }
-        .rekap-box { background: #f1f5f9; border-radius: 6px; padding: 4px 8px; display: inline-block; margin-right: 8px; }
-        .rekap-label { font-size: 9px; font-weight: bold; color: #334155; }
-        .rekap-value { font-size: 12px; font-weight: bold; margin-left: 4px; }
         .last-update-panel { background: #fef9e3; border-left: 4px solid #f59e0b; font-size: 9px; max-height: 70px; overflow-y: auto; }
         
         .loading-overlay {
@@ -168,7 +165,6 @@
 
 <script>
     // ======================== GLOBAL OVERRIDES ========================
-    // Mencegah console.error dan console.warn bawaan ZIP Size sheetjs muncul dan membingungkan user/playground
     const originalConsoleError = console.error;
     console.error = function(...args) {
         if (args.length > 0 && String(args[0]).includes('Bad uncompressed size')) return;
@@ -243,12 +239,49 @@
                 <button id="btnApplySalary" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] px-2 py-1 rounded font-bold shadow-sm ml-1 transition">Hitung</button>
             </div>
             
-            <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value text-emerald-700">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">Total Staff:</span><span id="totalStaff" class="rekap-value text-purple-700">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">Total Security:</span><span id="totalSecurity" class="rekap-value text-slate-700">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">Total Tampil:</span><span id="totalSemua" class="rekap-value text-blue-700">0</span></div>
+            <!-- SUMMARY REKAP UNIT -->
+            <div class="flex gap-2 items-center">
+                <!-- UNIT 1 -->
+                <div class="flex items-center gap-1.5 bg-blue-50/80 border border-blue-200 px-2 py-1 rounded-lg shadow-sm">
+                    <span class="bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-inner">UNIT 1</span>
+                    <div class="flex items-center gap-1 text-[9px]">
+                        <span class="text-slate-600 font-medium">Worker:</span>
+                        <span id="w1" class="font-bold text-blue-700 text-[11px]">0</span>
+                    </div>
+                    <div class="w-px h-3 bg-blue-200 mx-0.5"></div>
+                    <div class="flex items-center gap-1 text-[9px]">
+                        <span class="text-slate-600 font-medium">Staff:</span>
+                        <span id="s1" class="font-bold text-blue-700 text-[11px]">0</span>
+                    </div>
+                    <div class="w-px h-3 bg-blue-200 mx-0.5"></div>
+                    <div class="flex items-center gap-1 text-[9px]">
+                        <span class="text-slate-700 font-bold">Total:</span>
+                        <span id="all1" class="font-black text-blue-900 text-[12px]">0</span>
+                    </div>
+                </div>
+
+                <!-- UNIT 2 -->
+                <div class="flex items-center gap-1.5 bg-orange-50/80 border border-orange-200 px-2 py-1 rounded-lg shadow-sm">
+                    <span class="bg-orange-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-inner">UNIT 2</span>
+                    <div class="flex items-center gap-1 text-[9px]">
+                        <span class="text-slate-600 font-medium">Worker:</span>
+                        <span id="w2" class="font-bold text-orange-700 text-[11px]">0</span>
+                    </div>
+                    <div class="w-px h-3 bg-orange-200 mx-0.5"></div>
+                    <div class="flex items-center gap-1 text-[9px]">
+                        <span class="text-slate-600 font-medium">Staff:</span>
+                        <span id="s2" class="font-bold text-orange-700 text-[11px]">0</span>
+                    </div>
+                    <div class="w-px h-3 bg-orange-200 mx-0.5"></div>
+                    <div class="flex items-center gap-1 text-[9px]">
+                        <span class="text-slate-700 font-bold">Total:</span>
+                        <span id="all2" class="font-black text-orange-900 text-[12px]">0</span>
+                    </div>
+                </div>
+            </div>
+            
         </div>
-        <div class="flex gap-2 items-center flex-wrap mt-1 lg:mt-0">
+        <div class="flex gap-2 items-center flex-wrap mt-1 xl:mt-0">
             <div class="flex items-center gap-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-sm">
                 <span class="text-[10px]">🔍</span>
                 <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[10px] border-none outline-none w-32 bg-transparent font-medium text-slate-800">
@@ -1621,12 +1654,34 @@
     }
 
     function updateRekapUtama(dataList) {
-        let w=0,s=0,sec=0;
-        for(let r of dataList) { if(r.status==="WORKER") w++; else if(r.status==="STAFF") s++; else if(r.status==="SECURITY") sec++; }
-        const wEl = document.getElementById('totalWorker'); if (wEl) wEl.innerText = w;
-        const sEl = document.getElementById('totalStaff'); if (sEl) sEl.innerText = s;
-        const secEl = document.getElementById('totalSecurity'); if (secEl) secEl.innerText = sec;
-        const allEl = document.getElementById('totalSemua'); if (allEl) allEl.innerText = dataList.length;
+        let u1w=0, u1s=0, u2w=0, u2s=0;
+        
+        for(let r of dataList) { 
+            let isU2 = r.id && String(r.id).toUpperCase().startsWith('SM');
+            // Jika bukan Awalan SM, otomatis masuk ke perhitungan Unit 1
+            if (isU2) {
+                if(r.status === "STAFF") u2s++; else u2w++;
+            } else {
+                if(r.status === "STAFF") u1s++; else u1w++;
+            }
+        }
+        
+        const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+        
+        // Render Unit 1
+        setEl('w1', u1w);
+        setEl('s1', u1s);
+        setEl('all1', u1w + u1s);
+        
+        // Render Unit 2
+        setEl('w2', u2w);
+        setEl('s2', u2s);
+        setEl('all2', u2w + u2s);
+        
+        // Optional safety for the legacy boxes in case they are used elsewhere
+        let tw=0, ts=0, tsec=0;
+        for(let r of dataList) { if(r.status==="WORKER") tw++; else if(r.status==="STAFF") ts++; else if(r.status==="SECURITY") tsec++; }
+        setEl('totalWorker', tw); setEl('totalStaff', ts); setEl('totalSecurity', tsec); setEl('totalSemua', dataList.length);
     }
 
     function highlightText(text, keyword) {
