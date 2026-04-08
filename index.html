@@ -160,7 +160,6 @@
         .view-tab.active-attend { background-color: white; color: #1d4ed8; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .view-tab.active-ot { background-color: #7e22ce; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .view-tab.active-salary { background-color: #059669; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .view-tab.active-salary-worker { background-color: #0284c7; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .view-tab.inactive { background-color: transparent; color: #64748b; }
         .view-tab.inactive:hover { color: #334155; }
     </style>
@@ -219,7 +218,6 @@
                 <button id="tabAttend" class="view-tab active-attend">Kehadiran (Absen)</button>
                 <button id="tabOT" class="view-tab inactive">Lembur (Overtime)</button>
                 <button id="tabSalary" class="view-tab inactive">Kenaikan Gaji</button>
-                <button id="tabSalaryWorker" class="view-tab inactive">Salary Worker</button>
             </div>
             
             <!-- PANEL PENGATURAN GAJI DINAMIS -->
@@ -247,14 +245,15 @@
             <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value text-emerald-700">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Staff:</span><span id="totalStaff" class="rekap-value text-purple-700">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Security:</span><span id="totalSecurity" class="rekap-value text-slate-700">0</span></div>
-            <div class="rekap-box"><span class="rekap-label">Total Semua:</span><span id="totalSemua" class="rekap-value text-blue-700">0</span></div>
+            <div class="rekap-box"><span class="rekap-label">Total Tampil:</span><span id="totalSemua" class="rekap-value text-blue-700">0</span></div>
         </div>
         <div class="flex gap-2 items-center flex-wrap mt-1 lg:mt-0">
             <div class="flex items-center gap-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-sm">
                 <span class="text-[10px]">🔍</span>
                 <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[10px] border-none outline-none w-32 bg-transparent font-medium text-slate-800">
             </div>
-            <div class="flex items-center gap-1 bg-white border rounded px-1 py-0.5 shadow-sm">
+            
+            <div id="dateFilterGroup" class="flex items-center gap-1 bg-white border rounded px-1 py-0.5 shadow-sm">
                 <span class="text-[9px] font-semibold text-slate-600">Tgl:</span>
                 <select id="dateFrom" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Dari</option></select>
                 <span class="text-[9px] text-slate-400">-</span>
@@ -265,6 +264,7 @@
                     Hapus
                 </button>
             </div>
+            
             <select id="filterAttendanceDetail" class="bg-white border rounded px-1 py-0.5 text-[9px] outline-none shadow-sm font-medium cursor-pointer max-w-[120px]">
                 <option value="ALL">Semua Kehadiran</option>
                 <option value="ONE_TIME">Time in / Out (Salah Satu)</option>
@@ -276,8 +276,9 @@
                 <option value="MANGKIR_CUTI">Mangkir + Cuti</option>
                 <option value="HOLIDAY">Holiday (HL)</option>
             </select>
+            
             <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export</button>
-            <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
+            <button id="btnSummary" onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
             
             <span id="dbStatus" class="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-1 rounded border border-blue-200">Menunggu Data...</span>
         </div>
@@ -332,7 +333,7 @@
     let databaseGlobal = [];
     let isProcessing = false;
     let cancelProcessing = false;
-    let currentViewMode = 'ATTENDANCE'; // 'ATTENDANCE', 'OVERTIME', 'SALARY', 'SALARY_WORKER'
+    let currentViewMode = 'ATTENDANCE'; // 'ATTENDANCE', 'OVERTIME', 'SALARY'
     const MAX_BARIS_PER_FILE = 2500;
     
     let filters = {}; 
@@ -858,27 +859,12 @@
 
         const finalData = databaseKaryawan.map(karyawan => {
             const tanggalData = {};
-            let sumPR = 0, sumAB = 0, sumSK = 0, sumAL = 0, sumOL = 0, sumFO = 0, sumHL = 0;
-            let ttlOT = 0;
 
             for(let tgl of semuaTanggal) {
                 const kode = karyawan.kodePerTanggal?.[String(tgl)] || "";
                 const time = timeMap.get(`${karyawan.id}_${tgl}`) || "";
                 const ot = karyawan.otPerTanggal?.[String(tgl)] || "";
                 tanggalData[tgl] = { kode, time, ot };
-
-                // Hitung Rekap untuk tab Salary Worker
-                const kUpper = kode.toUpperCase();
-                if (["PR", "PRP", "PRS", "PRM"].includes(kUpper)) sumPR++;
-                else if (kUpper === "AB" || kUpper === "LWP") sumAB++;
-                else if (kUpper === "SK") sumSK++;
-                else if (kUpper === "AL") sumAL++;
-                else if (kUpper === "OL") sumOL++;
-                else if (kUpper === "FO") sumFO++;
-                else if (kUpper === "HL") sumHL++;
-                
-                let otVal = parseFloat(ot);
-                if (!isNaN(otVal)) ttlOT += otVal;
             }
             
             // Hitung Masa Kerja & Gaji berdasarkan Cut Off Date
@@ -888,36 +874,10 @@
             const gajiIni = mkIni !== "" ? calcSalary(mkIni) : "";
             const selisih = (gajiIni !== "" && gajiLalu !== "") ? gajiIni - gajiLalu : "";
 
-            // Menghitung elemen tambahan Salary Worker
-            const basicSalary = gajiIni !== "" ? gajiIni : 0;
-            const tunjKinerja = 0;
-            const tunjShift = 0;
-            const otherAllow = 0;
-            const grossSalary = basicSalary !== "" ? (basicSalary + tunjKinerja + tunjShift + otherAllow) : "";
-            
-            const ot15 = 0, ot2 = 0, ot3 = 0, ot4 = 0;
-            const otFee15 = 0, otFee2 = 0, otFee3 = 0, otFee4 = 0, totalOtFee = 0;
-            
-            const attendDeduct = 0;
-            const jht = basicSalary !== "" ? Math.round(basicSalary * 0.02) : 0;
-            const jp = basicSalary !== "" ? Math.round(basicSalary * 0.01) : 0;
-            const bpjsKes = basicSalary !== "" ? Math.round(basicSalary * 0.01) : 0;
-            const otherDeduct = 0;
-            const totalDeduct = basicSalary !== "" ? (jht + jp + bpjsKes + attendDeduct + otherDeduct) : "";
-            
-            const tax = 0;
-            const thp = (grossSalary !== "" && totalDeduct !== "") ? (grossSalary + totalOtFee - totalDeduct - tax) : "";
-
             return { 
                 id: karyawan.id, name: karyawan.name, section: karyawan.section, 
                 position: karyawan.position, joinDate: karyawan.joinDate, status: karyawan.status, 
-                tanggalData, mkLalu, mkIni, gajiLalu, gajiIni, selisih,
-                sumPR, sumAB, sumSK, sumAL, sumOL, sumFO, sumHL,
-                basicSalary, tunjKinerja, tunjShift, otherAllow, grossSalary,
-                ot15, ot2, ot3, ot4, ttlOT,
-                otFee15, otFee2, otFee3, otFee4, totalOtFee,
-                attendDeduct, jht, jp, bpjsKes, otherDeduct, totalDeduct,
-                tax, thp
+                tanggalData, mkLalu, mkIni, gajiLalu, gajiIni, selisih 
             };
         });
         databaseGlobal = finalData;
@@ -950,8 +910,6 @@
         const fixedColumns = ['id', 'name', 'section', 'position', 'joinDate', 'status'];
         if (currentViewMode === 'SALARY') {
             fixedColumns.push('mkLalu', 'mkIni', 'gajiLalu', 'gajiIni', 'selisih');
-        } else if (currentViewMode === 'SALARY_WORKER') {
-            fixedColumns.push('sumPR', 'basicSalary', 'grossSalary', 'thp'); // Only few main columns for filtering
         }
 
         for (let col of fixedColumns) {
@@ -977,7 +935,7 @@
                 displayValues: values.map(v => {
                     if (v === "__EMPTY__") return "Kosong";
                     // Tampilkan format uang di menu filter drop-down
-                    if (['gajiLalu', 'gajiIni', 'selisih', 'basicSalary', 'grossSalary', 'thp'].includes(col)) {
+                    if (['gajiLalu', 'gajiIni', 'selisih'].includes(col)) {
                         return typeof v === 'number' ? new Intl.NumberFormat('id-ID').format(v) : v;
                     }
                     return v;
@@ -1036,40 +994,6 @@
                 { name: "SELISIH", width: 90, filterKey: "selisih" }
             ]);
             headerBgClass = 'bg-emerald-800';
-        } else if (currentViewMode === 'SALARY_WORKER') {
-            allCols = allCols.concat([
-                { name: "PR", width: 50, filterKey: "sumPR" },
-                { name: "AB", width: 50, filterKey: null },
-                { name: "SK", width: 50, filterKey: null },
-                { name: "AL", width: 50, filterKey: null },
-                { name: "OL", width: 50, filterKey: null },
-                { name: "FO", width: 50, filterKey: null },
-                { name: "HL", width: 50, filterKey: null },
-                { name: "BASIC SALARY", width: 100, filterKey: "basicSalary" },
-                { name: "TUNJANGAN KINERJA", width: 100, filterKey: null },
-                { name: "TUNJANGAN SHIFT", width: 100, filterKey: null },
-                { name: "OTHER ALLOW", width: 100, filterKey: null },
-                { name: "GROSS SALARY", width: 100, filterKey: "grossSalary" },
-                { name: "OT x 1,5", width: 60, filterKey: null },
-                { name: "OT X 2", width: 60, filterKey: null },
-                { name: "OT X 3", width: 60, filterKey: null },
-                { name: "OT X 4", width: 60, filterKey: null },
-                { name: "TTL HOURS", width: 70, filterKey: null },
-                { name: "OT FEE x 1,5", width: 90, filterKey: null },
-                { name: "OT FEE X 2", width: 90, filterKey: null },
-                { name: "OT FEE X 3", width: 90, filterKey: null },
-                { name: "OT FEE X 4", width: 90, filterKey: null },
-                { name: "TOTAL OT FEE", width: 100, filterKey: null },
-                { name: "ATTEND DEDUCT", width: 100, filterKey: null },
-                { name: "JAMSOS JHT 2%", width: 100, filterKey: null },
-                { name: "JAMINAN PENSIUN 1%", width: 100, filterKey: null },
-                { name: "BPJS KESEHATAN", width: 100, filterKey: null },
-                { name: "OTHER DEDUCT", width: 100, filterKey: null },
-                { name: "TOTAL DEDUCTN", width: 100, filterKey: null },
-                { name: "TAX ( Pph 21 )", width: 100, filterKey: null },
-                { name: "TAKE HOME PAY", width: 110, filterKey: "thp" }
-            ]);
-            headerBgClass = 'bg-blue-700';
         }
 
         let th = `<tr class="${headerBgClass} text-white text-[10px]">`;
@@ -1383,6 +1307,9 @@
         const range = getTanggalRange();
 
         return databaseGlobal.filter(row => {
+            // MENYEMBUNYIKAN STATUS 'STAFF' SAAT BERADA DI MENU KENAIKAN GAJI
+            if (currentViewMode === 'SALARY' && row.status === 'STAFF') return false;
+
             if (hasSearch && !(row.id.toLowerCase().includes(searchKeyword) || row.name.toLowerCase().includes(searchKeyword))) return false;
 
             for (let i = 0; i < activeFilters.length; i++) {
@@ -1478,7 +1405,6 @@
             if (currentFilteredData.length === 0) {
                 let colspan = 7;
                 if (currentViewMode === 'SALARY') colspan += 5;
-                else if (currentViewMode === 'SALARY_WORKER') colspan += 23;
                 else colspan += range.length;
                 
                 tBody.innerHTML = `<tr><td colspan="${colspan}" class="p-4 text-center text-slate-500 font-bold">Tidak ada data yang sesuai filter</td></tr>`;
@@ -1526,7 +1452,7 @@
                 `<td class="col-status-fixed px-1 py-0.5" style="width:75px;">${sBadge}</td>`
             );
 
-            // Render Tab Dinamis: Absen ATAU Lembur ATAU Gaji ATAU Salary Worker
+            // Render Tab Dinamis: Absen ATAU Lembur ATAU Gaji
             if (currentViewMode === 'SALARY') {
                 const numFormat = new Intl.NumberFormat('id-ID');
                 const formatCurr = (val) => val === "" ? "—" : (val === 0 ? "0" : numFormat.format(val));
@@ -1538,43 +1464,6 @@
                     `<td class="attendance-col px-1 py-0.5 text-right font-mono text-blue-700 font-semibold">${formatCurr(row.gajiLalu)}</td>`,
                     `<td class="attendance-col px-1 py-0.5 text-right font-mono text-emerald-700 font-semibold">${formatCurr(row.gajiIni)}</td>`,
                     `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-600 font-semibold">${formatCurr(row.selisih)}</td>`
-                );
-            } else if (currentViewMode === 'SALARY_WORKER') {
-                const numFormat = new Intl.NumberFormat('id-ID');
-                const formatCurr = (val) => val === "" ? "—" : (val === 0 ? "0" : numFormat.format(val));
-                const formatNum = (val) => val === 0 ? "0" : val;
-                
-                htmlChunks.push(
-                    `<td class="attendance-col px-1 py-0.5 text-center font-bold text-slate-700">${formatNum(row.sumPR)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-slate-700">${formatNum(row.sumAB)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-slate-700">${formatNum(row.sumSK)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-slate-700">${formatNum(row.sumAL)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-slate-700">${formatNum(row.sumOL)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-slate-700">${formatNum(row.sumFO)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-slate-700">${formatNum(row.sumHL)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-emerald-700 font-semibold">${formatCurr(row.basicSalary)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono">${formatCurr(row.tunjKinerja)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono">${formatCurr(row.tunjShift)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono">${formatCurr(row.otherAllow)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-blue-700 font-bold">${formatCurr(row.grossSalary)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-purple-700">${formatNum(row.ot15)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-purple-700">${formatNum(row.ot2)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-purple-700">${formatNum(row.ot3)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center text-purple-700">${formatNum(row.ot4)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center font-bold text-purple-800">${formatNum(row.ttlOT)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono">${formatCurr(row.otFee15)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono">${formatCurr(row.otFee2)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono">${formatCurr(row.otFee3)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono">${formatCurr(row.otFee4)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-purple-700 font-bold">${formatCurr(row.totalOtFee)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-600">${formatCurr(row.attendDeduct)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-600">${formatCurr(row.jht)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-600">${formatCurr(row.jp)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-600">${formatCurr(row.bpjsKes)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-600">${formatCurr(row.otherDeduct)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-700 font-bold">${formatCurr(row.totalDeduct)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-600">${formatCurr(row.tax)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-emerald-800 font-bold text-[11px]">${formatCurr(row.thp)}</td>`
                 );
             } else if (currentViewMode === 'OVERTIME') {
                 for(let i=0; i<range.length; i++) {
@@ -1626,8 +1515,6 @@
         
         if (currentViewMode === 'SALARY') {
             headers.push(`MASA KERJA ${configGaji.bulan1.nama}`, `MASA KERJA ${configGaji.bulan2.nama}`, `GAJI ${configGaji.bulan1.nama}`, `GAJI ${configGaji.bulan2.nama}`, "SELISIH");
-        } else if (currentViewMode === 'SALARY_WORKER') {
-            headers.push("PR", "AB", "SK", "AL", "OL", "FO", "HL", "BASIC SALARY", "TUNJANGAN KINERJA", "TUNJANGAN SHIFT", "OTHER ALLOW", "GROSS SALARY", "OT x 1,5", "OT X 2", "OT X 3", "OT X 4", "TTL HOURS", "OT FEE x 1,5", "OT FEE X 2", "OT FEE X 3", "OT FEE X 4", "TOTAL OT FEE", "ATTEND DEDUCT", "JAMSOS JHT 2%", "JAMINAN PENSIUN 1%", "BPJS KESEHATAN", "OTHER DEDUCT", "TOTAL DEDUCTN", "TAX ( Pph 21 )", "TAKE HOME PAY");
         } else {
             headers.push(...range.map(t => `Tgl ${t}`));
         }
@@ -1638,20 +1525,12 @@
             const rowArr = [i+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
             
             if (currentViewMode === 'SALARY') {
+                // Konversi secara paksa ke Number untuk Excel Export
                 let gajiLaluNum = row.gajiLalu !== "" ? Number(row.gajiLalu) : "";
                 let gajiIniNum = row.gajiIni !== "" ? Number(row.gajiIni) : "";
                 let selisihNum = row.selisih !== "" ? Number(row.selisih) : "";
+                
                 rowArr.push(row.mkLalu, row.mkIni, gajiLaluNum, gajiIniNum, selisihNum);
-            } else if (currentViewMode === 'SALARY_WORKER') {
-                let numCol = (v) => v !== "" ? Number(v) : 0;
-                rowArr.push(
-                    row.sumPR, row.sumAB, row.sumSK, row.sumAL, row.sumOL, row.sumFO, row.sumHL,
-                    numCol(row.basicSalary), numCol(row.tunjKinerja), numCol(row.tunjShift), numCol(row.otherAllow), numCol(row.grossSalary),
-                    row.ot15, row.ot2, row.ot3, row.ot4, row.ttlOT,
-                    numCol(row.otFee15), numCol(row.otFee2), numCol(row.otFee3), numCol(row.otFee4), numCol(row.totalOtFee),
-                    numCol(row.attendDeduct), numCol(row.jht), numCol(row.jp), numCol(row.bpjsKes), numCol(row.otherDeduct), numCol(row.totalDeduct),
-                    numCol(row.tax), numCol(row.thp)
-                );
             } else if (currentViewMode === 'OVERTIME') {
                 for(let tgl of range) {
                     const dataTgl = row.tanggalData[tgl] || { kode: "", time: "", ot: "" };
@@ -1685,25 +1564,11 @@
                     }
                 });
             }
-        } else if (currentViewMode === 'SALARY_WORKER') {
-            const xlsxRange = XLSX.utils.decode_range(ws['!ref']);
-            // Kolom Uang (Currency) yang butuh diformat
-            const currCols = [14, 15, 16, 17, 18, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36];
-            for(let R = 1; R <= xlsxRange.e.r; ++R) {
-                currCols.forEach(C => {
-                    const cellRef = XLSX.utils.encode_cell({c:C, r:R});
-                    if(ws[cellRef] && typeof ws[cellRef].v === 'number') {
-                        ws[cellRef].t = 'n';
-                        ws[cellRef].z = '#,##0';
-                    }
-                });
-            }
         }
 
         const wb = XLSX.utils.book_new();
         const sheetName = currentViewMode === 'ATTENDANCE' ? "Attendance" : 
-                          (currentViewMode === 'SALARY' ? "Kenaikan_Gaji" : 
-                          (currentViewMode === 'SALARY_WORKER' ? "Salary_Worker" : "Overtime"));
+                          (currentViewMode === 'SALARY' ? "Kenaikan_Gaji" : "Overtime");
         XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
         const suffix = `${sheetName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}`;
         XLSX.writeFile(wb, `Hoplun_${suffix}.xlsx`);
@@ -1845,10 +1710,12 @@
         document.getElementById('tabAttend').className = "view-tab active-attend";
         document.getElementById('tabOT').className = "view-tab inactive";
         document.getElementById('tabSalary').className = "view-tab inactive";
-        document.getElementById('tabSalaryWorker').className = "view-tab inactive";
         
         document.getElementById('salaryConfigPanel').classList.add('hidden');
         document.getElementById('filterAttendanceDetail').style.display = 'block';
+        document.getElementById('dateFilterGroup').style.display = 'flex';
+        document.getElementById('btnSummary').style.display = 'inline-block';
+        
         document.getElementById('dateFrom').disabled = false;
         document.getElementById('dateTo').disabled = false;
         gabungkanDanRender();
@@ -1860,10 +1727,12 @@
         document.getElementById('tabOT').className = "view-tab active-ot";
         document.getElementById('tabAttend').className = "view-tab inactive";
         document.getElementById('tabSalary').className = "view-tab inactive";
-        document.getElementById('tabSalaryWorker').className = "view-tab inactive";
         
         document.getElementById('salaryConfigPanel').classList.add('hidden');
-        document.getElementById('filterAttendanceDetail').style.display = 'none';
+        document.getElementById('filterAttendanceDetail').style.display = 'none'; 
+        document.getElementById('dateFilterGroup').style.display = 'flex';
+        document.getElementById('btnSummary').style.display = 'inline-block';
+        
         document.getElementById('dateFrom').disabled = false;
         document.getElementById('dateTo').disabled = false;
         gabungkanDanRender();
@@ -1875,27 +1744,12 @@
         document.getElementById('tabSalary').className = "view-tab active-salary";
         document.getElementById('tabAttend').className = "view-tab inactive";
         document.getElementById('tabOT').className = "view-tab inactive";
-        document.getElementById('tabSalaryWorker').className = "view-tab inactive";
         
         document.getElementById('salaryConfigPanel').classList.remove('hidden');
         document.getElementById('filterAttendanceDetail').style.display = 'none';
-        document.getElementById('dateFrom').disabled = true;
-        document.getElementById('dateTo').disabled = true;
-        gabungkanDanRender();
-    });
-
-    safeAddListener('tabSalaryWorker', 'click', () => {
-        if(currentViewMode === 'SALARY_WORKER') return;
-        currentViewMode = 'SALARY_WORKER';
-        document.getElementById('tabSalaryWorker').className = "view-tab active-salary-worker";
-        document.getElementById('tabSalary').className = "view-tab inactive";
-        document.getElementById('tabAttend').className = "view-tab inactive";
-        document.getElementById('tabOT').className = "view-tab inactive";
+        document.getElementById('dateFilterGroup').style.display = 'none';
+        document.getElementById('btnSummary').style.display = 'none';
         
-        document.getElementById('salaryConfigPanel').classList.remove('hidden'); // Membutuhkan patokan bulan untuk Basic Salary
-        document.getElementById('filterAttendanceDetail').style.display = 'none';
-        document.getElementById('dateFrom').disabled = true;
-        document.getElementById('dateTo').disabled = true;
         gabungkanDanRender();
     });
 
