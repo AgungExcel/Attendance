@@ -168,7 +168,6 @@
 
 <script>
     // ======================== GLOBAL OVERRIDES ========================
-    // Mencegah console.error dan console.warn bawaan ZIP Size sheetjs muncul dan membingungkan user/playground
     const originalConsoleError = console.error;
     console.error = function(...args) {
         if (args.length > 0 && String(args[0]).includes('Bad uncompressed size')) return;
@@ -221,12 +220,34 @@
                 <button id="tabSalary" class="view-tab inactive">Gaji (Salary)</button>
             </div>
             
+            <!-- PANEL PENGATURAN GAJI DINAMIS (Muncul saat tab Salary diklik) -->
+            <div id="salaryConfigPanel" class="hidden flex items-center bg-emerald-100 border border-emerald-300 rounded-lg p-0.5 shadow-sm gap-1 mr-2">
+                <span class="text-[9px] font-bold text-emerald-800 px-1">Bulan 1:</span>
+                <select id="salMonth1" class="text-[9px] p-0.5 border border-emerald-300 rounded outline-none bg-white cursor-pointer">
+                    <option value="0">Jan</option><option value="1">Feb</option><option value="2" selected>Mar</option><option value="3">Apr</option>
+                    <option value="4">Mei</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Ags</option>
+                    <option value="8">Sep</option><option value="9">Okt</option><option value="10">Nov</option><option value="11">Des</option>
+                </select>
+                <input type="number" id="salYear1" value="2026" class="text-[9px] p-0.5 w-12 border border-emerald-300 rounded outline-none bg-white">
+                
+                <span class="text-[9px] font-bold text-slate-500 px-1">VS Bulan 2:</span>
+                
+                <select id="salMonth2" class="text-[9px] p-0.5 border border-emerald-300 rounded outline-none bg-white cursor-pointer">
+                    <option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3" selected>Apr</option>
+                    <option value="4">Mei</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Ags</option>
+                    <option value="8">Sep</option><option value="9">Okt</option><option value="10">Nov</option><option value="11">Des</option>
+                </select>
+                <input type="number" id="salYear2" value="2026" class="text-[9px] p-0.5 w-12 border border-emerald-300 rounded outline-none bg-white">
+                
+                <button id="btnApplySalary" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] px-2 py-1 rounded font-bold shadow-sm ml-1 transition">Hitung</button>
+            </div>
+            
             <div class="rekap-box"><span class="rekap-label">Total Worker:</span><span id="totalWorker" class="rekap-value text-emerald-700">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Staff:</span><span id="totalStaff" class="rekap-value text-purple-700">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Security:</span><span id="totalSecurity" class="rekap-value text-slate-700">0</span></div>
             <div class="rekap-box"><span class="rekap-label">Total Semua:</span><span id="totalSemua" class="rekap-value text-blue-700">0</span></div>
         </div>
-        <div class="flex gap-2 items-center flex-wrap">
+        <div class="flex gap-2 items-center flex-wrap mt-1 lg:mt-0">
             <div class="flex items-center gap-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-sm">
                 <span class="text-[10px]">🔍</span>
                 <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[10px] border-none outline-none w-32 bg-transparent font-medium text-slate-800">
@@ -316,9 +337,20 @@
     let filterOptions = {}; 
     let currentSummaryData = null;
 
-    // Batas Cut Off
-    const targetMar2026 = new Date(2026, 2, 25); // Bulan ke-2 = Maret (0-indexed)
-    const targetApr2026 = new Date(2026, 3, 25); // Bulan ke-3 = April (0-indexed)
+    // Fungsi Mengambil Pengaturan Gaji Langsung dari Input UI
+    function getSalaryConfig() {
+        const m1 = parseInt(document.getElementById('salMonth1').value);
+        const y1 = parseInt(document.getElementById('salYear1').value) || 2026;
+        const m2 = parseInt(document.getElementById('salMonth2').value);
+        const y2 = parseInt(document.getElementById('salYear2').value) || 2026;
+        
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        
+        return {
+            bulan1: { nama: `${monthNames[m1]} ${y1}`.toUpperCase(), cutOff: new Date(y1, m1, 25) },
+            bulan2: { nama: `${monthNames[m2]} ${y2}`.toUpperCase(), cutOff: new Date(y2, m2, 25) }
+        };
+    }
 
     function showAlert(title, msg) {
         const modal = document.getElementById('modernAlert');
@@ -420,7 +452,6 @@
 
     const yieldToBrowser = () => new Promise(resolve => setTimeout(resolve, 5));
 
-    // MEMASTIKAN PENGGUNAAN BINARY STRING UNTUK MENGHINDARI ERROR ZIP / UNCOMPRESSED SIZE
     function readFileAsBinaryString(file) { 
         return new Promise((resolve,reject)=>{ 
             const fr=new FileReader(); 
@@ -464,7 +495,6 @@
                 const data = await readFileAsBinaryString(file);
                 const workbook = XLSX.read(data, { type: 'binary', cellDates: true, dense: true });
                 
-                // 1. Ekstrak Data Kehadiran (Attendance)
                 let sheetName = workbook.SheetNames.find(s => s.toUpperCase().includes('ATTEND')) || workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 
@@ -685,7 +715,6 @@
                     
                     if(id && dateRaw && record) {
                         let tgl = NaN;
-                        // Deteksi dan perbaikan Format Tanggal Cerdas
                         if(dateRaw instanceof Date) {
                             tgl = dateRaw.getDate();
                         } else if(typeof dateRaw === 'number') {
@@ -723,6 +752,8 @@
 
     function gabungkanDanRender() {
         if(!databaseKaryawan.length) return;
+        const configGaji = getSalaryConfig();
+
         const finalData = databaseKaryawan.map(karyawan => {
             const tanggalData = {};
             for(let tgl of semuaTanggal) {
@@ -732,16 +763,16 @@
             }
             
             // Hitung Masa Kerja & Gaji berdasarkan Cut Off Date
-            const mkMar = getTenureYears(karyawan.joinDate, targetMar2026);
-            const mkApr = getTenureYears(karyawan.joinDate, targetApr2026);
-            const gajiMar = mkMar !== "" ? calcSalary(mkMar) : "";
-            const gajiApr = mkApr !== "" ? calcSalary(mkApr) : "";
-            const selisih = (gajiApr !== "" && gajiMar !== "") ? gajiApr - gajiMar : "";
+            const mkLalu = getTenureYears(karyawan.joinDate, configGaji.bulan1.cutOff);
+            const mkIni = getTenureYears(karyawan.joinDate, configGaji.bulan2.cutOff);
+            const gajiLalu = mkLalu !== "" ? calcSalary(mkLalu) : "";
+            const gajiIni = mkIni !== "" ? calcSalary(mkIni) : "";
+            const selisih = (gajiIni !== "" && gajiLalu !== "") ? gajiIni - gajiLalu : "";
 
             return { 
                 id: karyawan.id, name: karyawan.name, section: karyawan.section, 
                 position: karyawan.position, joinDate: karyawan.joinDate, status: karyawan.status, 
-                tanggalData, mkMar, mkApr, gajiMar, gajiApr, selisih 
+                tanggalData, mkLalu, mkIni, gajiLalu, gajiIni, selisih 
             };
         });
         databaseGlobal = finalData;
@@ -773,7 +804,7 @@
         filterOptions = {};
         const fixedColumns = ['id', 'name', 'section', 'position', 'joinDate', 'status'];
         if (currentViewMode === 'SALARY') {
-            fixedColumns.push('mkMar', 'mkApr', 'gajiMar', 'gajiApr', 'selisih');
+            fixedColumns.push('mkLalu', 'mkIni', 'gajiLalu', 'gajiIni', 'selisih');
         }
 
         for (let col of fixedColumns) {
@@ -799,7 +830,7 @@
                 displayValues: values.map(v => {
                     if (v === "__EMPTY__") return "Kosong";
                     // Tampilkan format uang di menu filter drop-down
-                    if (col === 'gajiMar' || col === 'gajiApr' || col === 'selisih') {
+                    if (col === 'gajiLalu' || col === 'gajiIni' || col === 'selisih') {
                         return typeof v === 'number' ? new Intl.NumberFormat('id-ID').format(v) : v;
                     }
                     return v;
@@ -825,6 +856,7 @@
         const thead = document.getElementById('tableHeader');
         if (!thead) return;
         
+        const configGaji = getSalaryConfig();
         const fixedCols = [
             { name: "NO", width: 40, filterKey: null }, { name: "ID", width: 70, filterKey: "id" },
             { name: "NAMA", width: 120, filterKey: "name" }, { name: "SECTION", width: 100, filterKey: "section" },
@@ -839,10 +871,10 @@
             allCols = allCols.concat(dateCols);
         } else if (currentViewMode === 'SALARY') {
             allCols = allCols.concat([
-                { name: "MASA KERJA MAR 2026", width: 130, filterKey: "mkMar" },
-                { name: "MASA KERJA APR 2026", width: 130, filterKey: "mkApr" },
-                { name: "GAJI MARET", width: 100, filterKey: "gajiMar" },
-                { name: "GAJI APRIL", width: 100, filterKey: "gajiApr" },
+                { name: `MASA KERJA ${configGaji.bulan1.nama}`, width: 130, filterKey: "mkLalu" },
+                { name: `MASA KERJA ${configGaji.bulan2.nama}`, width: 130, filterKey: "mkIni" },
+                { name: `GAJI ${configGaji.bulan1.nama}`, width: 100, filterKey: "gajiLalu" },
+                { name: `GAJI ${configGaji.bulan2.nama}`, width: 100, filterKey: "gajiIni" },
                 { name: "SELISIH", width: 90, filterKey: "selisih" }
             ]);
         }
@@ -1304,10 +1336,10 @@
                 const formatVal = (val) => val === "" ? "—" : val;
                 
                 htmlChunks.push(
-                    `<td class="attendance-col px-1 py-0.5 text-center font-bold text-slate-700">${formatVal(row.mkMar)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-center font-bold text-slate-700">${formatVal(row.mkApr)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-blue-700 font-semibold">${formatCurr(row.gajiMar)}</td>`,
-                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-emerald-700 font-semibold">${formatCurr(row.gajiApr)}</td>`,
+                    `<td class="attendance-col px-1 py-0.5 text-center font-bold text-slate-700">${formatVal(row.mkLalu)}</td>`,
+                    `<td class="attendance-col px-1 py-0.5 text-center font-bold text-slate-700">${formatVal(row.mkIni)}</td>`,
+                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-blue-700 font-semibold">${formatCurr(row.gajiLalu)}</td>`,
+                    `<td class="attendance-col px-1 py-0.5 text-right font-mono text-emerald-700 font-semibold">${formatCurr(row.gajiIni)}</td>`,
                     `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-600 font-semibold">${formatCurr(row.selisih)}</td>`
                 );
             } else {
@@ -1339,11 +1371,12 @@
         const filteredData = applyAllFiltersFast();
         if(!filteredData.length) { showAlert("Peringatan","Tidak ada data untuk diexport"); return; }
         
+        const configGaji = getSalaryConfig();
         const headers = ["NO", "ID", "NAMA", "SECTION", "POSISI", "JOIN DATE", "STATUS"];
         let range = getTanggalRange();
         
         if (currentViewMode === 'SALARY') {
-            headers.push("MASA KERJA MARET 2026", "MASA KERJA APRIL 2026", "GAJI MARET", "GAJI APRIL", "SELISIH");
+            headers.push(`MASA KERJA ${configGaji.bulan1.nama}`, `MASA KERJA ${configGaji.bulan2.nama}`, `GAJI ${configGaji.bulan1.nama}`, `GAJI ${configGaji.bulan2.nama}`, "SELISIH");
         } else {
             headers.push(...range.map(t => `Tgl ${t}`));
         }
@@ -1354,7 +1387,12 @@
             const rowArr = [i+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
             
             if (currentViewMode === 'SALARY') {
-                rowArr.push(row.mkMar, row.mkApr, row.gajiMar, row.gajiApr, row.selisih);
+                // Konversi secara paksa ke Number untuk Excel Export
+                let gajiLaluNum = row.gajiLalu !== "" ? Number(row.gajiLalu) : "";
+                let gajiIniNum = row.gajiIni !== "" ? Number(row.gajiIni) : "";
+                let selisihNum = row.selisih !== "" ? Number(row.selisih) : "";
+                
+                rowArr.push(row.mkLalu, row.mkIni, gajiLaluNum, gajiIniNum, selisihNum);
             } else {
                 for(let tgl of range) {
                     const dataTgl = row.tanggalData[tgl] || { kode: "", time: "" };
@@ -1364,7 +1402,28 @@
             wsData.push(rowArr);
         }
         
-        const ws = XLSX.utils.aoa_to_sheet(wsData); const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(wsData); 
+        
+        // FORMAT ANGKA / CURRENCY DI EXCEL UNTUK KOLOM GAJI
+        if (currentViewMode === 'SALARY') {
+            const xlsxRange = XLSX.utils.decode_range(ws['!ref']);
+            const lastCol = xlsxRange.e.c;
+            const selisihCol = lastCol;
+            const gajiIniCol = lastCol - 1;
+            const gajiLaluCol = lastCol - 2;
+            
+            for(let R = 1; R <= xlsxRange.e.r; ++R) {
+                [gajiLaluCol, gajiIniCol, selisihCol].forEach(C => {
+                    const cellRef = XLSX.utils.encode_cell({c:C, r:R});
+                    if(ws[cellRef] && typeof ws[cellRef].v === 'number') {
+                        ws[cellRef].t = 'n'; // Tetapkan secara spesifik bahwa ini adalah sel Number (Angka)
+                        ws[cellRef].z = '#,##0'; // Tambahkan format pemisah ribuan otomatis
+                    }
+                });
+            }
+        }
+
+        const wb = XLSX.utils.book_new();
         const sheetName = currentViewMode === 'ATTENDANCE' ? "Attendance" : (currentViewMode === 'SALARY' ? "Salary" : "Overtime");
         XLSX.utils.book_append_sheet(wb, ws, sheetName);
         const suffix = `${sheetName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}`;
@@ -1508,6 +1567,7 @@
         document.getElementById('tabOT').className = "view-tab inactive";
         document.getElementById('tabSalary').className = "view-tab inactive";
         
+        document.getElementById('salaryConfigPanel').classList.add('hidden');
         document.getElementById('filterAttendanceDetail').style.display = 'block';
         document.getElementById('dateFrom').disabled = false;
         document.getElementById('dateTo').disabled = false;
@@ -1526,9 +1586,14 @@
         document.getElementById('tabAttend').className = "view-tab inactive";
         document.getElementById('tabOT').className = "view-tab inactive";
         
+        document.getElementById('salaryConfigPanel').classList.remove('hidden');
         document.getElementById('filterAttendanceDetail').style.display = 'none';
         document.getElementById('dateFrom').disabled = true;
         document.getElementById('dateTo').disabled = true;
+        gabungkanDanRender();
+    });
+
+    safeAddListener('btnApplySalary', 'click', () => {
         gabungkanDanRender();
     });
 
