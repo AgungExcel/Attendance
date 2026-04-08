@@ -120,9 +120,6 @@
         
         .btn-export { background: #059669; transition: 0.2s; }
         .btn-export:hover { background: #047857; }
-        .rekap-box { background: #f1f5f9; border-radius: 6px; padding: 4px 8px; display: inline-block; margin-right: 8px; }
-        .rekap-label { font-size: 9px; font-weight: bold; color: #334155; }
-        .rekap-value { font-size: 12px; font-weight: bold; margin-left: 4px; }
         .last-update-panel { background: #fef9e3; border-left: 4px solid #f59e0b; font-size: 9px; max-height: 70px; overflow-y: auto; }
         
         .loading-overlay {
@@ -160,6 +157,7 @@
         .view-tab.active-attend { background-color: white; color: #1d4ed8; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .view-tab.active-ot { background-color: #7e22ce; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .view-tab.active-salary { background-color: #059669; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .view-tab.active-mangkir { background-color: #e11d48; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .view-tab.inactive { background-color: transparent; color: #64748b; }
         .view-tab.inactive:hover { color: #334155; }
     </style>
@@ -218,6 +216,7 @@
                 <button id="tabAttend" class="view-tab active-attend">Kehadiran (Absen)</button>
                 <button id="tabOT" class="view-tab inactive">Lembur (Overtime)</button>
                 <button id="tabSalary" class="view-tab inactive">Kenaikan Gaji</button>
+                <button id="tabMangkir" class="view-tab inactive">Mangkir</button>
             </div>
             
             <!-- PANEL PENGATURAN GAJI DINAMIS -->
@@ -240,6 +239,22 @@
                 <input type="number" id="salYear2" value="2026" class="text-[9px] p-0.5 w-12 border border-emerald-300 rounded outline-none bg-white">
                 
                 <button id="btnApplySalary" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] px-2 py-1 rounded font-bold shadow-sm ml-1 transition">Hitung</button>
+            </div>
+            
+            <!-- PANEL PENGATURAN MANGKIR -->
+            <div id="mangkirConfigPanel" class="hidden flex items-center bg-rose-100 border border-rose-300 rounded-lg p-0.5 shadow-sm gap-1 mr-2">
+                <span class="text-[9px] font-bold text-rose-800 px-1">Tgl Proses:</span>
+                <input type="date" id="mangkirDate" class="text-[9px] p-0.5 border border-rose-300 rounded outline-none bg-white cursor-pointer">
+                
+                <span class="text-[9px] font-bold text-slate-500 px-1">Mangkir:</span>
+                <select id="mangkirDays" class="text-[9px] p-0.5 border border-rose-300 rounded outline-none bg-white cursor-pointer">
+                    <option value="ALL">Semua (3, 4, 5 Hari)</option>
+                    <option value="3">3 Hari Beruntun</option>
+                    <option value="4">4 Hari Beruntun</option>
+                    <option value="5" selected>5 Hari Beruntun</option>
+                </select>
+                
+                <button id="btnApplyMangkir" class="bg-rose-600 hover:bg-rose-700 text-white text-[9px] px-2 py-1 rounded font-bold shadow-sm ml-1 transition">Cari</button>
             </div>
             
             <!-- SUMMARY REKAP UNIT -->
@@ -566,6 +581,16 @@
     let filterOptions = {}; 
     let currentSummaryData = null;
 
+    // Inisialisasi Tgl Proses Mangkir ke Hari Ini
+    document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mangkirDateEl = document.getElementById('mangkirDate');
+        if(mangkirDateEl) mangkirDateEl.value = `${yyyy}-${mm}-${dd}`;
+    });
+
     window.generateUUID = function() {
         return crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
     }
@@ -618,7 +643,6 @@
 
     // ======================== FUNGSI UTAMA ========================
 
-    // Fungsi Mengambil Pengaturan Gaji Langsung dari Input UI
     function getSalaryConfig() {
         const m1 = parseInt(document.getElementById('salMonth1').value);
         const y1 = parseInt(document.getElementById('salYear1').value) || 2026;
@@ -637,7 +661,7 @@
         const modal = document.getElementById('modernAlert');
         if (modal) {
             document.getElementById('alertTitle').innerText = title;
-            document.getElementById('alertMessage').innerHTML = msg; // Menggunakan innerHTML agar bisa merender HTML
+            document.getElementById('alertMessage').innerHTML = msg; 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
@@ -700,7 +724,6 @@
         }
         let html = '<div class="flex items-center gap-2 flex-wrap"><span class="font-bold text-amber-800">📅 WAKTU UPDATE TERAKHIR:</span>';
         for(let info of window.lastUpdateMeta) {
-            // Cek jika datanya format baru (Object)
             if (typeof info === 'object') {
                 html += `<span class="bg-white rounded px-2 py-0.5 shadow-sm text-[9px] border border-amber-100 flex items-center gap-1 font-bold">${info.icon} ${info.type} : <span class="text-blue-700">${info.date}</span></span>`;
             } else {
@@ -721,7 +744,6 @@
         
         for(let info of window.lastUpdateMeta) {
             if (typeof info === 'string') {
-                // Legacy support
                 msg += `<div class="flex items-center text-[13px] font-bold bg-white p-2 rounded shadow-sm border border-slate-100">${info}</div>`;
             } else {
                 let bgClass = "bg-slate-200 text-slate-800";
@@ -760,7 +782,6 @@
             else if(file.name.toUpperCase().includes('STAFF')) { icon = "👔"; label = "STAFF"; }
             else if(file.name.toUpperCase().includes('SECURITY')) { icon = "🔒"; label = "SECURITY"; }
             
-            // Push object format for better HTML rendering later
             window.lastUpdateMeta.push({ type: label, date: dateStr, icon: icon });
         }
         window.renderLastUpdateBar();
@@ -1252,6 +1273,8 @@
         const fixedColumns = ['id', 'name', 'section', 'position', 'joinDate', 'status'];
         if (currentViewMode === 'SALARY') {
             fixedColumns.push('mkLalu', 'mkIni', 'gajiLalu', 'gajiIni', 'selisih');
+        } else if (currentViewMode === 'MANGKIR') {
+            fixedColumns.push('mangkirCount', 'mangkirDates');
         }
 
         for (let col of fixedColumns) {
@@ -1280,6 +1303,7 @@
                     if (['gajiLalu', 'gajiIni', 'selisih'].includes(col)) {
                         return typeof v === 'number' ? new Intl.NumberFormat('id-ID').format(v) : v;
                     }
+                    if (col === 'mangkirCount') return v + " Hari";
                     return v;
                 }) 
             };
@@ -1336,6 +1360,12 @@
                 { name: "SELISIH", width: 90, filterKey: "selisih" }
             ]);
             headerBgClass = 'bg-emerald-800';
+        } else if (currentViewMode === 'MANGKIR') {
+            allCols = allCols.concat([
+                { name: "TOTAL HARI", width: 100, filterKey: "mangkirCount" },
+                { name: "RINCIAN TGL MANGKIR", width: 250, filterKey: "mangkirDates" }
+            ]);
+            headerBgClass = 'bg-rose-800';
         }
 
         let th = `<tr class="${headerBgClass} text-white text-[10px]">`;
@@ -1647,12 +1677,65 @@
         const checkMode = (mode !== "ALL" && currentViewMode === 'ATTENDANCE');
 
         const range = getTanggalRange();
+        
+        // Logika Untuk Tab Mangkir
+        let mangkirTargetDates = [];
+        if (currentViewMode === 'MANGKIR') {
+            const processDateVal = document.getElementById('mangkirDate').value;
+            const processDate = processDateVal ? new Date(processDateVal) : new Date(); 
+            const selectedDays = document.getElementById('mangkirDays').value; 
+
+            let currDate = new Date(processDate);
+            while (mangkirTargetDates.length < 5) {
+                if (currDate.getDay() !== 0) { // Lewati hari Minggu (0)
+                    mangkirTargetDates.push(new Date(currDate));
+                }
+                currDate.setDate(currDate.getDate() - 1);
+            }
+        }
 
         return window.databaseGlobal.filter(row => {
             // MENYEMBUNYIKAN STATUS 'STAFF' SAAT BERADA DI MENU KENAIKAN GAJI
             if (currentViewMode === 'SALARY' && row.status === 'STAFF') return false;
 
             if (hasSearch && !(row.id.toLowerCase().includes(searchKeyword) || row.name.toLowerCase().includes(searchKeyword))) return false;
+            
+            // LOGIKA FILTER MANGKIR BERTURUT-TURUT
+            if (currentViewMode === 'MANGKIR') {
+                if (mangkirTargetDates.length === 0) return false;
+                
+                let streak = 0;
+                let rincianArr = [];
+
+                for (let i = 0; i < mangkirTargetDates.length; i++) {
+                    let d = mangkirTargetDates[i];
+                    let tglNum = d.getDate();
+                    let cell = row.tanggalData[tglNum];
+                    let kode = cell && cell.kode ? cell.kode.toUpperCase() : "";
+
+                    if (kode === "AB" || kode === "LWP") {
+                        streak++;
+                        rincianArr.unshift(`${String(tglNum).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`);
+                    } else {
+                        break;
+                    }
+                }
+                
+                const selectedDays = document.getElementById('mangkirDays').value; 
+                if (selectedDays === "ALL") {
+                    if (streak < 3) return false;
+                } else {
+                    let reqDays = parseInt(selectedDays);
+                    if (reqDays === 5) {
+                        if (streak < 5) return false;
+                    } else {
+                        if (streak !== reqDays) return false;
+                    }
+                }
+                
+                row.mangkirCount = streak;
+                row.mangkirDates = rincianArr.join(', ');
+            }
 
             for (let i = 0; i < activeFilters.length; i++) {
                 const {key, set} = activeFilters[i];
@@ -1760,6 +1843,7 @@
             if (currentFilteredData.length === 0) {
                 let colspan = 7;
                 if (currentViewMode === 'SALARY') colspan += 5;
+                else if (currentViewMode === 'MANGKIR') colspan += 2;
                 else colspan += range.length;
                 
                 tBody.innerHTML = `<tr><td colspan="${colspan}" class="p-4 text-center text-slate-500 font-bold">Tidak ada data yang sesuai filter</td></tr>`;
@@ -1819,6 +1903,11 @@
                     `<td class="attendance-col px-1 py-0.5 text-right font-mono text-emerald-700 font-semibold">${formatCurr(row.gajiIni)}</td>`,
                     `<td class="attendance-col px-1 py-0.5 text-right font-mono text-red-600 font-semibold">${formatCurr(row.selisih)}</td>`
                 );
+            } else if (currentViewMode === 'MANGKIR') {
+                htmlChunks.push(
+                    `<td class="attendance-col px-1 py-0.5 text-center font-bold text-rose-700">${row.mangkirCount} Hari</td>`,
+                    `<td class="px-1 py-0.5 text-left font-mono text-rose-600">${row.mangkirDates}</td>`
+                );
             } else if (currentViewMode === 'OVERTIME') {
                 for(let i=0; i<range.length; i++) {
                     const dataTgl = row.tanggalData[range[i]] || { kode: "", time: "", ot: "" };
@@ -1869,6 +1958,8 @@
         
         if (currentViewMode === 'SALARY') {
             headers.push(`MASA KERJA ${configGaji.bulan1.nama}`, `MASA KERJA ${configGaji.bulan2.nama}`, `GAJI ${configGaji.bulan1.nama}`, `GAJI ${configGaji.bulan2.nama}`, "SELISIH");
+        } else if (currentViewMode === 'MANGKIR') {
+            headers.push("TOTAL HARI", "RINCIAN TANGGAL MANGKIR");
         } else {
             headers.push(...range.map(t => `Tgl ${t}`));
         }
@@ -1882,8 +1973,9 @@
                 let gajiLaluNum = row.gajiLalu !== "" ? Number(row.gajiLalu) : "";
                 let gajiIniNum = row.gajiIni !== "" ? Number(row.gajiIni) : "";
                 let selisihNum = row.selisih !== "" ? Number(row.selisih) : "";
-                
                 rowArr.push(row.mkLalu, row.mkIni, gajiLaluNum, gajiIniNum, selisihNum);
+            } else if (currentViewMode === 'MANGKIR') {
+                rowArr.push(row.mangkirCount, row.mangkirDates);
             } else if (currentViewMode === 'OVERTIME') {
                 for(let tgl of range) {
                     const dataTgl = row.tanggalData[tgl] || { kode: "", time: "", ot: "" };
@@ -1920,102 +2012,295 @@
 
         const wb = XLSX.utils.book_new();
         const sheetName = currentViewMode === 'ATTENDANCE' ? "Attendance" : 
-                          (currentViewMode === 'SALARY' ? "Kenaikan_Gaji" : "Overtime");
+                          (currentViewMode === 'SALARY' ? "Kenaikan_Gaji" : 
+                          (currentViewMode === 'MANGKIR' ? "Mangkir" : "Overtime"));
         XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
         const suffix = `${sheetName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}`;
         XLSX.writeFile(wb, `Hoplun_${suffix}.xlsx`);
     }
 
     window.openSummary = function() {
-        if(currentViewMode !== 'ATTENDANCE') {
-            window.showAlert("Info", "Summary saat ini hanya tersedia untuk data Kehadiran (Absen). Silakan beralih ke tab Kehadiran.");
+        if(currentViewMode !== 'ATTENDANCE' && currentViewMode !== 'MANGKIR') {
+            window.showAlert("Info", "Summary saat ini hanya tersedia untuk tab Kehadiran dan Mangkir.");
             return;
         }
         
         const filteredData = applyAllFiltersFast();
         if(!filteredData.length) { window.showAlert("Info","Tidak ada data yang ditampilkan pada kriteria saat ini."); return; }
         
-        const range = getTanggalRange();
-        let dateText = range.length === 1 ? `Tgl ${range[0]}` : `Tgl ${range[0]} - ${range[range.length-1]}`;
-        
-        document.getElementById('summaryTitle').innerText = `Laporan Summary Kehadiran (${dateText})`;
-        
-        let hadir = { WORKER: 0, STAFF: 0, SECURITY: 0 };
-        let kosong = { WORKER: 0, STAFF: 0, SECURITY: 0 };
-        let lainLain = {}; 
-        let total = 0;
-        
-        for(const row of filteredData) {
-            let cat = row.status ? row.status.toUpperCase() : "WORKER";
-            if(!["WORKER", "STAFF", "SECURITY"].includes(cat)) cat = "WORKER";
+        if (currentViewMode === 'MANGKIR') {
+            const dateVal = document.getElementById('mangkirDate').value;
+            const dateObj = dateVal ? new Date(dateVal) : new Date();
+            const months = ["JANUARI","FEBRUARI","MARET","APRIL","MEI","JUNI","JULI","AGUSTUS","SEPTEMBER","OKTOBER","NOVEMBER","DESEMBER"];
+            let dateTextStr = `${dateObj.getDate()} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
             
-            let hasTime = false;
-            let firstCode = "";
+            document.getElementById('summaryTitle').innerText = `Laporan Summary Mangkir`;
             
-            for(let tgl of range) {
-                const cell = row.tanggalData[tgl];
-                if(cell && cell.time) {
-                    hasTime = true; 
-                    break;
-                }
-                if(cell && cell.kode && !firstCode) {
-                    let k = cell.kode.trim().toUpperCase();
-                    if(k && k !== "-" && k !== "0") firstCode = k;
+            const mangkirSum = {
+                BRA: {3:0, 4:0, 5:0},
+                PANTY: {3:0, 4:0, 5:0},
+                OTHER: {3:0, 4:0, 5:0},
+                STAFF: {3:0, 4:0, 5:0}
+            };
+            
+            for (const row of filteredData) {
+                let status = row.status ? row.status.toUpperCase() : "";
+                let section = row.section ? row.section.toUpperCase().trim() : "";
+                let streak = row.mangkirCount > 5 ? 5 : row.mangkirCount;
+                
+                if (streak < 3) continue;
+                
+                if (status === "STAFF") {
+                    mangkirSum.STAFF[streak]++;
+                } else if (status === "WORKER") {
+                    if (section.endsWith("T-A") || section.endsWith("T-B")) {
+                        mangkirSum.BRA[streak]++;
+                    } else if (section.endsWith("B-A") || section.endsWith("B-B")) {
+                        mangkirSum.PANTY[streak]++;
+                    } else {
+                        mangkirSum.OTHER[streak]++;
+                    }
+                } else {
+                    mangkirSum.OTHER[streak]++;
                 }
             }
-
-            if(hasTime) {
-                hadir[cat]++;
-            } else if(firstCode) {
-                if(!lainLain[firstCode]) lainLain[firstCode] = 0;
-                lainLain[firstCode]++;
-            } else {
-                kosong[cat]++;
-            }
-            total++;
-        }
-        
-        currentSummaryData = { hadir, kosong, lainLain, total, dateText }; 
-        
-        let html = `<table class="w-full border-collapse border border-slate-300 text-[11px] text-left">
-            <thead>
-                <tr class="bg-slate-700 text-white">
-                    <th class="p-2 border border-slate-600">KATEGORI / KETERANGAN</th>
-                    <th class="p-2 border border-slate-600 text-center w-32">JUMLAH KARYAWAN</th>
+            
+            currentSummaryData = { type: 'MANGKIR', mangkirSum, dateTextStr };
+            
+            let html = `<div class="mb-2 font-bold text-slate-800 text-[12px]">MANGKIR UPDATE ${dateTextStr}</div>
+            <div class="mb-1 font-bold text-slate-800 text-[11px]">FIRST SHIFT</div>
+            <table class="w-full border-collapse border border-slate-300 text-[11px] text-left">
+                <thead>
+                    <tr class="bg-rose-100 text-rose-900">
+                        <th class="p-2 border border-slate-300 text-center w-10">NO</th>
+                        <th class="p-2 border border-slate-300 text-center">POSITION</th>
+                        <th class="p-2 border border-slate-300 text-center w-16">3 HARI</th>
+                        <th class="p-2 border border-slate-300 text-center w-16">4 HARI</th>
+                        <th class="p-2 border border-slate-300 text-center w-16">5 HARI</th>
+                        <th class="p-2 border border-slate-300 text-center w-16">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            const categories = [
+                { key: "BRA", label: "BRA" },
+                { key: "PANTY", label: "PANTY" },
+                { key: "OTHER", label: "OTHER" },
+                { key: "STAFF", label: "STAFF" }
+            ];
+            
+            let t3=0, t4=0, t5=0, tTotal=0;
+            
+            categories.forEach((cat, index) => {
+                let row3 = mangkirSum[cat.key][3];
+                let row4 = mangkirSum[cat.key][4];
+                let row5 = mangkirSum[cat.key][5];
+                let rowTot = row3 + row4 + row5;
+                
+                t3 += row3; t4 += row4; t5 += row5; tTotal += rowTot;
+                
+                html += `<tr class="bg-white">
+                    <td class="border border-slate-300 p-2 text-center">${index + 1}</td>
+                    <td class="border border-slate-300 p-2 font-medium">${cat.label}</td>
+                    <td class="border border-slate-300 p-2 text-center">${row3}</td>
+                    <td class="border border-slate-300 p-2 text-center">${row4}</td>
+                    <td class="border border-slate-300 p-2 text-center">${row5}</td>
+                    <td class="border border-slate-300 p-2 text-center font-bold text-rose-700">${rowTot}</td>
+                </tr>`;
+            });
+            
+            html += `
+                <tr class="bg-rose-100 text-rose-900 font-bold">
+                    <td colspan="2" class="border border-slate-300 p-2 text-center">GRAND TOTAL</td>
+                    <td class="border border-slate-300 p-2 text-center">${t3}</td>
+                    <td class="border border-slate-300 p-2 text-center">${t4}</td>
+                    <td class="border border-slate-300 p-2 text-center">${t5}</td>
+                    <td class="border border-slate-300 p-2 text-center text-[12px]">${tTotal}</td>
                 </tr>
-            </thead>
-            <tbody>`;
+            </tbody></table>`;
             
-        let totalHadir = hadir.WORKER + hadir.STAFF + hadir.SECURITY;
-        html += `<tr class="bg-emerald-50"><td class="border border-slate-300 p-2 font-bold text-emerald-800">✅ HADIR (Ada Time In / Out)</td><td class="border border-slate-300 p-2 text-center font-bold text-emerald-800">${totalHadir}</td></tr>`;
-        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Worker</td><td class="border border-slate-300 p-2 text-center font-medium">${hadir.WORKER}</td></tr>`;
-        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Staff</td><td class="border border-slate-300 p-2 text-center font-medium">${hadir.STAFF}</td></tr>`;
-        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Security</td><td class="border border-slate-300 p-2 text-center font-medium">${hadir.SECURITY}</td></tr>`;
-        
-        let totalKosong = kosong.WORKER + kosong.STAFF + kosong.SECURITY;
-        html += `<tr class="bg-red-50"><td class="border border-slate-300 p-2 font-bold text-red-800">❌ KOSONG (Tidak Ada Data)</td><td class="border border-slate-300 p-2 text-center font-bold text-red-800">${totalKosong}</td></tr>`;
-        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Worker</td><td class="border border-slate-300 p-2 text-center font-medium">${kosong.WORKER}</td></tr>`;
-        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Staff</td><td class="border border-slate-300 p-2 text-center font-medium">${kosong.STAFF}</td></tr>`;
-        html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-600">↳ Security</td><td class="border border-slate-300 p-2 text-center font-medium">${kosong.SECURITY}</td></tr>`;
-
-        let totalLain = Object.values(lainLain).reduce((a, b) => a + b, 0);
-        html += `<tr class="bg-amber-50"><td class="border border-slate-300 p-2 font-bold text-amber-800">⚠️ LAIN-LAIN (Kode Absensi)</td><td class="border border-slate-300 p-2 text-center font-bold text-amber-800">${totalLain}</td></tr>`;
-        if (totalLain === 0) {
-            html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-400 italic">Tidak ada</td><td class="border border-slate-300 p-2 text-center text-slate-400">-</td></tr>`;
+            document.getElementById('summaryContent').innerHTML = html;
+            document.getElementById('summaryModal').classList.remove('hidden'); 
+            document.getElementById('summaryModal').classList.add('flex');
+            
         } else {
-            for (let [kode, jumlah] of Object.entries(lainLain).sort()) {
-                html += `<tr><td class="border border-slate-300 p-2 pl-6 text-slate-700 font-bold">↳ Kode: ${kode}</td><td class="border border-slate-300 p-2 text-center font-bold text-amber-700">${jumlah}</td></tr>`;
+            // ================== SUMMARY ABSENTISM DIRECT SEWER ==================
+            const range = getTanggalRange();
+            
+            // Logika Tanggal Proses (Ambil dari input Mangkir Date sebagai patokan "Hari Ini")
+            const processDateVal = document.getElementById('mangkirDate').value;
+            const anchorDate = processDateVal ? new Date(processDateVal) : new Date();
+            let periodMonth = anchorDate.getMonth();
+            let periodYear = anchorDate.getFullYear();
+            
+            // Memastikan jika tgl anchor melebih 25, maka periode bulan gajinya naik 1
+            if (anchorDate.getDate() > 25) { 
+                periodMonth++; 
+                if(periodMonth > 11) { periodMonth = 0; periodYear++; } 
             }
+            
+            const monthsShort = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            let validDates = [];
+            
+            // Menyusun format tanggal dan memblokir tanggal masa depan & weekend
+            range.forEach(tgl => {
+                let dYear = periodYear;
+                let dMonth = periodMonth;
+                if (tgl >= 26) {
+                    dMonth--;
+                    if (dMonth < 0) { dMonth = 11; dYear--; }
+                }
+                let dObj = new Date(dYear, dMonth, tgl);
+                
+                // Abaikan hari Sabtu (6) dan Minggu (0)
+                if (dObj.getDay() === 0 || dObj.getDay() === 6) return;
+                
+                // Abaikan tanggal yang melewati tanggal proses
+                let anchorEnd = new Date(anchorDate);
+                anchorEnd.setHours(23,59,59,999);
+                if (dObj > anchorEnd) return;
+
+                let dateStr = `${tgl}-${monthsShort[dMonth]}-${String(dYear).substring(2)}`;
+                validDates.push({ tgl: tgl, dateObj: dObj, dateStr: dateStr });
+            });
+
+            if(validDates.length === 0) {
+                window.showAlert("Info", "Tidak ada tanggal kerja valid hingga tanggal proses yang ditentukan.");
+                return;
+            }
+
+            let dateText = `Periode ${validDates[0].dateStr} s/d ${validDates[validDates.length-1].dateStr}`;
+            document.getElementById('summaryTitle').innerText = `Laporan Summary Kehadiran`;
+            
+            let reportData = {};
+            validDates.forEach(vd => {
+                reportData[vd.tgl] = { A: { ab: 0, hc: 0 }, B: { ab: 0, hc: 0 }, S: { ab: 0, hc: 0 }, str: vd.dateStr };
+            });
+
+            for (const row of filteredData) {
+                let status = row.status ? row.status.toUpperCase() : "";
+                let section = row.section ? row.section.toUpperCase().trim() : "";
+                let pos = row.position ? row.position.toUpperCase().replace(/\s+/g, ' ') : ""; // Normalize multiple spaces
+                
+                let cat = null;
+                // KRITERIA: Pekerja, Posisi mengandung "SEWING OPERATOR"
+                if (status === "WORKER" && pos.includes("SEWING OPERATOR")) {
+                    let secClean = section.replace(/\s+/g, ''); // Hapus semua spasi di section name
+                    if (section.endsWith("T-A") || section.endsWith("B-A")) cat = "A";
+                    else if (section.endsWith("T-B") || section.endsWith("B-B")) cat = "B";
+                    else if (secClean.includes("STRAPLINE")) cat = "S"; 
+                }
+
+                if (cat) {
+                    for (let vd of validDates) {
+                        reportData[vd.tgl][cat].hc++;
+                        const cell = row.tanggalData[vd.tgl];
+                        let kode = cell && cell.kode ? cell.kode.toUpperCase() : "";
+                        if (kode === "AB" || kode === "LWP") {
+                            reportData[vd.tgl][cat].ab++;
+                        }
+                    }
+                }
+            }
+            
+            currentSummaryData = { type: 'ATTENDANCE', reportData, validDates, dateText }; 
+            
+            let html = `<div class="mb-3 font-bold text-slate-800 text-[13px] text-center uppercase tracking-wide">SEMARANG - Update Daily Absentism Direct Sewer</div>
+            <div class="overflow-x-auto pb-2">
+                <table class="w-full border-collapse border border-slate-400 text-[11px] text-center whitespace-nowrap">
+                    <thead>
+                        <tr class="bg-slate-300 text-slate-800 font-bold">
+                            <th rowspan="2" class="p-1.5 border border-slate-400 align-middle">Date</th>
+                            <th colspan="3" class="p-1.5 border border-slate-400">Shift A</th>
+                            <th colspan="3" class="p-1.5 border border-slate-400">Shift B</th>
+                            <th colspan="3" class="p-1.5 border border-slate-400">Strapline</th>
+                            <th colspan="3" class="p-1.5 border border-slate-400">TOTAL</th>
+                        </tr>
+                        <tr class="bg-slate-200 text-slate-700 font-bold">
+                            <th class="p-1.5 border border-slate-400 w-10">AB</th>
+                            <th class="p-1.5 border border-slate-400 w-14">HC Sew A</th>
+                            <th class="p-1.5 border border-slate-400 w-12">%</th>
+                            <th class="p-1.5 border border-slate-400 w-10">AB</th>
+                            <th class="p-1.5 border border-slate-400 w-14">HC Sew B</th>
+                            <th class="p-1.5 border border-slate-400 w-12">%</th>
+                            <th class="p-1.5 border border-slate-400 w-10">AB</th>
+                            <th class="p-1.5 border border-slate-400 w-14">HC Strap</th>
+                            <th class="p-1.5 border border-slate-400 w-12">%</th>
+                            <th class="p-1.5 border border-slate-400 w-10">AB</th>
+                            <th class="p-1.5 border border-slate-400 w-16">HC Direct Sew</th>
+                            <th class="p-1.5 border border-slate-400 w-12">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            
+            let sum = { A: { ab: 0, hc: 0 }, B: { ab: 0, hc: 0 }, S: { ab: 0, hc: 0 }, T: { ab: 0, hc: 0 } };
+
+            validDates.forEach(vd => {
+                let r = reportData[vd.tgl];
+                let totAB = r.A.ab + r.B.ab + r.S.ab;
+                let totHC = r.A.hc + r.B.hc + r.S.hc;
+
+                sum.A.ab += r.A.ab; sum.A.hc += r.A.hc;
+                sum.B.ab += r.B.ab; sum.B.hc += r.B.hc;
+                sum.S.ab += r.S.ab; sum.S.hc += r.S.hc;
+                sum.T.ab += totAB;  sum.T.hc += totHC;
+
+                let pctA = r.A.hc ? (r.A.ab / r.A.hc * 100).toFixed(1) + '%' : '0.0%';
+                let pctB = r.B.hc ? (r.B.ab / r.B.hc * 100).toFixed(1) + '%' : '0.0%';
+                let pctS = r.S.hc ? (r.S.ab / r.S.hc * 100).toFixed(1) + '%' : '0.0%';
+                let pctT = totHC ? (totAB / totHC * 100).toFixed(1) + '%' : '0.0%';
+
+                html += `<tr class="hover:bg-slate-50 transition">
+                    <td class="p-1.5 border border-slate-400 font-medium bg-slate-50 text-slate-700">${r.str}</td>
+                    <td class="p-1.5 border border-slate-400 font-bold text-slate-700">${r.A.ab}</td>
+                    <td class="p-1.5 border border-slate-400 text-slate-600">${r.A.hc}</td>
+                    <td class="p-1.5 border border-slate-400 text-slate-600">${pctA}</td>
+                    <td class="p-1.5 border border-slate-400 font-bold text-slate-700">${r.B.ab}</td>
+                    <td class="p-1.5 border border-slate-400 text-slate-600">${r.B.hc}</td>
+                    <td class="p-1.5 border border-slate-400 text-slate-600">${pctB}</td>
+                    <td class="p-1.5 border border-slate-400 font-bold text-slate-700">${r.S.ab}</td>
+                    <td class="p-1.5 border border-slate-400 text-slate-600">${r.S.hc}</td>
+                    <td class="p-1.5 border border-slate-400 text-slate-600">${pctS}</td>
+                    <td class="p-1.5 border border-slate-400 font-bold bg-slate-50 text-slate-800">${totAB}</td>
+                    <td class="p-1.5 border border-slate-400 font-medium bg-slate-50 text-slate-800">${totHC}</td>
+                    <td class="p-1.5 border border-slate-400 font-bold bg-slate-50 text-slate-800">${pctT}</td>
+                </tr>`;
+            });
+
+            let days = validDates.length || 1;
+            let avg = {
+                A: { ab: Math.round(sum.A.ab/days), hc: Math.round(sum.A.hc/days) },
+                B: { ab: Math.round(sum.B.ab/days), hc: Math.round(sum.B.hc/days) },
+                S: { ab: Math.round(sum.S.ab/days), hc: Math.round(sum.S.hc/days) },
+                T: { ab: Math.round(sum.T.ab/days), hc: Math.round(sum.T.hc/days) }
+            };
+
+            let avgPctA = avg.A.hc ? (avg.A.ab / avg.A.hc * 100).toFixed(1) + '%' : '0.0%';
+            let avgPctB = avg.B.hc ? (avg.B.ab / avg.B.hc * 100).toFixed(1) + '%' : '0.0%';
+            let avgPctS = avg.S.hc ? (avg.S.ab / avg.S.hc * 100).toFixed(1) + '%' : '0.0%';
+            let avgPctT = avg.T.hc ? (avg.T.ab / avg.T.hc * 100).toFixed(1) + '%' : '0.0%';
+
+            html += `<tr class="bg-slate-300 text-slate-800 font-bold">
+                    <td class="p-1.5 border border-slate-400 uppercase text-center">AVERAGE</td>
+                    <td class="p-1.5 border border-slate-400">${avg.A.ab}</td>
+                    <td class="p-1.5 border border-slate-400">${avg.A.hc}</td>
+                    <td class="p-1.5 border border-slate-400">${avgPctA}</td>
+                    <td class="p-1.5 border border-slate-400">${avg.B.ab}</td>
+                    <td class="p-1.5 border border-slate-400">${avg.B.hc}</td>
+                    <td class="p-1.5 border border-slate-400">${avgPctB}</td>
+                    <td class="p-1.5 border border-slate-400">${avg.S.ab}</td>
+                    <td class="p-1.5 border border-slate-400">${avg.S.hc}</td>
+                    <td class="p-1.5 border border-slate-400">${avgPctS}</td>
+                    <td class="p-1.5 border border-slate-400">${avg.T.ab}</td>
+                    <td class="p-1.5 border border-slate-400">${avg.T.hc}</td>
+                    <td class="p-1.5 border border-slate-400">${avgPctT}</td>
+                </tr>
+            </tbody></table></div>`;
+
+            document.getElementById('summaryContent').innerHTML = html;
+            document.getElementById('summaryModal').classList.remove('hidden'); 
+            document.getElementById('summaryModal').classList.add('flex');
         }
-        
-        html += `<tr class="bg-slate-800 text-white font-bold text-[12px]">
-            <td class="p-2 border border-slate-700 text-right">GRAND TOTAL KESELURUHAN</td>
-            <td class="text-center p-2 border border-slate-700 text-yellow-400 text-[13px]">${total}</td>
-        </tr></tbody></table>`;
-        
-        document.getElementById('summaryContent').innerHTML = html;
-        document.getElementById('summaryModal').classList.remove('hidden'); 
-        document.getElementById('summaryModal').classList.add('flex');
     }
     
     window.closeSummary = function() { document.getElementById('summaryModal').classList.add('hidden'); }
@@ -2023,31 +2308,249 @@
     window.exportSummaryToExcel = function() {
         if(!currentSummaryData) return;
         const d = currentSummaryData;
-        let dateText = d.dateText.replace(/_/g, ' ');
         
-        const wsData = [
-            ["LAPORAN SUMMARY KEHADIRAN"], ["PERIODE:", dateText], [],
-            ["KATEGORI / KETERANGAN", "JUMLAH KARYAWAN"]
-        ];
+        if (d.type === 'MANGKIR') {
+            const wsData = [
+                [`MANGKIR UPDATE ${d.dateTextStr}`],
+                [],
+                ["FIRST SHIFT"],
+                ["NO", "POSITION", "3 HARI", "4 HARI", "5 HARI", "TOTAL"]
+            ];
 
-        let totalHadir = d.hadir.WORKER + d.hadir.STAFF + d.hadir.SECURITY;
-        wsData.push(["HADIR (Ada Time In / Out)", totalHadir]);
-        wsData.push(["- Worker", d.hadir.WORKER]); wsData.push(["- Staff", d.hadir.STAFF]); wsData.push(["- Security", d.hadir.SECURITY]);
+            const categories = [
+                { key: "BRA", label: "BRA" },
+                { key: "PANTY", label: "PANTY" },
+                { key: "OTHER", label: "OTHER" },
+                { key: "STAFF", label: "STAFF" }
+            ];
+
+            let t3=0, t4=0, t5=0, tTotal=0;
+            categories.forEach((cat, index) => {
+                let row3 = d.mangkirSum[cat.key][3];
+                let row4 = d.mangkirSum[cat.key][4];
+                let row5 = d.mangkirSum[cat.key][5];
+                let rowTot = row3 + row4 + row5;
+                t3 += row3; t4 += row4; t5 += row5; tTotal += rowTot;
+
+                wsData.push([index + 1, cat.label, row3, row4, row5, rowTot]);
+            });
+            wsData.push(["", "GRAND TOTAL", t3, t4, t5, tTotal]);
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData); 
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Summary Mangkir");
+            XLSX.writeFile(wb, `Hoplun_Summary_Mangkir_${d.dateTextStr.replace(/\s/g,'_')}.xlsx`);
+            
+        } else {
+            // EXPORT EXCEL UNTUK SUMMARY KEHADIRAN (DIRECT SEWER)
+            const wsData = [
+                ["SEMARANG - Update Daily Absentism Direct Sewer"],
+                [],
+                ["Date", "Shift A", "", "", "Shift B", "", "", "Strapline", "", "", "TOTAL", "", ""],
+                ["", "AB", "HC Sew A", "%", "AB", "HC Sew B", "%", "AB", "HC Strap", "%", "AB", "HC Direct Sew", "%"]
+            ];
+
+            let sum = { A: {ab:0, hc:0}, B: {ab:0, hc:0}, S: {ab:0, hc:0}, T: {ab:0, hc:0} };
+
+            d.validDates.forEach(vd => {
+                let r = d.reportData[vd.tgl];
+                let totAB = r.A.ab + r.B.ab + r.S.ab;
+                let totHC = r.A.hc + r.B.hc + r.S.hc;
+
+                sum.A.ab += r.A.ab; sum.A.hc += r.A.hc;
+                sum.B.ab += r.B.ab; sum.B.hc += r.B.hc;
+                sum.S.ab += r.S.ab; sum.S.hc += r.S.hc;
+                sum.T.ab += totAB; sum.T.hc += totHC;
+
+                let pctA = r.A.hc ? (r.A.ab / r.A.hc) : 0;
+                let pctB = r.B.hc ? (r.B.ab / r.B.hc) : 0;
+                let pctS = r.S.hc ? (r.S.ab / r.S.hc) : 0;
+                let pctT = totHC ? (totAB / totHC) : 0;
+
+                wsData.push([
+                    vd.dateStr,
+                    r.A.ab, r.A.hc, pctA,
+                    r.B.ab, r.B.hc, pctB,
+                    r.S.ab, r.S.hc, pctS,
+                    totAB, totHC, pctT
+                ]);
+            });
+
+            let days = d.validDates.length || 1;
+            let avg = {
+                A: { ab: Math.round(sum.A.ab/days), hc: Math.round(sum.A.hc/days) },
+                B: { ab: Math.round(sum.B.ab/days), hc: Math.round(sum.B.hc/days) },
+                S: { ab: Math.round(sum.S.ab/days), hc: Math.round(sum.S.hc/days) },
+                T: { ab: Math.round(sum.T.ab/days), hc: Math.round(sum.T.hc/days) }
+            };
+
+            let avgPctA = avg.A.hc ? (avg.A.ab / avg.A.hc) : 0;
+            let avgPctB = avg.B.hc ? (avg.B.ab / avg.B.hc) : 0;
+            let avgPctS = avg.S.hc ? (avg.S.ab / avg.S.hc) : 0;
+            let avgPctT = avg.T.hc ? (avg.T.ab / avg.T.hc) : 0;
+
+            wsData.push([
+                "AVERAGE",
+                avg.A.ab, avg.A.hc, avgPctA,
+                avg.B.ab, avg.B.hc, avgPctB,
+                avg.S.ab, avg.S.hc, avgPctS,
+                avg.T.ab, avg.T.hc, avgPctT
+            ]);
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData); 
+
+            // Format kolom persentase (C, F, I, L) di Excel
+            const xlsxRange = XLSX.utils.decode_range(ws['!ref']);
+            for(let R = 4; R <= xlsxRange.e.r; ++R) {
+                [3, 6, 9, 12].forEach(C => {
+                    const cellRef = XLSX.utils.encode_cell({c:C, r:R});
+                    if(ws[cellRef] && typeof ws[cellRef].v === 'number') {
+                        ws[cellRef].z = '0.0%';
+                    }
+                });
+            }
+
+            // Menerapkan Merging cell untuk Header
+            if(!ws['!merges']) ws['!merges'] = [];
+            ws['!merges'].push(
+                {s:{r:0, c:0}, e:{r:0, c:12}}, // Judul Tabel
+                {s:{r:2, c:0}, e:{r:3, c:0}}, // Header Date Vertikal
+                {s:{r:2, c:1}, e:{r:2, c:3}}, // Header Shift A Horizontal
+                {s:{r:2, c:4}, e:{r:2, c:6}}, // Header Shift B Horizontal
+                {s:{r:2, c:7}, e:{r:2, c:9}}, // Header Strapline Horizontal
+                {s:{r:2, c:10}, e:{r:2, c:12}} // Header TOTAL Horizontal
+            );
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Direct Sewer Absentism");
+            XLSX.writeFile(wb, `Hoplun_Absentism_Summary.xlsx`);
+        }
+    }
+    
+    window.closeSummary = function() { document.getElementById('summaryModal').classList.add('hidden'); }
+    
+    window.exportSummaryToExcel = function() {
+        if(!currentSummaryData) return;
+        const d = currentSummaryData;
         
-        let totalKosong = d.kosong.WORKER + d.kosong.STAFF + d.kosong.SECURITY;
-        wsData.push(["KOSONG (Tidak Ada Data)", totalKosong]);
-        wsData.push(["- Worker", d.kosong.WORKER]); wsData.push(["- Staff", d.kosong.STAFF]); wsData.push(["- Security", d.kosong.SECURITY]);
+        if (d.type === 'MANGKIR') {
+            const wsData = [
+                [`MANGKIR UPDATE ${d.dateTextStr}`],
+                [],
+                ["FIRST SHIFT"],
+                ["NO", "POSITION", "3 HARI", "4 HARI", "5 HARI", "TOTAL"]
+            ];
 
-        let totalLain = Object.values(d.lainLain).reduce((a, b) => a + b, 0);
-        wsData.push(["LAIN-LAIN (Kode Absensi)", totalLain]);
-        if (totalLain === 0) wsData.push(["- Tidak ada", 0]);
-        else for (let [kode, jumlah] of Object.entries(d.lainLain).sort()) wsData.push([`- Kode: ${kode}`, jumlah]);
-        
-        wsData.push(["", ""]); wsData.push(["GRAND TOTAL KESELURUHAN", d.total]);
+            const categories = [
+                { key: "BRA", label: "BRA" },
+                { key: "PANTY", label: "PANTY" },
+                { key: "OTHER", label: "OTHER" },
+                { key: "STAFF", label: "STAFF" }
+            ];
 
-        const ws = XLSX.utils.aoa_to_sheet(wsData); const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Summary Kehadiran");
-        XLSX.writeFile(wb, `Hoplun_Summary_${d.dateText.replace(/\s/g,'_')}.xlsx`);
+            let t3=0, t4=0, t5=0, tTotal=0;
+            categories.forEach((cat, index) => {
+                let row3 = d.mangkirSum[cat.key][3];
+                let row4 = d.mangkirSum[cat.key][4];
+                let row5 = d.mangkirSum[cat.key][5];
+                let rowTot = row3 + row4 + row5;
+                t3 += row3; t4 += row4; t5 += row5; tTotal += rowTot;
+
+                wsData.push([index + 1, cat.label, row3, row4, row5, rowTot]);
+            });
+            wsData.push(["", "GRAND TOTAL", t3, t4, t5, tTotal]);
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData); 
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Summary Mangkir");
+            XLSX.writeFile(wb, `Hoplun_Summary_Mangkir_${d.dateTextStr.replace(/\s/g,'_')}.xlsx`);
+            
+        } else {
+            // EXPORT EXCEL UNTUK SUMMARY KEHADIRAN YANG BARU
+            let dateText = d.dateText.replace(/_/g, ' ');
+            
+            const wsData = [
+                ["SEMARANG - Update Daily Absentism Direct Sewer"],
+                ["PERIODE:", dateText],
+                [],
+                ["Date", "Shift A", "", "", "Shift B", "", "", "Strapline", "", "", "TOTAL", "", ""],
+                ["", "AB", "HC Sew A", "%", "AB", "HC Sew B", "%", "AB", "HC Strap", "%", "AB", "HC Direct Sew", "%"]
+            ];
+
+            let sum = { A: {ab:0, hc:0}, B: {ab:0, hc:0}, S: {ab:0, hc:0}, T: {ab:0, hc:0} };
+
+            d.range.forEach(tgl => {
+                let r = d.reportData[tgl];
+                let totAB = r.A.ab + r.B.ab + r.S.ab;
+                let totHC = r.A.hc + r.B.hc + r.S.hc;
+
+                sum.A.ab += r.A.ab; sum.A.hc += r.A.hc;
+                sum.B.ab += r.B.ab; sum.B.hc += r.B.hc;
+                sum.S.ab += r.S.ab; sum.S.hc += r.S.hc;
+                sum.T.ab += totAB; sum.T.hc += totHC;
+
+                let pctA = r.A.hc ? (r.A.ab / r.A.hc) : 0;
+                let pctB = r.B.hc ? (r.B.ab / r.B.hc) : 0;
+                let pctS = r.S.hc ? (r.S.ab / r.S.hc) : 0;
+                let pctT = totHC ? (totAB / totHC) : 0;
+
+                wsData.push([
+                    String(tgl),
+                    r.A.ab, r.A.hc, pctA,
+                    r.B.ab, r.B.hc, pctB,
+                    r.S.ab, r.S.hc, pctS,
+                    totAB, totHC, pctT
+                ]);
+            });
+
+            let days = d.range.length || 1;
+            let avg = {
+                A: { ab: Math.round(sum.A.ab/days), hc: Math.round(sum.A.hc/days) },
+                B: { ab: Math.round(sum.B.ab/days), hc: Math.round(sum.B.hc/days) },
+                S: { ab: Math.round(sum.S.ab/days), hc: Math.round(sum.S.hc/days) },
+                T: { ab: Math.round(sum.T.ab/days), hc: Math.round(sum.T.hc/days) }
+            };
+
+            let avgPctA = avg.A.hc ? (avg.A.ab / avg.A.hc) : 0;
+            let avgPctB = avg.B.hc ? (avg.B.ab / avg.B.hc) : 0;
+            let avgPctS = avg.S.hc ? (avg.S.ab / avg.S.hc) : 0;
+            let avgPctT = avg.T.hc ? (avg.T.ab / avg.T.hc) : 0;
+
+            wsData.push([
+                "AVERAGE",
+                avg.A.ab, avg.A.hc, avgPctA,
+                avg.B.ab, avg.B.hc, avgPctB,
+                avg.S.ab, avg.S.hc, avgPctS,
+                avg.T.ab, avg.T.hc, avgPctT
+            ]);
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData); 
+
+            // Format kolom persentase (C, F, I, L) di Excel
+            const xlsxRange = XLSX.utils.decode_range(ws['!ref']);
+            for(let R = 5; R <= xlsxRange.e.r; ++R) {
+                [3, 6, 9, 12].forEach(C => {
+                    const cellRef = XLSX.utils.encode_cell({c:C, r:R});
+                    if(ws[cellRef] && typeof ws[cellRef].v === 'number') {
+                        ws[cellRef].z = '0.0%';
+                    }
+                });
+            }
+
+            // Menerapkan Merging cell
+            if(!ws['!merges']) ws['!merges'] = [];
+            ws['!merges'].push(
+                {s:{r:3, c:0}, e:{r:4, c:0}}, // Date
+                {s:{r:3, c:1}, e:{r:3, c:3}}, // Shift A
+                {s:{r:3, c:4}, e:{r:3, c:6}}, // Shift B
+                {s:{r:3, c:7}, e:{r:3, c:9}}, // Strapline
+                {s:{r:3, c:10}, e:{r:3, c:12}} // TOTAL
+            );
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Summary Absentism");
+            XLSX.writeFile(wb, `Hoplun_Summary_Absentism_${d.dateText.replace(/\s/g,'_')}.xlsx`);
+        }
     }
 
     // EVENT LISTENERS SECURE BINDING
@@ -2062,14 +2565,14 @@
         document.getElementById('tabAttend').className = "view-tab active-attend";
         document.getElementById('tabOT').className = "view-tab inactive";
         document.getElementById('tabSalary').className = "view-tab inactive";
+        document.getElementById('tabMangkir').className = "view-tab inactive";
         
         document.getElementById('salaryConfigPanel').classList.add('hidden');
+        document.getElementById('mangkirConfigPanel').classList.add('hidden');
+        
         document.getElementById('filterAttendanceDetail').style.display = 'block';
         document.getElementById('dateFilterGroup').style.display = 'flex';
         document.getElementById('btnSummary').style.display = 'inline-block';
-        
-        document.getElementById('dateFrom').disabled = false;
-        document.getElementById('dateTo').disabled = false;
         window.gabungkanDanRender();
     });
 
@@ -2079,14 +2582,14 @@
         document.getElementById('tabOT').className = "view-tab active-ot";
         document.getElementById('tabAttend').className = "view-tab inactive";
         document.getElementById('tabSalary').className = "view-tab inactive";
+        document.getElementById('tabMangkir').className = "view-tab inactive";
         
         document.getElementById('salaryConfigPanel').classList.add('hidden');
+        document.getElementById('mangkirConfigPanel').classList.add('hidden');
+        
         document.getElementById('filterAttendanceDetail').style.display = 'none'; 
         document.getElementById('dateFilterGroup').style.display = 'flex';
-        document.getElementById('btnSummary').style.display = 'inline-block';
-        
-        document.getElementById('dateFrom').disabled = false;
-        document.getElementById('dateTo').disabled = false;
+        document.getElementById('btnSummary').style.display = 'none';
         window.gabungkanDanRender();
     });
     
@@ -2096,18 +2599,36 @@
         document.getElementById('tabSalary').className = "view-tab active-salary";
         document.getElementById('tabAttend').className = "view-tab inactive";
         document.getElementById('tabOT').className = "view-tab inactive";
+        document.getElementById('tabMangkir').className = "view-tab inactive";
         
         document.getElementById('salaryConfigPanel').classList.remove('hidden');
+        document.getElementById('mangkirConfigPanel').classList.add('hidden');
+        
         document.getElementById('filterAttendanceDetail').style.display = 'none';
         document.getElementById('dateFilterGroup').style.display = 'none';
         document.getElementById('btnSummary').style.display = 'none';
-        
         window.gabungkanDanRender();
     });
 
-    safeAddListener('btnApplySalary', 'click', () => {
+    safeAddListener('tabMangkir', 'click', () => {
+        if(currentViewMode === 'MANGKIR') return;
+        currentViewMode = 'MANGKIR';
+        document.getElementById('tabMangkir').className = "view-tab active-mangkir";
+        document.getElementById('tabAttend').className = "view-tab inactive";
+        document.getElementById('tabOT').className = "view-tab inactive";
+        document.getElementById('tabSalary').className = "view-tab inactive";
+        
+        document.getElementById('salaryConfigPanel').classList.add('hidden');
+        document.getElementById('mangkirConfigPanel').classList.remove('hidden');
+        
+        document.getElementById('filterAttendanceDetail').style.display = 'none';
+        document.getElementById('dateFilterGroup').style.display = 'none';
+        document.getElementById('btnSummary').style.display = 'inline-block';
         window.gabungkanDanRender();
     });
+
+    safeAddListener('btnApplySalary', 'click', () => window.gabungkanDanRender());
+    safeAddListener('btnApplyMangkir', 'click', () => window.gabungkanDanRender());
 
     safeAddListener('globalSearch', 'input', debounce(() => window.gabungkanDanRender(), 250));
     safeAddListener('dateFrom', 'change', () => { window.gabungkanDanRender(); });
