@@ -188,8 +188,8 @@
         <div class="flex items-center gap-2">
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
-                <h1 class="text-base font-bold tracking-wider">HOPLUN DASHBOARD</h1>
-                <p class="text-[9px] text-emerald-400">Attendance & Overtime System</p>
+                <h1 class="text-base font-bold tracking-wider">HOPLUN CLOUD DASHBOARD</h1>
+                <p class="text-[9px] text-emerald-400">Realtime Attendance & Overtime System</p>
             </div>
         </div>
 
@@ -206,7 +206,7 @@
                 <button onclick="document.getElementById('hiddenTimeInput').click()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update Time</button>
             </div>
             <div class="w-px h-5 bg-slate-500 mx-1"></div>
-            <button id="resetDataBtn" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[9px] font-bold shadow-sm transition" title="Hapus Seluruh Data Browser">Reset Data</button>
+            <button id="resetDataBtn" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[9px] font-bold shadow-sm transition" title="Hapus Seluruh Data Server">Reset Data</button>
         </div>
     </div>
 
@@ -251,7 +251,10 @@
             <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export</button>
             <button onclick="openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary Absen</button>
             
-            <span id="dbStatus" class="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-1 rounded border border-blue-200">Menunggu Data...</span>
+            <span id="dbStatus" class="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-1 rounded border border-blue-200 shadow-sm flex items-center gap-1">
+                <svg class="animate-spin h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Menghubungkan Cloud...
+            </span>
         </div>
     </div>
 
@@ -310,6 +313,196 @@
     let filters = {}; 
     let filterOptions = {}; 
     let currentSummaryData = null;
+
+    // === FIREBASE REALTIME CLOUD INTEGRATION ===
+    let fbDb = null, fbAuth = null, fbCurrentUser = null;
+    let fbWriteBatch, fbCollection, fbDoc, fbSetDoc, fbGetDocs, fbOnSnapshot;
+    let fbAppId = typeof __app_id !== 'undefined' ? __app_id : 'hoplun-app-id';
+    let lastCloudUpdateId = null;
+
+    function generateUUID() {
+        return crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+    }
+
+    async function initFirebase() {
+        try {
+            const fbAppLib = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+            const fbAuthLib = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+            const fbFirestoreLib = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+            
+            // Konfigurasi Firebase dari Environment Web App
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            const app = fbAppLib.initializeApp(firebaseConfig);
+            
+            fbAuth = fbAuthLib.getAuth(app);
+            fbDb = fbFirestoreLib.getFirestore(app);
+            
+            fbWriteBatch = fbFirestoreLib.writeBatch;
+            fbCollection = fbFirestoreLib.collection;
+            fbDoc = fbFirestoreLib.doc;
+            fbSetDoc = fbFirestoreLib.setDoc;
+            fbGetDocs = fbFirestoreLib.getDocs;
+            fbOnSnapshot = fbFirestoreLib.onSnapshot;
+
+            fbAuthLib.onAuthStateChanged(fbAuth, (user) => {
+                fbCurrentUser = user;
+                if (user) {
+                    setupRealtimeListener();
+                }
+            });
+
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await fbAuthLib.signInWithCustomToken(fbAuth, __initial_auth_token);
+            } else {
+                await fbAuthLib.signInAnonymously(fbAuth);
+            }
+        } catch (e) {
+            console.error("Firebase init failed:", e);
+            document.getElementById('dbStatus').innerHTML = `⚠️ Cloud Offline (Local Mode)`;
+        }
+    }
+    
+    // Jalankan inisialisasi server
+    initFirebase();
+
+    function setupRealtimeListener() {
+        const metaRef = fbDoc(fbDb, 'artifacts', fbAppId, 'public', 'data', 'hoplun_meta', 'sync');
+        
+        fbOnSnapshot(metaRef, async (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                // Jika update ini dilakukan oleh diri sendiri, abaikan agar tidak loop download
+                if (data.updateId === lastCloudUpdateId) return; 
+
+                document.getElementById('dbStatus').innerHTML = `⬇️ Mendownload Update Realtime...`;
+                
+                if (data.type === 'reset') {
+                    databaseKaryawan = [];
+                    timeMap.clear();
+                    databaseGlobal = [];
+                    gabungkanDanRender();
+                    showAlert("Reset Cloud", "Data telah dikosongkan oleh Admin / Pengguna lain.");
+                    document.getElementById('dbStatus').innerHTML = `Data Kosong`;
+                } else {
+                    await downloadCloudData(data.type);
+                    showAlert("Data Diperbarui", "Data terbaru (Absen/Time) telah diterima dari Cloud Server.");
+                }
+            } else {
+                document.getElementById('dbStatus').innerHTML = `☁️ Cloud Ready (Data Kosong)`;
+            }
+        }, (error) => {
+            console.error("Realtime listen error:", error);
+            document.getElementById('dbStatus').innerHTML = `⚠️ Koneksi Terputus`;
+        });
+    }
+
+    async function downloadCloudData(type = 'all') {
+        if (!fbDb || !fbCurrentUser) return;
+        try {
+            document.getElementById('dbStatus').innerHTML = `⏳ Syncing Data...`;
+            
+            if (type === 'karyawan' || type === 'all') {
+                const karCol = fbCollection(fbDb, 'artifacts', fbAppId, 'public', 'data', 'hoplun_karyawan');
+                const karSnap = await fbGetDocs(karCol);
+                let newKaryawan = [];
+                karSnap.forEach(doc => {
+                    if (doc.data().data) newKaryawan = newKaryawan.concat(JSON.parse(doc.data().data));
+                });
+                if (newKaryawan.length > 0) databaseKaryawan = newKaryawan;
+            }
+
+            if (type === 'time' || type === 'all') {
+                const timeCol = fbCollection(fbDb, 'artifacts', fbAppId, 'public', 'data', 'hoplun_time');
+                const timeSnap = await fbGetDocs(timeCol);
+                let newTimeObj = {};
+                timeSnap.forEach(doc => {
+                    if (doc.data().data) Object.assign(newTimeObj, JSON.parse(doc.data().data));
+                });
+                timeMap = new Map(Object.entries(newTimeObj));
+            }
+            
+            if (databaseKaryawan.length > 0) {
+                gabungkanDanRender();
+                document.getElementById('dbStatus').innerHTML = `✅ DB Karyawan: ${databaseKaryawan.length} | DB Time: ${timeMap.size} (Cloud)`;
+            } else {
+                document.getElementById('dbStatus').innerHTML = `☁️ Menunggu Upload Data...`;
+            }
+        } catch (e) {
+            console.error("Download Error:", e);
+            document.getElementById('dbStatus').innerHTML = `⚠️ Gagal Sync Data`;
+        }
+    }
+
+    async function saveToCloud(type) { 
+        if (!fbCurrentUser || !fbDb) return;
+        
+        try {
+            document.getElementById('dbStatus').innerHTML = `⬆️ Menyimpan ke Cloud Server...`;
+            const batch = fbWriteBatch(fbDb);
+            const updateId = generateUUID();
+            lastCloudUpdateId = updateId; 
+
+            // Simpan Karyawan secara Chunks (karena limit ukuran dokumen 1MB)
+            if (type === 'karyawan' || type === 'all') {
+                const colRef = fbCollection(fbDb, 'artifacts', fbAppId, 'public', 'data', 'hoplun_karyawan');
+                // Bersihkan slot dokumen lama
+                for(let i=0; i<15; i++) batch.set(fbDoc(colRef, `chunk_${i}`), { data: null });
+                
+                const chunkSize = 500;
+                for(let i=0; i<databaseKaryawan.length; i+=chunkSize) {
+                    const chunk = databaseKaryawan.slice(i, i+chunkSize);
+                    batch.set(fbDoc(colRef, `chunk_${i/chunkSize}`), { data: JSON.stringify(chunk) });
+                }
+            }
+
+            // Simpan Time Map secara Chunks
+            if (type === 'time' || type === 'all') {
+                const colRef = fbCollection(fbDb, 'artifacts', fbAppId, 'public', 'data', 'hoplun_time');
+                // Bersihkan slot dokumen lama
+                for(let i=0; i<25; i++) batch.set(fbDoc(colRef, `chunk_${i}`), { data: null });
+                
+                const timeObj = Object.fromEntries(timeMap);
+                const entries = Object.entries(timeObj);
+                const chunkSize = 1500; // Pisah jadi per 1500 kunci agar enteng
+                for(let i=0; i<entries.length; i+=chunkSize) {
+                    const chunk = entries.slice(i, i+chunkSize);
+                    batch.set(fbDoc(colRef, `chunk_${i/chunkSize}`), { data: JSON.stringify(Object.fromEntries(chunk)) });
+                }
+            }
+
+            // Reset Mode (kosongkan semua slot)
+            if (type === 'reset') {
+                const colK = fbCollection(fbDb, 'artifacts', fbAppId, 'public', 'data', 'hoplun_karyawan');
+                for(let i=0; i<15; i++) batch.set(fbDoc(colK, `chunk_${i}`), { data: null });
+                
+                const colT = fbCollection(fbDb, 'artifacts', fbAppId, 'public', 'data', 'hoplun_time');
+                for(let i=0; i<25; i++) batch.set(fbDoc(colT, `chunk_${i}`), { data: null });
+            }
+
+            // Tembak Meta File untuk memberikan sinyal Realtime ke User lain
+            const metaRef = fbDoc(fbDb, 'artifacts', fbAppId, 'public', 'data', 'hoplun_meta', 'sync');
+            batch.set(metaRef, { updatedAt: Date.now(), updateId: updateId, type: type });
+
+            // Commit seluruh batch secara Atomik
+            await batch.commit();
+            document.getElementById('dbStatus').innerHTML = `✅ Tersimpan & Tersinkronisasi`;
+            
+            setTimeout(() => {
+                if(databaseKaryawan.length) {
+                    document.getElementById('dbStatus').innerHTML = `✅ DB Karyawan: ${databaseKaryawan.length} | DB Time: ${timeMap.size} (Cloud)`;
+                } else {
+                    document.getElementById('dbStatus').innerHTML = `☁️ Cloud Ready (Data Kosong)`;
+                }
+            }, 3000);
+
+        } catch (e) {
+            console.error("Save Cloud Error:", e);
+            showAlert("Cloud Error", "Gagal menyimpan ke server: " + e.message);
+        }
+    }
+
+
+    // ======================== FUNGSI LAINNYA ========================
 
     function showAlert(title, msg) {
         const modal = document.getElementById('modernAlert');
@@ -552,7 +745,7 @@
                         let hasData = false;
                         
                         for(let i=0; i<31; i++) {
-                            let val = row[startColIdx + i]; // Mengambil dari index kolom persis sesuai Request (M/N/K)
+                            let val = row[startColIdx + i]; 
                             if(val !== undefined && val !== "" && val !== null && val !== "-") {
                                 let num = parseFloat(val);
                                 if(!isNaN(num) && num > 0) {
@@ -679,16 +872,17 @@
                 
                 databaseKaryawan = Array.from(masterMap.values());
                 
-                try {
-                    localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
-                } catch(e) { console.warn(e); }
-                
                 if(loadingDetailText) loadingDetailText.innerText = "Merender Tabel...";
                 await yieldToBrowser();
                 
                 gabungkanDanRender();
                 displayLastUpdate(valid);
-                showAlert("Sukses", `${databaseKaryawan.length} Karyawan baru telah dimuat (Absen & Lembur).`);
+                
+                // MENGUNGGAH KE CLOUD
+                if(loadingDetailText) loadingDetailText.innerText = "Mengunggah Data ke Cloud Server...";
+                await saveToCloud('karyawan');
+
+                showAlert("Sukses", `${databaseKaryawan.length} Karyawan baru telah dimuat dan Tersimpan di Cloud (Realtime).`);
             }
         } catch (err) {
             console.error(err); showAlert("Error", "Gagal memproses file: " + err.message);
@@ -800,9 +994,6 @@
         precomputeFilterOptions();
         buildFilterHeader();
         renderTable();
-        
-        const dbStatusEl = document.getElementById('dbStatus');
-        if (dbStatusEl) dbStatusEl.innerHTML = `✅ DB Karyawan: ${databaseKaryawan.length} | DB Time: ${timeMap.size}`;
     }
 
     function precomputeFilterOptions() {
@@ -1535,7 +1726,7 @@
     safeAddListener('filterAttendanceDetail', 'change', renderTable);
     safeAddListener('btnExport', 'click', exportToExcel);
 
-    safeAddListener('btnHapusTgl', 'click', () => {
+    safeAddListener('btnHapusTgl', 'click', async () => {
         const range = getTanggalRange();
         if (!databaseKaryawan.length) {
             showAlert("Info", "Belum ada data untuk dihapus.");
@@ -1545,7 +1736,7 @@
         let dateText = range.length === 1 ? `tanggal ${range[0]}` : `tanggal ${range[0]} sampai ${range[range.length-1]}`;
         if (range.length === semuaTanggal.length) dateText = "SEMUA TANGGAL";
         
-        if (confirm(`PENTING: Anda yakin ingin menghapus SELURUH data (Time, Absen & OT) pada ${dateText}?\n\n(Kolom ini akan dikosongkan dan Anda bisa melakukan Update data baru)`)) {
+        if (confirm(`PENTING: Anda yakin ingin menghapus SELURUH data (Time, Absen & OT) pada ${dateText}?\n\n(Data di seluruh perangkat juga akan terhapus!)`)) {
             for (const key of timeMap.keys()) {
                 const tgl = parseInt(key.split('_')[1]);
                 if (range.includes(tgl)) { timeMap.delete(key); }
@@ -1562,23 +1753,22 @@
                     }
                 }
             }
-            try {
-                localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
-                localStorage.setItem('hoplun_karyawan', JSON.stringify(databaseKaryawan));
-            } catch(e) { console.warn("Gagal update storage", e); }
             
             gabungkanDanRender();
-            showAlert("Sukses", `Semua data pada ${dateText} telah dikosongkan!`);
+            await saveToCloud('all'); // Tembakkan ke Cloud
+            showAlert("Sukses", `Semua data pada ${dateText} telah dikosongkan secara global!`);
         }
     });
 
-    safeAddListener('resetDataBtn', 'click', () => {
-        if(confirm("Yakin ingin menghapus seluruh data database dari browser?")) { 
-            localStorage.clear(); databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; filters={}; renderTable(); 
+    safeAddListener('resetDataBtn', 'click', async () => {
+        if(confirm("Yakin ingin MENGHAPUS SELURUH DATA DARI SERVER? Semua pengguna akan kehilangan akses ke data saat ini.")) { 
+            databaseKaryawan=[]; timeMap.clear(); databaseGlobal=[]; filters={}; renderTable(); 
             const dbStatus = document.getElementById('dbStatus');
-            if (dbStatus) dbStatus.innerHTML="Menunggu Data..."; 
+            if (dbStatus) dbStatus.innerHTML="Mengosongkan Data Server..."; 
             clearLastUpdate(); 
-            showAlert("Reset","Data berhasil dihapus dari memori."); 
+            
+            await saveToCloud('reset'); // Tembak reset ke cloud
+            showAlert("Reset","Data berhasil dihapus bersih dari server Cloud."); 
         }
     });
     
@@ -1614,16 +1804,14 @@
             if (newTimeMap.size) {
                 timeMap = newTimeMap;
                 
-                try {
-                    localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(timeMap)));
-                } catch(storageErr) {
-                    console.warn("Penyimpanan lokal penuh, namun data tetap ada di memori sementara.");
-                }
-                
                 if (databaseKaryawan.length) {
                     gabungkanDanRender();
                 }
-                else { showAlert("Info", `Data Time tersimpan. Silakan Update Absen (Folder) dulu.`); }
+                
+                // MENGUNGGAH KE CLOUD
+                if(loadingDetailText) loadingDetailText.innerText = "Mengunggah Data Time ke Cloud Server...";
+                await saveToCloud('time');
+                
             } else { 
                 showAlert("Gagal", `File Time (${file.name}) kosong atau format salah.`); 
             }
@@ -1643,17 +1831,6 @@
             renderNextChunk();
         }
     });
-
-    (function loadStored() {
-        const karyawan = localStorage.getItem('hoplun_karyawan');
-        const timeObj = localStorage.getItem('hoplun_time');
-        if(karyawan) {
-            databaseKaryawan = JSON.parse(karyawan);
-            if(timeObj) timeMap = new Map(Object.entries(JSON.parse(timeObj)));
-            if(databaseKaryawan.length) gabungkanDanRender();
-        }
-        clearLastUpdate();
-    })();
 </script>
 </body>
 </html>
