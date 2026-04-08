@@ -406,6 +406,9 @@
 
                 const tglDoc = await getDocs(collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_tanggal'));
                 tglDoc.forEach(doc => { if (doc.id === 'data_tgl' && doc.data().data) window.semuaTanggal = JSON.parse(doc.data().data); });
+                
+                const metaFilesDoc = await getDocs(collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_meta_files'));
+                metaFilesDoc.forEach(doc => { if (doc.id === 'file_meta' && doc.data().data) window.lastUpdateMeta = JSON.parse(doc.data().data); });
             }
 
             if (type === 'time' || type === 'all') {
@@ -419,6 +422,13 @@
             if (window.databaseKaryawan.length > 0) {
                 window.gabungkanDanRender();
                 document.getElementById('dbStatus').innerHTML = `✅ DB Karyawan: ${window.databaseKaryawan.length} | DB Time: ${window.timeMap.size} (Online)`;
+                
+                window.renderLastUpdateBar();
+                if(!window.hasShownInitialPopup) {
+                    window.showLastUpdatePopup();
+                    window.hasShownInitialPopup = true;
+                }
+                
                 window.saveToLocalStorage(); // Backup ke lokal
             }
         } catch (e) {
@@ -448,6 +458,7 @@
                 }
                 
                 batch.set(doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_tanggal', 'data_tgl'), { data: JSON.stringify(window.semuaTanggal) });
+                batch.set(doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_meta_files', 'file_meta'), { data: JSON.stringify(window.lastUpdateMeta) });
             }
 
             if (type === 'time' || type === 'all') {
@@ -468,6 +479,7 @@
                 const timeCol = collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_time');
                 for (let i = 0; i < 20; i++) batch.set(doc(timeCol, `chunk_${i}`), { data: null });
                 batch.set(doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_tanggal', 'data_tgl'), { data: null });
+                batch.set(doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_meta_files', 'file_meta'), { data: null });
             }
 
             const metaDocRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_meta', 'sync');
@@ -500,6 +512,8 @@
     window.timeMap = new Map();         
     window.semuaTanggal = [];
     window.databaseGlobal = [];
+    window.lastUpdateMeta = [];
+    window.hasShownInitialPopup = false;
     let isProcessing = false;
     let cancelProcessing = false;
     let currentViewMode = 'ATTENDANCE'; 
@@ -519,6 +533,7 @@
             localStorage.setItem('hoplun_karyawan', JSON.stringify(window.databaseKaryawan));
             localStorage.setItem('hoplun_tanggal', JSON.stringify(window.semuaTanggal));
             localStorage.setItem('hoplun_time', JSON.stringify(Object.fromEntries(window.timeMap)));
+            localStorage.setItem('hoplun_lastUpdateMeta', JSON.stringify(window.lastUpdateMeta));
         } catch(e) { console.warn("Local storage penuh", e); }
     }
 
@@ -526,6 +541,7 @@
         const karyawan = localStorage.getItem('hoplun_karyawan');
         const tanggal = localStorage.getItem('hoplun_tanggal');
         const timeObj = localStorage.getItem('hoplun_time');
+        const meta = localStorage.getItem('hoplun_lastUpdateMeta');
         let hasData = false;
         
         if(karyawan && tanggal) {
@@ -537,12 +553,22 @@
             window.timeMap = new Map(Object.entries(JSON.parse(timeObj)));
             hasData = true;
         }
+        if(meta) {
+            window.lastUpdateMeta = JSON.parse(meta);
+        }
         
         if(hasData && window.databaseKaryawan.length > 0) {
             window.gabungkanDanRender();
+            window.renderLastUpdateBar();
+            
             const dbStatus = document.getElementById('dbStatus');
             if(dbStatus && (dbStatus.innerHTML.includes('Menunggu') || dbStatus.innerHTML.includes('Mode Lokal') || dbStatus.innerHTML.includes('Menyiapkan'))) {
                 dbStatus.innerHTML = `⚠️ Mode Lokal: ${window.databaseKaryawan.length} Karyawan`;
+            }
+            
+            if(!window.hasShownInitialPopup) {
+                window.showLastUpdatePopup();
+                window.hasShownInitialPopup = true;
             }
         }
     }
@@ -620,29 +646,55 @@
         return `${parts[0]}-${parts[parts.length-1]}`;
     }
 
-    function displayLastUpdate(filesArray) {
+    window.renderLastUpdateBar = function() {
         const panel = document.getElementById('lastUpdateInfo');
         if (!panel) return;
-        if(!filesArray || filesArray.length === 0) { panel.classList.add('hidden'); return; }
-        const validFiles = filesArray.filter(f => f && f.name && f.name.toLowerCase().endsWith('.xlsb'));
-        if(validFiles.length === 0) { panel.classList.add('hidden'); return; }
-        let html = '<div class="flex items-center gap-2 flex-wrap"><span class="font-bold text-amber-800">📅 LAST UPDATE (Absen Files):</span>';
-        for(let file of validFiles) {
-            let modDate = new Date(file.lastModified);
-            let dateStr = modDate.toLocaleString('id-ID', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
-            let highlightDate = `<span class="bg-yellow-300 text-yellow-900 font-bold px-1.5 py-0.5 rounded shadow-sm border border-yellow-400">${dateStr}</span>`;
-            let fileType = "📄";
-            if(file.name.toUpperCase().includes('WORKER')) fileType = "👷 WORKER";
-            else if(file.name.toUpperCase().includes('STAFF')) fileType = "👔 STAFF";
-            else if(file.name.toUpperCase().includes('SECURITY')) fileType = "🔒 SECURITY";
-            html += `<span class="bg-white rounded px-2 py-0.5 shadow-sm text-[9px] border border-amber-100 flex items-center gap-1">${fileType} : ${highlightDate}</span>`;
+        if (!window.lastUpdateMeta || window.lastUpdateMeta.length === 0) {
+            panel.classList.add('hidden');
+            panel.innerHTML = '';
+            return;
+        }
+        let html = '<div class="flex items-center gap-2 flex-wrap"><span class="font-bold text-amber-800">📅 WAKTU UPDATE TERAKHIR:</span>';
+        for(let info of window.lastUpdateMeta) {
+            html += `<span class="bg-white rounded px-2 py-0.5 shadow-sm text-[9px] border border-amber-100 flex items-center gap-1 font-bold">${info}</span>`;
         }
         html += '</div>';
         panel.innerHTML = html;
         panel.classList.remove('hidden');
     }
+
+    window.showLastUpdatePopup = function() {
+        if (!window.lastUpdateMeta || window.lastUpdateMeta.length === 0) return;
+        let msg = "Data Absensi ini terakhir kali diperbarui dari file Excel pada:\n\n";
+        msg += window.lastUpdateMeta.join("\n");
+        msg += "\n\nPastikan data ini sudah sesuai dengan file laporan terbaru Anda.";
+        window.showAlert("Informasi Update Data", msg);
+    }
+
+    window.displayLastUpdate = function(filesArray) {
+        const validFiles = filesArray.filter(f => f && f.name && f.name.toLowerCase().endsWith('.xlsb'));
+        if(validFiles.length === 0) { 
+            window.clearLastUpdate(); 
+            return; 
+        }
+        
+        window.lastUpdateMeta = [];
+        for(let file of validFiles) {
+            let modDate = new Date(file.lastModified);
+            let dateStr = modDate.toLocaleString('id-ID', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+            let fileType = "📄";
+            if(file.name.toUpperCase().includes('WORKER')) fileType = "👷 WORKER";
+            else if(file.name.toUpperCase().includes('STAFF')) fileType = "👔 STAFF";
+            else if(file.name.toUpperCase().includes('SECURITY')) fileType = "🔒 SECURITY";
+            window.lastUpdateMeta.push(`${fileType} : ${dateStr}`);
+        }
+        window.renderLastUpdateBar();
+        window.showLastUpdatePopup();
+        window.hasShownInitialPopup = true;
+    }
     
-    function clearLastUpdate() { 
+    window.clearLastUpdate = function() { 
+        window.lastUpdateMeta = [];
         const panel = document.getElementById('lastUpdateInfo'); 
         if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
     }
@@ -974,7 +1026,7 @@
                 await yieldToBrowser();
                 
                 window.gabungkanDanRender();
-                displayLastUpdate(valid);
+                window.displayLastUpdate(valid);
                 
                 // MENGUNGGAH KE CLOUD FIREBASE
                 if(window.saveToCloud) {
@@ -2023,7 +2075,7 @@
             window.databaseKaryawan=[]; window.timeMap.clear(); window.databaseGlobal=[]; filters={}; window.gabungkanDanRender(); 
             const dbStatus = document.getElementById('dbStatus');
             if (dbStatus) dbStatus.innerHTML="Mengosongkan Data Server..."; 
-            clearLastUpdate(); 
+            window.clearLastUpdate(); 
             
             if(window.saveToCloud) {
                 await window.saveToCloud('reset');
@@ -2101,7 +2153,6 @@
 
     // Panggil fungsi load storage saat pertama dimuat
     window.loadFromLocalStorage();
-    clearLastUpdate();
 </script>
 </body>
 </html>
