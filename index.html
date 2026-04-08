@@ -120,6 +120,9 @@
         
         .btn-export { background: #059669; transition: 0.2s; }
         .btn-export:hover { background: #047857; }
+        .rekap-box { background: #f1f5f9; border-radius: 6px; padding: 4px 8px; display: inline-block; margin-right: 8px; }
+        .rekap-label { font-size: 9px; font-weight: bold; color: #334155; }
+        .rekap-value { font-size: 12px; font-weight: bold; margin-left: 4px; }
         .last-update-panel { background: #fef9e3; border-left: 4px solid #f59e0b; font-size: 9px; max-height: 70px; overflow-y: auto; }
         
         .loading-overlay {
@@ -342,7 +345,14 @@
     </div>
 </div>
 
-<div id="modernAlert" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center backdrop-blur-sm"><div class="bg-white rounded-xl p-4 max-w-xs text-center shadow-2xl transform scale-95 transition-transform"><h3 id="alertTitle" class="text-sm font-bold mb-2 text-slate-800"></h3><p id="alertMessage" class="text-xs mb-4 text-slate-600"></p><button onclick="window.closeAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-xs font-bold transition">Tutup</button></div></div>
+<!-- Alert Pop-up REVISED -->
+<div id="modernAlert" class="hidden fixed inset-0 bg-black/60 z-50 items-center justify-center backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl p-5 max-w-md w-full shadow-2xl transform scale-95 transition-transform flex flex-col">
+        <h3 id="alertTitle" class="text-base font-bold mb-3 text-slate-800 border-b border-slate-200 pb-2 text-center"></h3>
+        <div id="alertMessage" class="text-sm mb-5 text-slate-600 whitespace-pre-line text-left flex-1 overflow-y-auto max-h-[60vh]"></div>
+        <button onclick="window.closeAlert()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-bold transition shadow-md">Tutup / Mengerti</button>
+    </div>
+</div>
 
 <!-- Modern Loading Overlay -->
 <div id="loadingOverlay" class="loading-overlay hidden">
@@ -627,11 +637,12 @@
         const modal = document.getElementById('modernAlert');
         if (modal) {
             document.getElementById('alertTitle').innerText = title;
-            document.getElementById('alertMessage').innerText = msg;
+            document.getElementById('alertMessage').innerHTML = msg; // Menggunakan innerHTML agar bisa merender HTML
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
     }
+    
     window.closeAlert = function() { 
         const modal = document.getElementById('modernAlert');
         if (modal) modal.classList.add('hidden'); 
@@ -689,7 +700,12 @@
         }
         let html = '<div class="flex items-center gap-2 flex-wrap"><span class="font-bold text-amber-800">📅 WAKTU UPDATE TERAKHIR:</span>';
         for(let info of window.lastUpdateMeta) {
-            html += `<span class="bg-white rounded px-2 py-0.5 shadow-sm text-[9px] border border-amber-100 flex items-center gap-1 font-bold">${info}</span>`;
+            // Cek jika datanya format baru (Object)
+            if (typeof info === 'object') {
+                html += `<span class="bg-white rounded px-2 py-0.5 shadow-sm text-[9px] border border-amber-100 flex items-center gap-1 font-bold">${info.icon} ${info.type} : <span class="text-blue-700">${info.date}</span></span>`;
+            } else {
+                html += `<span class="bg-white rounded px-2 py-0.5 shadow-sm text-[9px] border border-amber-100 flex items-center gap-1 font-bold">${info}</span>`;
+            }
         }
         html += '</div>';
         panel.innerHTML = html;
@@ -698,10 +714,33 @@
 
     window.showLastUpdatePopup = function() {
         if (!window.lastUpdateMeta || window.lastUpdateMeta.length === 0) return;
-        let msg = "Data Absensi ini terakhir kali diperbarui dari file Excel pada:\n\n";
-        msg += window.lastUpdateMeta.join("\n");
-        msg += "\n\nPastikan data ini sudah sesuai dengan file laporan terbaru Anda.";
-        window.showAlert("Informasi Update Data", msg);
+        
+        let msg = `<div class="flex flex-col gap-3">`;
+        msg += `<p class="text-[13px] text-slate-700">Data Absensi ini terakhir kali diperbarui dari file Excel pada:</p>`;
+        msg += `<div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-2">`;
+        
+        for(let info of window.lastUpdateMeta) {
+            if (typeof info === 'string') {
+                // Legacy support
+                msg += `<div class="flex items-center text-[13px] font-bold bg-white p-2 rounded shadow-sm border border-slate-100">${info}</div>`;
+            } else {
+                let bgClass = "bg-slate-200 text-slate-800";
+                if(info.type === 'WORKER') bgClass = "bg-emerald-100 text-emerald-800";
+                if(info.type === 'STAFF') bgClass = "bg-purple-100 text-purple-800";
+                if(info.type === 'SECURITY') bgClass = "bg-slate-700 text-white";
+                
+                msg += `<div class="flex items-center text-[14px] bg-white p-2 rounded shadow-sm border border-slate-100">
+                    <span class="w-8 text-center text-lg">${info.icon}</span>
+                    <span class="font-bold w-20 ${bgClass} px-1.5 py-0.5 rounded text-[10px] text-center mx-2 tracking-wider">${info.type}</span>
+                    <span class="font-mono text-blue-700 font-bold ml-1">${info.date}</span>
+                </div>`;
+            }
+        }
+        msg += `</div>`;
+        msg += `<p class="text-xs text-amber-700 font-medium bg-amber-50 p-2.5 rounded-lg border border-amber-200 text-center">Pastikan data ini sudah sesuai dengan file laporan Excel terbaru Anda.</p>`;
+        msg += `</div>`;
+        
+        window.showAlert("🕒 Informasi Update Data", msg);
     }
 
     window.displayLastUpdate = function(filesArray) {
@@ -715,11 +754,14 @@
         for(let file of validFiles) {
             let modDate = new Date(file.lastModified);
             let dateStr = modDate.toLocaleString('id-ID', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
-            let fileType = "📄";
-            if(file.name.toUpperCase().includes('WORKER')) fileType = "👷 WORKER";
-            else if(file.name.toUpperCase().includes('STAFF')) fileType = "👔 STAFF";
-            else if(file.name.toUpperCase().includes('SECURITY')) fileType = "🔒 SECURITY";
-            window.lastUpdateMeta.push(`${fileType} : ${dateStr}`);
+            
+            let icon = "📄", label = "UNKNOWN";
+            if(file.name.toUpperCase().includes('WORKER')) { icon = "👷"; label = "WORKER"; }
+            else if(file.name.toUpperCase().includes('STAFF')) { icon = "👔"; label = "STAFF"; }
+            else if(file.name.toUpperCase().includes('SECURITY')) { icon = "🔒"; label = "SECURITY"; }
+            
+            // Push object format for better HTML rendering later
+            window.lastUpdateMeta.push({ type: label, date: dateStr, icon: icon });
         }
         window.renderLastUpdateBar();
         window.showLastUpdatePopup();
@@ -1069,7 +1111,6 @@
                     window.saveToLocalStorage();
                 }
 
-                window.showAlert("Sukses", `${window.databaseKaryawan.length} Karyawan baru telah dimuat.`);
             }
         } catch (err) {
             console.error(err); window.showAlert("Error", "Gagal memproses file: " + err.message);
@@ -1658,7 +1699,6 @@
         
         for(let r of dataList) { 
             let isU2 = r.id && String(r.id).toUpperCase().startsWith('SM');
-            // Jika bukan Awalan SM, otomatis masuk ke perhitungan Unit 1
             if (isU2) {
                 if(r.status === "STAFF") u2s++; else u2w++;
             } else {
@@ -1668,17 +1708,9 @@
         
         const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
         
-        // Render Unit 1
-        setEl('w1', u1w);
-        setEl('s1', u1s);
-        setEl('all1', u1w + u1s);
+        setEl('w1', u1w); setEl('s1', u1s); setEl('all1', u1w + u1s);
+        setEl('w2', u2w); setEl('s2', u2s); setEl('all2', u2w + u2s);
         
-        // Render Unit 2
-        setEl('w2', u2w);
-        setEl('s2', u2s);
-        setEl('all2', u2w + u2s);
-        
-        // Optional safety for the legacy boxes in case they are used elsewhere
         let tw=0, ts=0, tsec=0;
         for(let r of dataList) { if(r.status==="WORKER") tw++; else if(r.status==="STAFF") ts++; else if(r.status==="SECURITY") tsec++; }
         setEl('totalWorker', tw); setEl('totalStaff', ts); setEl('totalSecurity', tsec); setEl('totalSemua', dataList.length);
@@ -1775,7 +1807,6 @@
                 `<td class="col-status-fixed px-1 py-0.5" style="width:75px;">${sBadge}</td>`
             );
 
-            // Render Tab Dinamis: Absen ATAU Lembur ATAU Gaji
             if (currentViewMode === 'SALARY') {
                 const numFormat = new Intl.NumberFormat('id-ID');
                 const formatCurr = (val) => val === "" ? "—" : (val === 0 ? "0" : numFormat.format(val));
@@ -1848,7 +1879,6 @@
             const rowArr = [i+1, row.id, row.name, row.section, row.position, row.joinDate, row.status];
             
             if (currentViewMode === 'SALARY') {
-                // Konversi secara paksa ke Number untuk Excel Export
                 let gajiLaluNum = row.gajiLalu !== "" ? Number(row.gajiLalu) : "";
                 let gajiIniNum = row.gajiIni !== "" ? Number(row.gajiIni) : "";
                 let selisihNum = row.selisih !== "" ? Number(row.selisih) : "";
@@ -1870,7 +1900,6 @@
         
         const ws = XLSX.utils.aoa_to_sheet(wsData); 
         
-        // FORMAT ANGKA / CURRENCY DI EXCEL UNTUK KOLOM GAJI
         if (currentViewMode === 'SALARY') {
             const xlsxRange = XLSX.utils.decode_range(ws['!ref']);
             const lastCol = xlsxRange.e.c;
