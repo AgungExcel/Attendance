@@ -294,18 +294,12 @@
 
 <script type="module">
     // ===================================================================================
-    // === GOOGLE FIREBASE REALTIME SYNC (SOLUSI UNTUK DATA BESAR 2799 KARYAWAN) =========
+    // === GOOGLE FIREBASE REALTIME SYNC =================================================
     // ===================================================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, doc, writeBatch, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // PENTING: Untuk mensinkronisasikan HP dan Laptop, Anda perlu membuat Project Firebase Gratis.
-    // 1. Buka firebase.google.com -> Go to Console -> Create Project ("Hoplun Absen")
-    // 2. Klik ikon Web (</>) -> Daftarkan App -> Copy script firebaseConfig di bawah ini.
-    // 3. Masuk ke menu Build -> Firestore Database -> Create Database (Start in Test Mode).
-    // 4. Masuk ke menu Build -> Authentication -> Get Started -> Aktifkan "Anonymous".
-    
     const myFirebaseConfig = {
         apiKey: "AIzaSyDA8UM_1RGYlHi0hZUKQ66U-GF-LDMHHmI",
         authDomain: "hoplun-attend.firebaseapp.com",
@@ -317,28 +311,17 @@
     };
 
     let db, auth, isFirebaseActive = false;
-    
-    // Gunakan APP ID yang disuntikkan oleh environment agar aturan keamanan database sesuai
     const APP_ID = typeof __app_id !== 'undefined' ? __app_id : "hoplun-app-v2";
-    
     let lastCloudUpdateId = null;
 
     async function initFirebase() {
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : myFirebaseConfig;
         
-        if (!firebaseConfig || !firebaseConfig.apiKey) {
-            console.warn("Konfigurasi Firebase kosong. Menggunakan Mode Lokal.");
-            document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal (Data Browser Aktif)`;
-            window.loadFromLocalStorage();
-            return;
-        }
-
         try {
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
 
-            // Menggunakan token otentikasi yang disuntikkan dari sistem untuk akses penuh
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 await signInWithCustomToken(auth, __initial_auth_token);
             } else {
@@ -347,12 +330,11 @@
 
             isFirebaseActive = true;
             document.getElementById('dbStatus').innerHTML = `🔄 Terhubung ke Cloud Firebase...`;
-            
-            // Pasang pendengar realtime (Kalau di HP di-update, Laptop langsung otomatis berubah)
             setupRealtimeListener();
+            
         } catch (e) {
             console.warn("Gagal inisiasi Firebase:", e);
-            document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal (Cloud Offline)`;
+            document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal Aktif`;
             window.loadFromLocalStorage();
         }
     }
@@ -374,7 +356,15 @@
             }
         }, (error) => {
             console.error("Realtime listen error:", error);
-            document.getElementById('dbStatus').innerHTML = `⚠️ Gagal Mendengarkan Update`;
+            // Memberikan pesan error yang jelas jika rules tertutup
+            if(error.message && error.message.includes("Missing or insufficient permissions")) {
+                document.getElementById('dbStatus').innerHTML = `⚠️ Database Terkunci (Cek Rules Firebase)`;
+                document.getElementById('dbStatus').className = "text-[9px] font-bold bg-red-100 text-red-800 px-1.5 py-1 rounded border border-red-300 shadow-sm flex items-center gap-1 cursor-pointer";
+                document.getElementById('dbStatus').onclick = () => window.showAlert("Akses Firebase Ditolak", "Database Firebase masih terkunci.\n\nSolusi:\n1. Buka console Firebase\n2. Klik menu Firestore Database\n3. Buka tab 'Rules' (Aturan)\n4. Ubah kodenya menjadi: allow read, write: if true;\n5. Klik Publish.");
+            } else {
+                document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal Aktif`;
+            }
+            window.loadFromLocalStorage();
         });
     }
 
@@ -407,19 +397,24 @@
             
             if (window.databaseKaryawan.length > 0) {
                 window.gabungkanDanRender();
+                document.getElementById('dbStatus').className = "text-[9px] font-bold bg-green-100 text-green-800 px-1.5 py-1 rounded border border-green-300 shadow-sm flex items-center gap-1";
                 document.getElementById('dbStatus').innerHTML = `✅ DB Karyawan: ${window.databaseKaryawan.length} | DB Time: ${window.timeMap.size} (Online)`;
                 window.saveToLocalStorage(); // Backup ke lokal
             }
         } catch (e) {
             console.error("Gagal Download Cloud:", e);
-            document.getElementById('dbStatus').innerHTML = `⚠️ Gagal Sync Cloud`;
+            document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal Aktif`;
         }
     }
 
     // Menempelkan fungsi saveToCloud ke objek window agar bisa dipanggil dari skrip utama
     window.saveToCloud = async function(type) {
-        window.saveToLocalStorage(); // Backup
-        if (!isFirebaseActive) return;
+        window.saveToLocalStorage(); // Backup ke lokal terlebih dahulu
+        
+        if (!isFirebaseActive) {
+            document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal: ${window.databaseKaryawan.length} Karyawan`;
+            return;
+        }
 
         try {
             document.getElementById('dbStatus').innerHTML = `⬆️ Menyimpan ke Cloud...`;
@@ -427,12 +422,11 @@
             const newUpdateId = window.generateUUID();
             lastCloudUpdateId = newUpdateId;
 
-            // TEKNIK CHUNKING: Memecah data 2799 karyawan agar tidak melampaui batas Firebase
             if (type === 'karyawan' || type === 'all') {
                 const karCol = collection(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_karyawan');
-                for (let i = 0; i < 15; i++) batch.set(doc(karCol, `chunk_${i}`), { data: null }); // Bersihkan memori lama
+                for (let i = 0; i < 15; i++) batch.set(doc(karCol, `chunk_${i}`), { data: null }); 
                 
-                const chunkSize = 500; // 500 Karyawan per file kepingan
+                const chunkSize = 500; 
                 for (let i = 0; i < window.databaseKaryawan.length; i += chunkSize) {
                     const chunk = window.databaseKaryawan.slice(i, i + chunkSize);
                     batch.set(doc(karCol, `chunk_${i/chunkSize}`), { data: JSON.stringify(chunk) });
@@ -458,12 +452,12 @@
                 for (let i = 0; i < 20; i++) batch.set(doc(timeCol, `chunk_${i}`), { data: null });
             }
 
-            // Update Sinyal Meta untuk trigger HP / Perangkat lain
             const metaDocRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'hoplun_meta', 'sync');
             batch.set(metaDocRef, { updateId: newUpdateId, timestamp: Date.now(), type: type });
 
-            await batch.commit(); // Kirim semua kepingan sekaligus
+            await batch.commit(); 
             
+            document.getElementById('dbStatus').className = "text-[9px] font-bold bg-green-100 text-green-800 px-1.5 py-1 rounded border border-green-300 shadow-sm flex items-center gap-1";
             document.getElementById('dbStatus').innerHTML = `✅ Tersimpan & Tersinkronisasi Realtime`;
             setTimeout(() => {
                 if(window.databaseKaryawan.length) {
@@ -475,12 +469,17 @@
 
         } catch (e) {
             console.error("Gagal Upload:", e);
-            window.showAlert("Cloud Error", "Gagal menyimpan ke server Cloud: " + e.message);
-            document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal Aktif`;
+            let errorMsg = e.message;
+            if (errorMsg.includes("Missing or insufficient permissions")) {
+                errorMsg = "Akses ditolak karena Firebase masih digembok!\n\nSolusi:\n1. Buka console Firebase Anda\n2. Masuk ke Firestore Database -> tab Rules (Aturan)\n3. Ubah isi kodenya menjadi: \nallow read, write: if true;\n4. Klik Publish.";
+                document.getElementById('dbStatus').innerHTML = `⚠️ Database Terkunci (Klik disini)`;
+            } else {
+                document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal Aktif`;
+            }
+            window.showAlert("Cloud Sync Error", errorMsg);
         }
     }
 
-    // Panggil inisiasi saat web dibuka
     initFirebase();
 </script>
 
