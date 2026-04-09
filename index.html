@@ -160,6 +160,379 @@
         .view-tab.active-mangkir { background-color: #e11d48; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .view-tab.inactive { background-color: transparent; color: #64748b; }
         .view-tab.inactive:hover { color: #334155; }
+    
+
+        /* ================= MODERN UI OVERRIDES ================= */
+        :root {
+            --bg: #09111f;
+            --panel: rgba(255,255,255,0.78);
+            --panel-strong: rgba(255,255,255,0.92);
+            --line: rgba(148,163,184,0.22);
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-2: #7c3aed;
+            --success: #059669;
+            --danger: #e11d48;
+            --warning: #d97706;
+            --shadow-xl: 0 24px 70px rgba(2, 8, 23, 0.28);
+            --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.12);
+            --radius-xl: 22px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+        }
+
+        * {
+            font-size: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148,163,184,0.7) transparent;
+        }
+
+        html, body {
+            min-height: 100%;
+        }
+
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text);
+            padding: 16px;
+            background:
+                radial-gradient(circle at top left, rgba(59,130,246,0.20), transparent 32%),
+                radial-gradient(circle at top right, rgba(168,85,247,0.16), transparent 24%),
+                linear-gradient(180deg, #081120 0%, #0f172a 48%, #111827 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(135deg, rgba(255,255,255,0.06), transparent 40%, rgba(255,255,255,0.03));
+        }
+
+        .dashboard-container {
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 28px;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(255,255,255,0.70), rgba(255,255,255,0.88));
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .dashboard-container::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(180deg, rgba(255,255,255,0.25), transparent 26%);
+        }
+
+        #mainDashboard > div:first-child {
+            position: relative;
+            padding: 18px 20px !important;
+            background:
+                radial-gradient(circle at left top, rgba(96,165,250,0.30), transparent 22%),
+                radial-gradient(circle at right top, rgba(167,139,250,0.22), transparent 25%),
+                linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #172554 100%) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        #mainDashboard > div:first-child h1 {
+            font-size: 18px !important;
+            letter-spacing: .08em;
+        }
+
+        #mainDashboard > div:first-child p {
+            font-size: 11px !important;
+            color: #93c5fd !important;
+        }
+
+        #mainDashboard > div:first-child img {
+            width: 42px !important;
+            height: 42px !important;
+            padding: 4px !important;
+            border: 1px solid rgba(255,255,255,0.16);
+            box-shadow: 0 12px 24px rgba(15,23,42,0.26);
+        }
+
+        #mainDashboard > div:first-child > div:last-child {
+            gap: 10px !important;
+            padding: 10px !important;
+            border-radius: 18px !important;
+            background: rgba(15, 23, 42, 0.38) !important;
+            border: 1px solid rgba(255,255,255,0.10) !important;
+            backdrop-filter: blur(12px);
+        }
+
+        #mainDashboard > div:nth-child(2) {
+            position: relative;
+            z-index: 2;
+            margin: 14px;
+            padding: 14px !important;
+            border-radius: 22px;
+            border: 1px solid rgba(148,163,184,0.22);
+            background: rgba(255,255,255,0.74) !important;
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(14px);
+        }
+
+        #mainDashboard > div:nth-child(2) .bg-slate-200,
+        #mainDashboard > div:nth-child(2) .bg-blue-50\/80,
+        #mainDashboard > div:nth-child(2) .bg-orange-50\/80,
+        #salaryConfigPanel,
+        #mangkirConfigPanel,
+        #dateFilterGroup,
+        .last-update-panel {
+            border-radius: 16px !important;
+            box-shadow: 0 10px 24px rgba(15,23,42,0.08);
+        }
+
+        #salaryConfigPanel {
+            flex-wrap: wrap;
+            row-gap: 6px;
+        }
+
+        #salaryConfigPanel select,
+        #salaryConfigPanel input {
+            min-width: 64px;
+        }
+
+        .view-tab {
+            padding: 9px 16px !important;
+            font-size: 11px !important;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        .view-tab.active-attend {
+            color: white;
+            background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+        }
+
+        .view-tab.active-ot {
+            background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
+        }
+
+        .view-tab.active-salary {
+            background: linear-gradient(135deg, #059669, #10b981) !important;
+        }
+
+        .view-tab.active-mangkir {
+            background: linear-gradient(135deg, #e11d48, #fb7185) !important;
+        }
+
+        .view-tab.inactive {
+            color: #475569 !important;
+        }
+
+        .view-tab.inactive:hover {
+            background: rgba(255,255,255,0.8);
+        }
+
+        input[type="text"], input[type="number"], input[type="date"], select,
+        .multi-select-btn, .searchable-btn {
+            min-height: 34px;
+            border-radius: 12px !important;
+            border: 1px solid rgba(148,163,184,0.32) !important;
+            background: rgba(255,255,255,0.94) !important;
+            color: #0f172a !important;
+            transition: .2s ease;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus,
+        .multi-select-btn.active, .searchable-btn.active {
+            border-color: rgba(59,130,246,.55) !important;
+            box-shadow: 0 0 0 4px rgba(59,130,246,.12) !important;
+            outline: none;
+        }
+
+        button {
+            transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease, background .18s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.12);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #btnExport, #btnSummary, #btnApplySalary, #btnApplyMangkir,
+        #resetDataBtn, #cancelLoadingBtn,
+        #mainDashboard > div:first-child button,
+        #summaryModal button,
+        #modernAlert button {
+            min-height: 36px;
+            border-radius: 12px !important;
+            font-size: 11px !important;
+            letter-spacing: .01em;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #059669, #10b981) !important;
+        }
+
+        #btnSummary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+        }
+
+        #resetDataBtn {
+            background: linear-gradient(135deg, #dc2626, #f43f5e) !important;
+            border: none;
+        }
+
+        #dbStatus {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 0 12px !important;
+            border-radius: 999px !important;
+            background: linear-gradient(135deg, rgba(219,234,254,.95), rgba(224,231,255,.95)) !important;
+            border-color: rgba(147,197,253,.5) !important;
+            color: #1d4ed8 !important;
+            box-shadow: 0 8px 20px rgba(59,130,246,.10);
+        }
+
+        #lastUpdateInfo {
+            margin: 0 14px 14px;
+            border: 1px solid rgba(245,158,11,.18);
+            background: linear-gradient(135deg, rgba(255,251,235,.96), rgba(255,247,237,.96)) !important;
+        }
+
+        .table-container {
+            margin: 0 14px 14px;
+            border-radius: 22px;
+            border: 1px solid rgba(148,163,184,.20);
+            background: rgba(255,255,255,.74);
+            box-shadow: var(--shadow-md);
+            overflow: auto;
+        }
+
+        table {
+            min-width: 100%;
+        }
+
+        thead tr:first-child th {
+            top: 0;
+            padding: 10px 8px !important;
+            font-size: 10px !important;
+            background: linear-gradient(135deg, #0f172a, #1e3a8a) !important;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+        }
+
+        thead tr:nth-child(2) th {
+            top: 38px;
+            height: 38px !important;
+            padding: 6px !important;
+            background: rgba(248,250,252,.96) !important;
+            backdrop-filter: blur(6px);
+        }
+
+        td {
+            padding: 8px 8px !important;
+            border-bottom: 1px solid rgba(226,232,240,0.85);
+            background: rgba(255,255,255,0.62);
+        }
+
+        tbody tr {
+            transition: background .16s ease, transform .16s ease;
+        }
+
+        tbody tr:hover td {
+            background: rgba(239,246,255,0.92) !important;
+        }
+
+        .sticky-no, .sticky-id, .sticky-name {
+            background: rgba(255,255,255,0.98) !important;
+            backdrop-filter: blur(6px);
+        }
+
+        .sticky-no { box-shadow: 10px 0 22px -18px rgba(15,23,42,.45); }
+        .sticky-id { box-shadow: 10px 0 22px -18px rgba(15,23,42,.35); }
+        .sticky-name { box-shadow: 10px 0 22px -18px rgba(15,23,42,.28); }
+
+        .loading-overlay,
+        #summaryModal,
+        #modernAlert {
+            backdrop-filter: blur(12px);
+        }
+
+        .loading-content,
+        #summaryModal > div,
+        #modernAlert > div {
+            border: 1px solid rgba(255,255,255,0.55);
+            background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,255,255,0.98));
+            box-shadow: var(--shadow-xl);
+        }
+
+        .progress-bar-container {
+            height: 10px !important;
+            border-radius: 999px !important;
+            background: rgba(226,232,240,0.9) !important;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #2563eb, #7c3aed, #06b6d4) !important;
+            border-radius: 999px;
+        }
+
+        .att-code-pr, .att-code-prs, .att-code-prp, .att-code-prm,
+        .att-code-ab, .att-code-lwp, .att-code-al, .att-code-ol,
+        .att-code-ml, .att-code-sk, .att-code-hl {
+            border-radius: 999px !important;
+            padding: 3px 8px !important;
+            font-size: 10px !important;
+            line-height: 1;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+        }
+
+        .highlight {
+            border-radius: 999px;
+            padding: 2px 6px !important;
+            background: #fef08a !important;
+        }
+
+        .multi-select-dropdown, .searchable-dropdown {
+            border-radius: 14px !important;
+            border-color: rgba(148,163,184,0.20) !important;
+            box-shadow: 0 24px 44px rgba(15,23,42,0.14) !important;
+            padding: 6px;
+        }
+
+        .multi-select-option, .searchable-option {
+            border-radius: 10px;
+            padding: 8px 8px !important;
+        }
+
+        .multi-select-option:hover, .searchable-option:hover {
+            background: rgba(239,246,255,0.95) !important;
+        }
+
+        @media (max-width: 1100px) {
+            body { padding: 10px; }
+            #mainDashboard > div:first-child,
+            #mainDashboard > div:nth-child(2) { padding: 12px !important; }
+            .table-container, #lastUpdateInfo { margin-left: 10px; margin-right: 10px; }
+            #mainDashboard > div:nth-child(2) { margin: 10px; }
+        }
+
+        @media (max-width: 768px) {
+            * { font-size: 11px; }
+            body { padding: 8px; }
+            .dashboard-container { border-radius: 22px; }
+            #mainDashboard > div:first-child h1 { font-size: 15px !important; }
+            #mainDashboard > div:first-child > div:last-child { width: 100%; }
+            #mainDashboard > div:nth-child(2) { border-radius: 18px; }
+            .table-container { border-radius: 18px; }
+            .view-tab { padding: 8px 12px !important; }
+            .sticky-name { width: 150px !important; min-width: 150px !important; max-width: 150px !important; }
+        }
+
     </style>
 </head>
 <body>
@@ -187,8 +560,8 @@
         <div class="flex items-center gap-2">
             <img src="hoplun128.png" alt="Hoplun" class="h-8 w-8 object-contain rounded-full bg-white p-0.5" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNSBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4='">
             <div>
-                <h1 class="text-base font-bold tracking-wider">HOPLUN CLOUD DASHBOARD</h1>
-                <p class="text-[9px] text-emerald-400">Powered by Firebase Realtime Sync</p>
+                <h1 class="text-base font-bold tracking-wider">HOPLUN ATTENDANCE</h1>
+                <p class="text-[9px] text-emerald-400">Powered by People and Culture Teams</p>
             </div>
         </div>
 
@@ -227,7 +600,7 @@
                     <option value="4">Mei</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Ags</option>
                     <option value="8">Sep</option><option value="9">Okt</option><option value="10">Nov</option><option value="11">Des</option>
                 </select>
-                <input type="number" id="salYear1" value="2026" class="text-[9px] p-0.5 w-12 border border-emerald-300 rounded outline-none bg-white">
+                <input type="number" id="salYear1" value="2026" class="text-[9px] p-0.5 w-16 min-w-[64px] border border-emerald-300 rounded outline-none bg-white text-center font-semibold">
                 
                 <span class="text-[9px] font-bold text-slate-500 px-1">VS Bulan 2:</span>
                 
@@ -236,7 +609,7 @@
                     <option value="4">Mei</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Ags</option>
                     <option value="8">Sep</option><option value="9">Okt</option><option value="10">Nov</option><option value="11">Des</option>
                 </select>
-                <input type="number" id="salYear2" value="2026" class="text-[9px] p-0.5 w-12 border border-emerald-300 rounded outline-none bg-white">
+                <input type="number" id="salYear2" value="2026" class="text-[9px] p-0.5 w-16 min-w-[64px] border border-emerald-300 rounded outline-none bg-white text-center font-semibold">
                 
                 <button id="btnApplySalary" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] px-2 py-1 rounded font-bold shadow-sm ml-1 transition">Hitung</button>
             </div>
@@ -2759,5 +3132,37 @@
     // Panggil fungsi load storage saat pertama dimuat
     window.loadFromLocalStorage();
 </script>
+
+<script>
+(function() {
+    const applyModernEnhancements = () => {
+        const dashboard = document.getElementById('mainDashboard');
+        if (!dashboard || dashboard.dataset.uiEnhanced === '1') return;
+        dashboard.dataset.uiEnhanced = '1';
+
+        const search = document.getElementById('globalSearch');
+        if (search) search.placeholder = 'Cari cepat nama, ID, atau kata kunci…';
+
+        const folderInput = document.getElementById('folderXlsbDisplay');
+        if (folderInput) folderInput.placeholder = 'Pilih folder absensi';
+
+        const timeInput = document.getElementById('fileTimeDisplay');
+        if (timeInput) timeInput.placeholder = 'Pilih file time';
+
+        const dbStatus = document.getElementById('dbStatus');
+        if (dbStatus && !dbStatus.dataset.dotAdded) {
+            dbStatus.dataset.dotAdded = '1';
+            dbStatus.insertAdjacentHTML('afterbegin', '<span style="display:inline-block;width:8px;height:8px;border-radius:999px;background:#22c55e;margin-right:8px;box-shadow:0 0 0 4px rgba(34,197,94,.12)"></span>');
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyModernEnhancements);
+    } else {
+        applyModernEnhancements();
+    }
+})();
+</script>
+
 </body>
 </html>
