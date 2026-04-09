@@ -92,12 +92,12 @@
             z-index: 10;
         }
         .sticky-no { left: 0; width: 40px !important; min-width: 40px !important; max-width: 40px !important; text-align: center; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
-        .sticky-id { left: 40px; width: 110px !important; min-width: 110px !important; max-width: 110px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
-        .sticky-name { left: 150px; width: 190px !important; min-width: 190px !important; max-width: 190px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
-        .col-section-fixed { width: 130px !important; min-width: 130px !important; }
-        .col-posisi-fixed { width: 130px !important; min-width: 130px !important; }
-        .col-join-fixed { width: 85px !important; min-width: 85px !important; }
-        .col-status-fixed { width: 95px !important; min-width: 95px !important; }
+        .sticky-id { left: 40px; width: 130px !important; min-width: 130px !important; max-width: 130px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        .sticky-name { left: 170px; width: 220px !important; min-width: 220px !important; max-width: 220px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        .col-section-fixed { width: 145px !important; min-width: 145px !important; }
+        .col-posisi-fixed { width: 150px !important; min-width: 150px !important; }
+        .col-join-fixed { width: 95px !important; min-width: 95px !important; }
+        .col-status-fixed { width: 120px !important; min-width: 120px !important; }
         
         .multi-select, .searchable-multi-select { position: relative; width: 100%; min-width: 100px; font-size: 9px; }
         .multi-select-btn, .searchable-btn {
@@ -106,7 +106,99 @@
             display: flex; justify-content: space-between; align-items: center; transition: background 0.1s;
         }
         .multi-select-btn.active, .searchable-btn.active { background-color: #dbeafe; border-color: #3b82f6; }
-        .multi-select-btn span:first-child, .searchable-btn span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display:block; max-width: calc(100% - 18px); }
+        .multi-select-btn span:first-child, .searchable-btn span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display:block; max-width: calc(100% - 18px); flex:1; min-width:0; }
+        .multi-select-btn span:last-child, .searchable-btn span:last-child { color:#334155; font-size:11px; font-weight:700; min-width:16px; text-align:center; margin-left:6px; opacity:.95; }
+
+        select,
+        input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding-right: 28px !important;
+            background-image:
+                linear-gradient(45deg, transparent 50%, #475569 50%),
+                linear-gradient(135deg, #475569 50%, transparent 50%);
+            background-position:
+                calc(100% - 15px) calc(50% - 2px),
+                calc(100% - 10px) calc(50% - 2px);
+            background-size: 6px 6px, 6px 6px;
+            background-repeat: no-repeat;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 0;
+            width: 18px;
+            cursor: pointer;
+        }
+
+        /* ===== Search bar modern menonjol ===== */
+        #modernSearchWrap {
+            background: linear-gradient(135deg, rgba(255,255,255,.98), rgba(239,246,255,.96)) !important;
+            box-shadow: 0 14px 30px rgba(37,99,235,.10), inset 0 1px 0 rgba(255,255,255,.75);
+        }
+        #modernSearchWrap:focus-within {
+            border-color: rgba(59,130,246,.45) !important;
+            box-shadow: 0 0 0 4px rgba(59,130,246,.10), 0 16px 36px rgba(37,99,235,.14);
+            transform: translateY(-1px);
+        }
+        .modern-search-icon {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            box-shadow: 0 10px 20px rgba(79,70,229,.22);
+            flex: 0 0 auto;
+        }
+
+        /* ===== Warna kolom tanggal sampai ke bawah ===== */
+        .attendance-date-cell {
+            transition: background .18s ease, box-shadow .18s ease, color .18s ease;
+        }
+        .attendance-date-cell.is-weekday {
+            background: linear-gradient(180deg, rgba(248,250,252,.94), rgba(239,246,255,.88)) !important;
+        }
+        .attendance-date-cell.is-saturday {
+            background: linear-gradient(180deg, rgba(236,254,255,.94), rgba(207,250,254,.86)) !important;
+        }
+        .attendance-date-cell.is-sunday {
+            background: linear-gradient(180deg, rgba(255,241,242,.96), rgba(255,228,230,.88)) !important;
+        }
+        .attendance-date-cell.is-holiday {
+            background: linear-gradient(180deg, rgba(255,251,235,.96), rgba(254,243,199,.88)) !important;
+        }
+        .attendance-date-cell.is-saturday.is-holiday,
+        .attendance-date-cell.is-sunday.is-holiday {
+            box-shadow: inset 0 0 0 1px rgba(245,158,11,.18);
+        }
+        tbody tr:hover .attendance-date-cell.is-weekday {
+            background: linear-gradient(180deg, rgba(239,246,255,.98), rgba(224,242,254,.92)) !important;
+        }
+        tbody tr:hover .attendance-date-cell.is-saturday {
+            background: linear-gradient(180deg, rgba(224,242,254,.98), rgba(186,230,253,.92)) !important;
+        }
+        tbody tr:hover .attendance-date-cell.is-sunday {
+            background: linear-gradient(180deg, rgba(255,228,230,.98), rgba(254,205,211,.92)) !important;
+        }
+        tbody tr:hover .attendance-date-cell.is-holiday {
+            background: linear-gradient(180deg, rgba(254,243,199,.98), rgba(253,230,138,.92)) !important;
+        }
+
+        .attendance-date-head {
+            background: linear-gradient(135deg, rgba(14,116,144,.95), rgba(59,130,246,.92)) !important;
+            color: #eff6ff !important;
+            box-shadow: inset 0 -1px 0 rgba(255,255,255,.08);
+        }
+        .attendance-date-filter {
+            background: linear-gradient(180deg, rgba(239,246,255,.96), rgba(224,242,254,.96)) !important;
+        }
+        .attendance-date-cell {
+            background: linear-gradient(180deg, rgba(248,250,252,.92), rgba(240,249,255,.88)) !important;
+        }
+        .filter-container { min-width:100%; }
+        .searchable-input::placeholder { color:#94a3b8; }
         .multi-select-dropdown, .searchable-dropdown {
             position: absolute; top: 100%; left: 0; right: 0; background: white;
             border: 1px solid #ccc; border-radius: 4px; z-index: 100; max-height: 200px;
@@ -386,6 +478,29 @@
             border: none;
         }
 
+
+        #onlineUsersChip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 34px;
+            max-width: 360px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: linear-gradient(135deg, rgba(236,253,245,.96), rgba(209,250,229,.96)) !important;
+            color: #047857 !important;
+            box-shadow: 0 8px 20px rgba(16,185,129,.10);
+        }
+        #onlineUsersChip .online-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #10b981;
+            box-shadow: 0 0 0 4px rgba(16,185,129,.14);
+            flex: 0 0 auto;
+        }
+
         #dbStatus {
             display: inline-flex;
             align-items: center;
@@ -513,6 +628,70 @@
             background: rgba(239,246,255,0.95) !important;
         }
 
+
+        /* ===== Modern tanggal 26-25 markers ===== */
+        .attendance-date-head {
+            position: relative;
+            overflow: visible !important;
+        }
+        .attendance-date-head .date-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 52px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-weight: 800;
+            letter-spacing: .02em;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 8px 18px rgba(15,23,42,.18);
+            border: 1px solid rgba(255,255,255,.12);
+        }
+        .attendance-date-head.is-weekday .date-pill {
+            background: linear-gradient(135deg, rgba(37,99,235,.22), rgba(99,102,241,.12));
+            color: #e0e7ff;
+        }
+        .attendance-date-head.is-saturday .date-pill {
+            background: linear-gradient(135deg, rgba(14,165,233,.35), rgba(6,182,212,.16));
+            color: #ecfeff;
+        }
+        .attendance-date-head.is-sunday .date-pill {
+            background: linear-gradient(135deg, rgba(244,63,94,.30), rgba(251,113,133,.14));
+            color: #fff1f2;
+        }
+        .attendance-date-head.is-holiday .date-pill {
+            background: linear-gradient(135deg, rgba(245,158,11,.34), rgba(251,191,36,.16));
+            color: #fffbeb;
+        }
+        .attendance-date-head.is-sunday.is-holiday .date-pill,
+        .attendance-date-head.is-saturday.is-holiday .date-pill {
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 0 0 2px rgba(255,255,255,.08), 0 8px 18px rgba(15,23,42,.18);
+        }
+
+        .multi-select-btn, .searchable-btn {
+            position: relative;
+            padding-right: 24px !important;
+        }
+        .multi-select-btn > span:last-child,
+        .searchable-btn > span:last-child {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(124,58,237,.10));
+            color: #1e3a8a !important;
+            font-size: 10px !important;
+            font-weight: 900;
+            line-height: 1;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+            pointer-events: none;
+        }
+
         @media (max-width: 1100px) {
             body { padding: 10px; }
             #mainDashboard > div:first-child,
@@ -530,7 +709,7 @@
             #mainDashboard > div:nth-child(2) { border-radius: 18px; }
             .table-container { border-radius: 18px; }
             .view-tab { padding: 8px 12px !important; }
-            .sticky-name { width: 180px !important; min-width: 180px !important; max-width: 180px !important; }
+            .sticky-name { width: 220px !important; min-width: 220px !important; max-width: 220px !important; }
         }
 
     </style>
@@ -676,16 +855,21 @@
             
         </div>
         <div class="flex gap-2 items-center flex-wrap mt-1 xl:mt-0">
-            <div class="flex items-center gap-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-sm">
-                <span class="text-[10px]">🔍</span>
-                <input type="text" id="globalSearch" placeholder="Cari Nama / ID..." class="text-[10px] border-none outline-none w-32 bg-transparent font-medium text-slate-800">
+            <div id="modernSearchWrap" class="flex items-center gap-2 bg-white/95 border border-slate-300 rounded-2xl px-3 py-2 shadow-sm min-w-[320px] lg:min-w-[420px] ring-1 ring-blue-100/70">
+                <span class="modern-search-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <path d="m20 20-3.5-3.5"></path>
+                    </svg>
+                </span>
+                <input type="text" id="globalSearch" placeholder="Cari cepat Nama / No ID..." class="text-[11px] border-none outline-none w-[240px] lg:w-[340px] bg-transparent font-semibold text-slate-800 placeholder:text-slate-400">
             </div>
             
             <div id="dateFilterGroup" class="flex items-center gap-1 bg-white border rounded px-1 py-0.5 shadow-sm">
                 <span class="text-[9px] font-semibold text-slate-600">Tgl:</span>
-                <select id="dateFrom" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Dari</option></select>
+                <select id="dateFrom" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer min-w-[82px]"><option value="ALL">Dari</option></select>
                 <span class="text-[9px] text-slate-400">-</span>
-                <select id="dateTo" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer"><option value="ALL">Sampai</option></select>
+                <select id="dateTo" class="text-[9px] border-none bg-transparent outline-none font-medium cursor-pointer min-w-[90px]"><option value="ALL">Sampai</option></select>
                 <div class="w-px h-3 bg-slate-300 mx-1"></div>
                 <button id="btnHapusTgl" class="text-red-600 hover:text-red-800 font-bold text-[9px] px-1 flex items-center gap-0.5" title="Hapus Data di Tanggal Terpilih">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -786,7 +970,7 @@
     // ===================================================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, doc, writeBatch, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, writeBatch, getDocs, onSnapshot, setDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const myFirebaseConfig = {
         apiKey: "AIzaSyDA8UM_1RGYlHi0hZUKQ66U-GF-LDMHHmI",
@@ -798,9 +982,104 @@
         measurementId: "G-BR3RFNBEG4"
     };
 
+
     let db, auth, isFirebaseActive = false;
     const APP_ID = "hoplun-app-v2";
     let lastCloudUpdateId = null;
+    let presenceInterval = null;
+    let currentViewerId = null;
+    let currentViewerName = null;
+
+    function buildStableViewerName() {
+        const saved = localStorage.getItem('hoplun_viewer_name');
+        const savedId = localStorage.getItem('hoplun_viewer_id');
+        if (saved && savedId) {
+            currentViewerId = savedId;
+            currentViewerName = saved;
+            return saved;
+        }
+        const adjectives = ['Cepat','Sigap','Solid','Prima','Aktif','Cerdas','Rapi','Tangguh','Fokus','Lincah'];
+        const animals = ['Rajawali','Harimau','Elang','Cheetah','Komodo','Singa','Falcon','Panther','Kuda','Naga'];
+        const rand = Math.floor(100 + Math.random() * 900);
+        const idPart = 'viewer-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+        const name = `${adjectives[Math.floor(Math.random()*adjectives.length)]}-${animals[Math.floor(Math.random()*animals.length)]}-${rand}`;
+        currentViewerId = idPart;
+        currentViewerName = name;
+        localStorage.setItem('hoplun_viewer_id', idPart);
+        localStorage.setItem('hoplun_viewer_name', name);
+        return name;
+    }
+
+    async function updatePresenceHeartbeat() {
+        if (!db || !currentViewerId) return;
+        try {
+            await setDoc(
+                doc(db, 'artifacts', APP_ID, 'public', 'presence', 'online_users', 'items', currentViewerId),
+                {
+                    name: currentViewerName || buildStableViewerName(),
+                    updatedAt: Date.now(),
+                    openedAt: Number(localStorage.getItem('hoplun_viewer_opened_at') || Date.now())
+                },
+                { merge: true }
+            );
+        } catch (e) {
+            console.warn('Presence heartbeat gagal:', e);
+        }
+    }
+
+    async function registerPresence() {
+        buildStableViewerName();
+        localStorage.setItem('hoplun_viewer_opened_at', String(localStorage.getItem('hoplun_viewer_opened_at') || Date.now()));
+        await updatePresenceHeartbeat();
+        if (presenceInterval) clearInterval(presenceInterval);
+        presenceInterval = setInterval(updatePresenceHeartbeat, 30000);
+
+        const removePresence = async () => {
+            try {
+                if (db && currentViewerId) {
+                    await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'presence', 'online_users', 'items', currentViewerId));
+                }
+            } catch (e) {}
+        };
+        window.addEventListener('beforeunload', removePresence);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') updatePresenceHeartbeat();
+        });
+    }
+
+    function setupPresenceListener() {
+        const chip = document.getElementById('onlineUsersChip');
+        if (!chip || !db) return;
+        const colRef = collection(db, 'artifacts', APP_ID, 'public', 'presence', 'online_users', 'items');
+        onSnapshot(colRef, async (snapshot) => {
+            const now = Date.now();
+            const active = [];
+            const stale = [];
+            snapshot.forEach(snap => {
+                const data = snap.data() || {};
+                const updatedAt = Number(data.updatedAt || 0);
+                if (updatedAt && (now - updatedAt) <= 90000) active.push({ id: snap.id, name: data.name || snap.id });
+                else stale.push(snap.id);
+            });
+
+            for (const id of stale.slice(0, 10)) {
+                try { await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'presence', 'online_users', 'items', id)); } catch (e) {}
+            }
+
+            active.sort((a, b) => a.name.localeCompare(b.name, 'id'));
+            chip.classList.toggle('hidden', active.length === 0);
+            if (active.length === 0) {
+                chip.innerHTML = '';
+                return;
+            }
+            const names = active.map(x => x.name);
+            chip.innerHTML = `<span class="online-dot"></span><span>User Online: ${active.length} • ${names.join(', ')}</span>`;
+            chip.title = names.join(', ');
+        }, (error) => {
+            console.warn('Presence listener error:', error);
+        });
+    }
+
 
     async function initFirebase() {
         try {
@@ -810,8 +1089,11 @@
 
             await signInAnonymously(auth);
             isFirebaseActive = true;
+            buildStableViewerName();
             document.getElementById('dbStatus').innerHTML = `🔄 Terhubung ke Cloud Firebase...`;
             setupRealtimeListener();
+            setupPresenceListener();
+            await registerPresence();
         } catch (e) {
             console.warn("Gagal inisiasi Firebase:", e);
             document.getElementById('dbStatus').innerHTML = `⚠️ Mode Lokal Aktif`;
@@ -1063,9 +1345,19 @@
         }
     }
     
-    window.closeAlert = function() { 
-        const modal = document.getElementById('modernAlert');
-        if (modal) modal.classList.add('hidden'); 
+    window.closeAlert = function() {
+        const alertEl = document.getElementById('modernAlert');
+        if (alertEl) {
+            alertEl.classList.add('hidden');
+            alertEl.classList.remove('flex');
+        }
+        setTimeout(() => {
+            const searchBox = document.getElementById('globalSearch');
+            if (searchBox) {
+                searchBox.focus();
+                searchBox.select?.();
+            }
+        }, 50);
     }
     
     function debounce(func, wait) {
@@ -1675,10 +1967,16 @@
 
         for (let col of fixedColumns) {
             const valueSet = new Set();
-            for (let row of window.databaseGlobal) {
-                let val = row[col];
-                if (col === 'joinDate') val = getYearMonth(val);
-                valueSet.add((val === undefined || val === null || val === "") ? "__EMPTY__" : val);
+            if (currentViewMode === 'MANGKIR' && col === 'mangkirCount') {
+                ['1','2','3','4','5'].forEach(v => valueSet.add(v));
+            } else if (currentViewMode === 'MANGKIR' && col === 'mangkirDates') {
+                valueSet.add('__EMPTY__');
+            } else {
+                for (let row of window.databaseGlobal) {
+                    let val = row[col];
+                    if (col === 'joinDate') val = getYearMonth(val);
+                    valueSet.add((val === undefined || val === null || val === "") ? "__EMPTY__" : val);
+                }
             }
             const values = Array.from(valueSet);
             if (col === 'joinDate') {
@@ -1727,16 +2025,71 @@
         return "";
     }
 
+
+    function getAttendanceCycleInfo(dayNum) {
+        const d = parseInt(dayNum, 10);
+        if (isNaN(d)) return { dateObj: null, dayOfWeek: null, isSaturday: false, isSunday: false };
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); // 0-based
+
+        // Siklus 26-25:
+        // Jika hari ini >= 26, periode = 26 bulan ini s/d 25 bulan depan
+        // Jika hari ini <= 25, periode = 26 bulan lalu s/d 25 bulan ini
+        const cycleStartMonth = now.getDate() >= 26 ? currentMonth : currentMonth - 1;
+        const cycleStartYear = currentYear + (cycleStartMonth < 0 ? -1 : 0);
+        const normalizedStartMonth = (cycleStartMonth + 12) % 12;
+
+        const month = d >= 26 ? normalizedStartMonth : ((normalizedStartMonth + 1) % 12);
+        const year = d >= 26
+            ? cycleStartYear
+            : cycleStartYear + (normalizedStartMonth === 11 ? 1 : 0);
+
+        const dateObj = new Date(year, month, d);
+        const dayOfWeek = dateObj.getDay();
+
+        return {
+            dateObj,
+            dayOfWeek,
+            isSaturday: dayOfWeek === 6,
+            isSunday: dayOfWeek === 0
+        };
+    }
+
+    function isNationalHolidayColumn(dayNum) {
+        const key = String(dayNum);
+        if (!Array.isArray(window.databaseGlobal)) return false;
+        return window.databaseGlobal.some(row => {
+            const kode = String(row?.tanggalData?.[key]?.kode || '').trim().toUpperCase();
+            return kode === 'HL';
+        });
+    }
+
+    function getDateHeaderClass(dayNum) {
+        const info = getAttendanceCycleInfo(dayNum);
+        const isHoliday = isNationalHolidayColumn(dayNum);
+        if (isHoliday) return info.isSunday ? 'is-sunday is-holiday' : (info.isSaturday ? 'is-saturday is-holiday' : 'is-holiday');
+        if (info.isSunday) return 'is-sunday';
+        if (info.isSaturday) return 'is-saturday';
+        return 'is-weekday';
+    }
+
+    function getDateHeaderLabel(dayNum) {
+        return `<span class="date-pill">Tgl ${dayNum}</span>`;
+    }
+
+
     function buildFilterHeader() {
         const thead = document.getElementById('tableHeader');
         if (!thead) return;
         
         const configGaji = getSalaryConfig();
         const fixedCols = [
-            { name: "NO", width: 40, filterKey: null }, { name: "ID", width: 110, filterKey: "id" },
-            { name: "NAMA", width: 190, filterKey: "name" }, { name: "SECTION", width: 130, filterKey: "section" },
-            { name: "POSISI", width: 130, filterKey: "position" }, { name: "JOIN DATE", width: 85, filterKey: "joinDate" },
-            { name: "STATUS", width: 95, filterKey: "status" }
+            { name: "NO", width: 40, filterKey: null }, { name: "ID", width: 130, filterKey: "id" },
+            { name: "NAMA", width: 220, filterKey: "name" }, { name: "SECTION", width: 145, filterKey: "section" },
+            { name: "POSISI", width: 150, filterKey: "position" }, { name: "JOIN DATE", width: 95, filterKey: "joinDate" },
+            { name: "STATUS", width: 120, filterKey: "status" }
         ];
         
         let allCols = [...fixedCols];
@@ -1767,17 +2120,24 @@
         let th = `<tr class="${headerBgClass} text-white text-[10px]">`;
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i], cls = "px-1 py-1 border-r border-slate-600/50", ws = `width: ${col.width}px; min-width: ${col.width}px;`;
+            const isDateCol = col.filterKey && col.filterKey.startsWith('date_');
             if(i===0) cls += ` sticky left-0 z-20 ${headerBgClass}`;
             if(i===1) cls += ` sticky left-[40px] z-20 ${headerBgClass}`;
-            if(i===2) cls += ` sticky left-[150px] z-20 ${headerBgClass}`;
-            th += `<th style="${ws}" class="${cls}">${col.name}</th>`;
+            if(i===2) cls += ` sticky left-[170px] z-20 ${headerBgClass}`;
+            let headerLabel = col.name;
+            if (isDateCol) {
+                const dayNum = parseInt(String(col.filterKey).replace('date_', ''), 10);
+                cls += ` attendance-date-head ${getDateHeaderClass(dayNum)}`;
+                headerLabel = getDateHeaderLabel(dayNum);
+            }
+            th += `<th style="${ws}" class="${cls}">${headerLabel}</th>`;
         }
         th += `</tr><tr class="bg-gray-100 text-[9px]">`;
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i], cls = "px-1 py-0.5 border-r border-slate-200", ws = `width: ${col.width}px; min-width: ${col.width}px;`;
             if(i===0) { cls += " sticky left-0 z-10 bg-gray-100"; ws += "width:40px;"; }
-            if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; ws += "width:110px;"; }
-            if(i===2) { cls += " sticky left-[150px] z-10 bg-gray-100"; ws += "width:190px;"; }
+            if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; ws += "width:130px; min-width:130px;"; }
+            if(i===2) { cls += " sticky left-[170px] z-10 bg-gray-100"; ws += "width:220px; min-width:220px;"; }
             
             if (col.filterKey) {
                 th += `<th style="${ws}" class="${cls}" data-colkey="${col.filterKey}"><div class="filter-container" id="filter_${col.filterKey}"></div></th>`;
@@ -1796,7 +2156,7 @@
             if (!options) continue;
             if (!filters[col.filterKey]) filters[col.filterKey] = new Set();
             const set = filters[col.filterKey];
-            const isSearchable = (col.filterKey === 'position' || col.filterKey.startsWith('date_'));
+            const isSearchable = (['id','name','section','position','status','joinDate','mangkirDates'].includes(col.filterKey) || col.filterKey.startsWith('date_'));
             if (isSearchable) createSearchableMultiSelect(container, options.values, options.displayValues, set, col.filterKey, () => renderTable());
             else createMultiSelect(container, options.values, options.displayValues, set, col.filterKey, () => renderTable());
         }
@@ -2110,15 +2470,16 @@
 
             const isUnit2 = row.id && String(row.id).toUpperCase().startsWith('SM');
             if (unitMode === 'UNIT2' && !isUnit2) return false;
-            if (unitMode === 'UNIT1' && isUnit2) return false;
-            
-            // LOGIKA FILTER MANGKIR BERTURUT-TURUT
+            if (unitMode === 'UNIT1' && isUnit2) return false;            // LOGIKA FILTER MANGKIR
             if (currentViewMode === 'MANGKIR') {
                 if (mangkirTargetDates.length === 0) return false;
-                
+
                 let streak = 0;
                 let rincianArr = [];
                 let allMangkirDates = [];
+                let currentStreakDates = [];
+                let maxStreak = 0;
+                let maxStreakDates = [];
 
                 for (let i = 0; i < mangkirTargetDates.length; i++) {
                     let d = mangkirTargetDates[i];
@@ -2133,32 +2494,35 @@
                             streak++;
                             rincianArr.unshift(labelTgl);
                         }
-                    } else if (streak > 0) {
-                        break;
+                        currentStreakDates.push(labelTgl);
+                        if (currentStreakDates.length >= maxStreak) {
+                            maxStreak = currentStreakDates.length;
+                            maxStreakDates = [...currentStreakDates];
+                        }
+                    } else {
+                        currentStreakDates = [];
+                        if (streak > 0) break;
                     }
                 }
-                
-                const selectedDays = document.getElementById('mangkirDays').value; 
+
+                const selectedDays = document.getElementById('mangkirDays').value;
                 const nonConsecutiveCount = allMangkirDates.length;
+                const effectiveStreak = Math.max(streak, maxStreak);
+                const effectiveDates = (streak > 0 ? rincianArr : maxStreakDates);
+
                 if (selectedDays === "ALL") {
-                    if (Math.max(streak, nonConsecutiveCount) < 1) return false;
+                    if (Math.max(effectiveStreak, nonConsecutiveCount) < 1) return false;
+                    row.mangkirCount = String(effectiveStreak > 0 ? effectiveStreak : nonConsecutiveCount);
+                    row.mangkirDates = (effectiveStreak > 0 ? effectiveDates : allMangkirDates).join(', ');
                 } else if (selectedDays === "3_NON") {
                     if (nonConsecutiveCount < 3) return false;
-                    row.mangkirCount = nonConsecutiveCount;
+                    row.mangkirCount = String(nonConsecutiveCount);
                     row.mangkirDates = allMangkirDates.join(', ');
                 } else {
                     let reqDays = parseInt(selectedDays);
-                    if (reqDays === 5) {
-                        if (streak < 5) return false;
-                    } else {
-                        if (streak !== reqDays) return false;
-                    }
-                    row.mangkirCount = streak;
-                    row.mangkirDates = rincianArr.join(', ');
-                }
-                if (selectedDays !== "3_NON") {
-                    row.mangkirCount = streak;
-                    row.mangkirDates = rincianArr.join(', ');
+                    if (effectiveStreak < reqDays) return false;
+                    row.mangkirCount = String(reqDays);
+                    row.mangkirDates = effectiveDates.slice(-reqDays).join(', ');
                 }
             }
 
@@ -2308,12 +2672,12 @@
             let rId = highlightText(row.id, keyword), rName = highlightText(row.name, keyword);
             htmlChunks.push(
                 `<td class="sticky-no px-1 py-0.5 text-slate-500 font-medium" style="width:40px;background:white;">${index+1}</td>`,
-                `<td class="sticky-id px-1 py-0.5 font-bold text-slate-800" style="width:110px;background:white;">${rId}</td>`,
-                `<td class="sticky-name px-1 py-0.5 text-slate-700 truncate" style="width:190px;background:white;" title="${row.name}">${rName}</td>`,
-                `<td class="col-section-fixed px-1 py-0.5 text-slate-600 truncate" style="width:130px;">${row.section}</td>`,
-                `<td class="col-posisi-fixed px-1 py-0.5 text-slate-600 truncate" style="width:130px;">${row.position}</td>`,
-                `<td class="col-join-fixed px-1 py-0.5 text-slate-500" style="width:85px;">${row.joinDate}</td>`,
-                `<td class="col-status-fixed px-1 py-0.5" style="width:95px;">${sBadge}</td>`
+                `<td class="sticky-id px-1 py-0.5 font-bold text-slate-800" style="width:130px;background:white;">${rId}</td>`,
+                `<td class="sticky-name px-1 py-0.5 text-slate-700 truncate" style="width:220px;background:white;" title="${row.name}">${rName}</td>`,
+                `<td class="col-section-fixed px-1 py-0.5 text-slate-600 truncate" style="width:145px;">${row.section}</td>`,
+                `<td class="col-posisi-fixed px-1 py-0.5 text-slate-600 truncate" style="width:150px;">${row.position}</td>`,
+                `<td class="col-join-fixed px-1 py-0.5 text-slate-500" style="width:95px;">${row.joinDate}</td>`,
+                `<td class="col-status-fixed px-1 py-0.5" style="width:120px;">${sBadge}</td>`
             );
 
             if (currentViewMode === 'SALARY') {
@@ -2346,7 +2710,8 @@
                     } else {
                         colorClass = "text-slate-300";
                     }
-                    htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
+                    const dateClass = getDateHeaderClass(range[i]);
+                    htmlChunks.push(`<td class="attendance-col attendance-date-cell ${dateClass} px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
                 }
             } else {
                 for(let i=0; i<range.length; i++) {
@@ -2361,7 +2726,8 @@
                     } else if (time && !time.includes('-')) colorClass = "text-blue-600 font-bold";
                     else if (time && time.includes('-')) colorClass = "text-emerald-600 font-bold";
                     
-                    htmlChunks.push(`<td class="attendance-col px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
+                    const dateClass = getDateHeaderClass(range[i]);
+                    htmlChunks.push(`<td class="attendance-col attendance-date-cell ${dateClass} px-1 py-0.5 text-center time-cell ${colorClass}">${display}</td>`);
                 }
             }
             
@@ -2472,36 +2838,38 @@
             
             document.getElementById('summaryTitle').innerText = `Laporan Summary Mangkir`;
             
+            const selectedDays = document.getElementById('mangkirDays').value;
+            const dayKeys = selectedDays === "ALL" ? [1,2,3,4,5] : (selectedDays === "3_NON" ? ["3_NON"] : [parseInt(selectedDays)]);
+            const dayLabels = {1:"1 HARI",2:"2 HARI",3:"3 HARI",4:"4 HARI",5:"5 HARI","3_NON":"3 HARI TDK BRNT"};
             const mangkirSum = {
-                BRA: {3:0, 4:0, 5:0},
-                PANTY: {3:0, 4:0, 5:0},
-                OTHER: {3:0, 4:0, 5:0},
-                STAFF: {3:0, 4:0, 5:0}
+                BRA: {1:0, 2:0, 3:0, 4:0, 5:0, "3_NON":0},
+                PANTY: {1:0, 2:0, 3:0, 4:0, 5:0, "3_NON":0},
+                OTHER: {1:0, 2:0, 3:0, 4:0, 5:0, "3_NON":0},
+                STAFF: {1:0, 2:0, 3:0, 4:0, 5:0, "3_NON":0}
             };
             
             for (const row of filteredData) {
                 let status = row.status ? row.status.toUpperCase() : "";
                 let section = row.section ? row.section.toUpperCase().trim() : "";
-                let streak = row.mangkirCount > 5 ? 5 : row.mangkirCount;
-                
-                if (streak < 3) continue;
+                const bucket = selectedDays === "3_NON" ? "3_NON" : Math.min(5, Math.max(1, Number(row.mangkirCount || 0)));
+                if (!dayKeys.includes(bucket)) continue;
                 
                 if (status === "STAFF") {
-                    mangkirSum.STAFF[streak]++;
+                    mangkirSum.STAFF[bucket]++;
                 } else if (status === "WORKER") {
                     if (section.endsWith("T-A") || section.endsWith("T-B")) {
-                        mangkirSum.BRA[streak]++;
+                        mangkirSum.BRA[bucket]++;
                     } else if (section.endsWith("B-A") || section.endsWith("B-B")) {
-                        mangkirSum.PANTY[streak]++;
+                        mangkirSum.PANTY[bucket]++;
                     } else {
-                        mangkirSum.OTHER[streak]++;
+                        mangkirSum.OTHER[bucket]++;
                     }
                 } else {
-                    mangkirSum.OTHER[streak]++;
+                    mangkirSum.OTHER[bucket]++;
                 }
             }
             
-            currentSummaryData = { type: 'MANGKIR', mangkirSum, dateTextStr };
+            currentSummaryData = { type: 'MANGKIR', mangkirSum, dateTextStr, dayKeys, dayLabels };
             
             let html = `<div class="mb-2 font-bold text-slate-800 text-[12px]">MANGKIR UPDATE ${dateTextStr}</div>
             <div class="mb-1 font-bold text-slate-800 text-[11px]">FIRST SHIFT</div>
@@ -2510,9 +2878,7 @@
                     <tr class="bg-rose-100 text-rose-900">
                         <th class="p-2 border border-slate-300 text-center w-10">NO</th>
                         <th class="p-2 border border-slate-300 text-center">POSITION</th>
-                        <th class="p-2 border border-slate-300 text-center w-16">3 HARI</th>
-                        <th class="p-2 border border-slate-300 text-center w-16">4 HARI</th>
-                        <th class="p-2 border border-slate-300 text-center w-16">5 HARI</th>
+                        ${dayKeys.map(key => `<th class="p-2 border border-slate-300 text-center w-20">${dayLabels[key]}</th>`).join('')}
                         <th class="p-2 border border-slate-300 text-center w-16">TOTAL</th>
                     </tr>
                 </thead>
@@ -2525,36 +2891,31 @@
                 { key: "STAFF", label: "STAFF" }
             ];
             
-            let t3=0, t4=0, t5=0, tTotal=0;
+            const grandTotals = {};
+            dayKeys.forEach(key => grandTotals[key] = 0);
             
             categories.forEach((cat, index) => {
-                let row3 = mangkirSum[cat.key][3];
-                let row4 = mangkirSum[cat.key][4];
-                let row5 = mangkirSum[cat.key][5];
-                let rowTot = row3 + row4 + row5;
-                
-                t3 += row3; t4 += row4; t5 += row5; tTotal += rowTot;
+                const rowValues = dayKeys.map(key => mangkirSum[cat.key][key] || 0);
+                const rowTot = rowValues.reduce((a,b) => a+b, 0);
+                dayKeys.forEach((key, idx) => grandTotals[key] += rowValues[idx]);
                 
                 html += `<tr class="bg-white">
                     <td class="border border-slate-300 p-2 text-center">${index + 1}</td>
                     <td class="border border-slate-300 p-2 font-medium">${cat.label}</td>
-                    <td class="border border-slate-300 p-2 text-center">${row3}</td>
-                    <td class="border border-slate-300 p-2 text-center">${row4}</td>
-                    <td class="border border-slate-300 p-2 text-center">${row5}</td>
+                    ${rowValues.map(v => `<td class="border border-slate-300 p-2 text-center">${v}</td>`).join('')}
                     <td class="border border-slate-300 p-2 text-center font-bold text-rose-700">${rowTot}</td>
                 </tr>`;
             });
             
+            const grandTotalAll = dayKeys.reduce((sum,key) => sum + grandTotals[key], 0);
             html += `
                 <tr class="bg-rose-100 text-rose-900 font-bold">
                     <td colspan="2" class="border border-slate-300 p-2 text-center">GRAND TOTAL</td>
-                    <td class="border border-slate-300 p-2 text-center">${t3}</td>
-                    <td class="border border-slate-300 p-2 text-center">${t4}</td>
-                    <td class="border border-slate-300 p-2 text-center">${t5}</td>
-                    <td class="border border-slate-300 p-2 text-center text-[12px]">${tTotal}</td>
+                    ${dayKeys.map(key => `<td class="border border-slate-300 p-2 text-center">${grandTotals[key]}</td>`).join('')}
+                    <td class="border border-slate-300 p-2 text-center text-[12px]">${grandTotalAll}</td>
                 </tr>
-            </tbody></table>`;
-            
+                </tbody>
+            </table>`;
             document.getElementById('summaryContent').innerHTML = html;
             document.getElementById('summaryModal').classList.remove('hidden'); 
             document.getElementById('summaryModal').classList.add('flex');
@@ -2746,11 +3107,13 @@
         const d = currentSummaryData;
         
         if (d.type === 'MANGKIR') {
+            const dayKeys = d.dayKeys || [1,2,3,4,5];
+            const dayLabels = d.dayLabels || {1:"1 HARI",2:"2 HARI",3:"3 HARI",4:"4 HARI",5:"5 HARI","3_NON":"3 HARI TDK BRNT"};
             const wsData = [
                 [`MANGKIR UPDATE ${d.dateTextStr}`],
                 [],
                 ["FIRST SHIFT"],
-                ["NO", "POSITION", "3 HARI", "4 HARI", "5 HARI", "TOTAL"]
+                ["NO", "POSITION", ...dayKeys.map(key => dayLabels[key]), "TOTAL"]
             ];
 
             const categories = [
@@ -2760,17 +3123,16 @@
                 { key: "STAFF", label: "STAFF" }
             ];
 
-            let t3=0, t4=0, t5=0, tTotal=0;
+            const grandTotals = {};
+            dayKeys.forEach(key => grandTotals[key] = 0);
             categories.forEach((cat, index) => {
-                let row3 = d.mangkirSum[cat.key][3];
-                let row4 = d.mangkirSum[cat.key][4];
-                let row5 = d.mangkirSum[cat.key][5];
-                let rowTot = row3 + row4 + row5;
-                t3 += row3; t4 += row4; t5 += row5; tTotal += rowTot;
+                const rowValues = dayKeys.map(key => d.mangkirSum[cat.key][key] || 0);
+                const rowTot = rowValues.reduce((a,b) => a+b, 0);
+                dayKeys.forEach((key, idx) => grandTotals[key] += rowValues[idx]);
 
-                wsData.push([index + 1, cat.label, row3, row4, row5, rowTot]);
+                wsData.push([index + 1, cat.label, ...rowValues, rowTot]);
             });
-            wsData.push(["", "GRAND TOTAL", t3, t4, t5, tTotal]);
+            wsData.push(["", "GRAND TOTAL", ...dayKeys.map(key => grandTotals[key]), dayKeys.reduce((sum,key) => sum + grandTotals[key], 0)]);
 
             const ws = XLSX.utils.aoa_to_sheet(wsData); 
             const wb = XLSX.utils.book_new();
@@ -2870,11 +3232,13 @@
         const d = currentSummaryData;
         
         if (d.type === 'MANGKIR') {
+            const dayKeys = d.dayKeys || [1,2,3,4,5];
+            const dayLabels = d.dayLabels || {1:"1 HARI",2:"2 HARI",3:"3 HARI",4:"4 HARI",5:"5 HARI","3_NON":"3 HARI TDK BRNT"};
             const wsData = [
                 [`MANGKIR UPDATE ${d.dateTextStr}`],
                 [],
                 ["FIRST SHIFT"],
-                ["NO", "POSITION", "3 HARI", "4 HARI", "5 HARI", "TOTAL"]
+                ["NO", "POSITION", ...dayKeys.map(key => dayLabels[key]), "TOTAL"]
             ];
 
             const categories = [
@@ -2884,17 +3248,16 @@
                 { key: "STAFF", label: "STAFF" }
             ];
 
-            let t3=0, t4=0, t5=0, tTotal=0;
+            const grandTotals = {};
+            dayKeys.forEach(key => grandTotals[key] = 0);
             categories.forEach((cat, index) => {
-                let row3 = d.mangkirSum[cat.key][3];
-                let row4 = d.mangkirSum[cat.key][4];
-                let row5 = d.mangkirSum[cat.key][5];
-                let rowTot = row3 + row4 + row5;
-                t3 += row3; t4 += row4; t5 += row5; tTotal += rowTot;
+                const rowValues = dayKeys.map(key => d.mangkirSum[cat.key][key] || 0);
+                const rowTot = rowValues.reduce((a,b) => a+b, 0);
+                dayKeys.forEach((key, idx) => grandTotals[key] += rowValues[idx]);
 
-                wsData.push([index + 1, cat.label, row3, row4, row5, rowTot]);
+                wsData.push([index + 1, cat.label, ...rowValues, rowTot]);
             });
-            wsData.push(["", "GRAND TOTAL", t3, t4, t5, tTotal]);
+            wsData.push(["", "GRAND TOTAL", ...dayKeys.map(key => grandTotals[key]), dayKeys.reduce((sum,key) => sum + grandTotals[key], 0)]);
 
             const ws = XLSX.utils.aoa_to_sheet(wsData); 
             const wb = XLSX.utils.book_new();
@@ -3075,6 +3438,31 @@
             return { tgl, kode: cell.kode || '—', absen: cell.time || '—', lembur: cell.ot || '—' };
         });
 
+        const renderKodeBadge = (kode) => {
+            const safeKode = String(kode || '—');
+            if (safeKode === '—') return '<span class="text-slate-400">—</span>';
+            const cls = getAttendanceCodeClass(safeKode);
+            return cls ? `<span class="${cls} shadow-sm">${safeKode}</span>` : `<span class="font-bold text-orange-500">${safeKode}</span>`;
+        };
+
+        const renderAbsenValue = (absen, kode) => {
+            const safeAbsen = String(absen || '—');
+            if (safeAbsen === '—') {
+                const cls = getAttendanceCodeClass(kode || '');
+                return cls ? `<span class="${cls} shadow-sm">${String(kode || '—')}</span>` : '<span class="text-slate-400">—</span>';
+            }
+            const cls = safeAbsen.includes('-') ? 'text-emerald-600 font-bold' : 'text-blue-600 font-bold';
+            return `<span class="${cls}">${safeAbsen}</span>`;
+        };
+
+        const renderLemburValue = (lembur) => {
+            const safeOt = String(lembur || '—');
+            if (safeOt === '—') return '<span class="text-slate-400">—</span>';
+            const num = Number(safeOt);
+            const cls = !isNaN(num) && num > 0 ? 'text-purple-700 font-bold' : 'text-slate-700 font-semibold';
+            return `<span class="${cls}">${safeOt}</span>`;
+        };
+
         const titleEl = document.getElementById('timeRecordTitle');
         const subEl = document.getElementById('timeRecordSubtitle');
         const contentEl = document.getElementById('timeRecordContent');
@@ -3101,7 +3489,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${rows.map(r => `<tr class="border-b border-slate-100 hover:bg-slate-50"><td class="px-3 py-2 font-semibold">Tgl ${r.tgl}</td><td class="px-3 py-2">${r.kode}</td><td class="px-3 py-2 font-mono">${r.absen}</td><td class="px-3 py-2 font-mono text-purple-700">${r.lembur}</td></tr>`).join('')}
+                        ${rows.map(r => `<tr class="border-b border-slate-100 hover:bg-slate-50"><td class="px-3 py-2 font-semibold">Tgl ${r.tgl}</td><td class="px-3 py-2">${renderKodeBadge(r.kode)}</td><td class="px-3 py-2 font-mono">${renderAbsenValue(r.absen, r.kode)}</td><td class="px-3 py-2 font-mono">${renderLemburValue(r.lembur)}</td></tr>`).join('')}
                     </tbody>
                 </table>
             </div>`;
@@ -3287,5 +3675,17 @@
 })();
 </script>
 
+<script>
+(function() {
+    const focusSearchReady = () => {
+        const searchBox = document.getElementById('globalSearch');
+        if (searchBox && !document.getElementById('modernAlert')?.classList.contains('flex')) {
+            setTimeout(() => searchBox.focus(), 200);
+        }
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', focusSearchReady);
+    else focusSearchReady();
+})();
+</script>
 </body>
 </html>
