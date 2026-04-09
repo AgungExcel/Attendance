@@ -3687,5 +3687,20 @@
     else focusSearchReady();
 })();
 </script>
+<script>
+// ===== Enter key untuk tutup alert =====
+(function() {
+    function handleEnterClose(e) {
+        const alertEl = document.getElementById('modernAlert');
+        if (!alertEl) return;
+        const isVisible = !alertEl.classList.contains('hidden');
+        if (isVisible && (e.key === 'Enter' || e.keyCode === 13)) {
+            e.preventDefault();
+            if (window.closeAlert) window.closeAlert();
+        }
+    }
+    document.addEventListener('keydown', handleEnterClose);
+})();
+</script>
 </body>
 </html>
