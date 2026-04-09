@@ -92,21 +92,21 @@
             z-index: 10;
         }
         .sticky-no { left: 0; width: 40px !important; min-width: 40px !important; max-width: 40px !important; text-align: center; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
-        .sticky-id { left: 40px; width: 70px !important; min-width: 70px !important; max-width: 70px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
-        .sticky-name { left: 110px; width: 120px !important; min-width: 120px !important; max-width: 120px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
-        .col-section-fixed { width: 100px !important; min-width: 100px !important; }
-        .col-posisi-fixed { width: 100px !important; min-width: 100px !important; }
+        .sticky-id { left: 40px; width: 110px !important; min-width: 110px !important; max-width: 110px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        .sticky-name { left: 150px; width: 190px !important; min-width: 190px !important; max-width: 190px !important; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        .col-section-fixed { width: 130px !important; min-width: 130px !important; }
+        .col-posisi-fixed { width: 130px !important; min-width: 130px !important; }
         .col-join-fixed { width: 85px !important; min-width: 85px !important; }
-        .col-status-fixed { width: 75px !important; min-width: 75px !important; }
+        .col-status-fixed { width: 95px !important; min-width: 95px !important; }
         
-        .multi-select, .searchable-multi-select { position: relative; width: 100%; font-size: 9px; }
+        .multi-select, .searchable-multi-select { position: relative; width: 100%; min-width: 100px; font-size: 9px; }
         .multi-select-btn, .searchable-btn {
-            width: 100%; padding: 2px 4px; background: white; border: 1px solid #94a3b8;
+            width: 100%; min-width: 100px; padding: 2px 6px; background: white; border: 1px solid #94a3b8;
             border-radius: 4px; cursor: pointer; text-align: left; font-size: 9px;
             display: flex; justify-content: space-between; align-items: center; transition: background 0.1s;
         }
         .multi-select-btn.active, .searchable-btn.active { background-color: #dbeafe; border-color: #3b82f6; }
-        .multi-select-btn span:first-child, .searchable-btn span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .multi-select-btn span:first-child, .searchable-btn span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display:block; max-width: calc(100% - 18px); }
         .multi-select-dropdown, .searchable-dropdown {
             position: absolute; top: 100%; left: 0; right: 0; background: white;
             border: 1px solid #ccc; border-radius: 4px; z-index: 100; max-height: 200px;
@@ -530,7 +530,7 @@
             #mainDashboard > div:nth-child(2) { border-radius: 18px; }
             .table-container { border-radius: 18px; }
             .view-tab { padding: 8px 12px !important; }
-            .sticky-name { width: 150px !important; min-width: 150px !important; max-width: 150px !important; }
+            .sticky-name { width: 180px !important; min-width: 180px !important; max-width: 180px !important; }
         }
 
     </style>
@@ -620,9 +620,12 @@
                 <input type="date" id="mangkirDate" class="text-[9px] p-0.5 border border-rose-300 rounded outline-none bg-white cursor-pointer">
                 
                 <span class="text-[9px] font-bold text-slate-500 px-1">Mangkir:</span>
-                <select id="mangkirDays" class="text-[9px] p-0.5 border border-rose-300 rounded outline-none bg-white cursor-pointer">
-                    <option value="ALL">Semua (3, 4, 5 Hari)</option>
+                <select id="mangkirDays" class="text-[9px] p-0.5 border border-rose-300 rounded outline-none bg-white cursor-pointer min-w-[150px]">
+                    <option value="ALL">Semua (1, 2, 3, 4, 5 Hari)</option>
+                    <option value="1">1 Hari Beruntun</option>
+                    <option value="2">2 Hari Beruntun</option>
                     <option value="3">3 Hari Beruntun</option>
+                    <option value="3_NON">3 Hari Tidak Beruntun</option>
                     <option value="4">4 Hari Beruntun</option>
                     <option value="5" selected>5 Hari Beruntun</option>
                 </select>
@@ -701,6 +704,12 @@
                 <option value="MANGKIR_CUTI">Mangkir + Cuti</option>
                 <option value="HOLIDAY">Holiday (HL)</option>
             </select>
+
+            <select id="filterUnitMode" class="bg-white border rounded px-2 py-0.5 text-[9px] outline-none shadow-sm font-medium cursor-pointer min-w-[110px]">
+                <option value="ALL">Semua Unit</option>
+                <option value="UNIT1">Status Unit 1</option>
+                <option value="UNIT2">Status Unit 2</option>
+            </select>
             
             <button id="btnExport" class="btn-export text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm flex items-center gap-1"><span class="text-[12px]">⬇</span> Export</button>
             <button id="btnSummary" onclick="window.openSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2.5 rounded text-[10px] shadow-sm">Summary</button>
@@ -730,6 +739,20 @@
             </div>
         </div>
         <div class="p-4 overflow-auto" id="summaryContent"></div>
+    </div>
+</div>
+
+<!-- Employee Time Record Modal -->
+<div id="timeRecordModal" class="hidden fixed inset-0 bg-black/60 z-40 items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl w-full max-w-5xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+        <div class="p-4 border-b bg-slate-900 text-white flex justify-between items-center gap-3">
+            <div>
+                <h2 id="timeRecordTitle" class="text-sm font-bold">Time Record Karyawan</h2>
+                <p id="timeRecordSubtitle" class="text-[11px] text-slate-300">Rekap kehadiran dan lembur</p>
+            </div>
+            <button onclick="window.closeTimeRecord()" class="text-gray-300 hover:text-white bg-slate-700 rounded-full w-8 h-8 flex items-center justify-center font-bold">✕</button>
+        </div>
+        <div id="timeRecordContent" class="p-4 overflow-auto bg-slate-50"></div>
     </div>
 </div>
 
@@ -1710,10 +1733,10 @@
         
         const configGaji = getSalaryConfig();
         const fixedCols = [
-            { name: "NO", width: 40, filterKey: null }, { name: "ID", width: 70, filterKey: "id" },
-            { name: "NAMA", width: 120, filterKey: "name" }, { name: "SECTION", width: 100, filterKey: "section" },
-            { name: "POSISI", width: 100, filterKey: "position" }, { name: "JOIN DATE", width: 85, filterKey: "joinDate" },
-            { name: "STATUS", width: 75, filterKey: "status" }
+            { name: "NO", width: 40, filterKey: null }, { name: "ID", width: 110, filterKey: "id" },
+            { name: "NAMA", width: 190, filterKey: "name" }, { name: "SECTION", width: 130, filterKey: "section" },
+            { name: "POSISI", width: 130, filterKey: "position" }, { name: "JOIN DATE", width: 85, filterKey: "joinDate" },
+            { name: "STATUS", width: 95, filterKey: "status" }
         ];
         
         let allCols = [...fixedCols];
@@ -1746,15 +1769,15 @@
             let col = allCols[i], cls = "px-1 py-1 border-r border-slate-600/50", ws = `width: ${col.width}px; min-width: ${col.width}px;`;
             if(i===0) cls += ` sticky left-0 z-20 ${headerBgClass}`;
             if(i===1) cls += ` sticky left-[40px] z-20 ${headerBgClass}`;
-            if(i===2) cls += ` sticky left-[110px] z-20 ${headerBgClass}`;
+            if(i===2) cls += ` sticky left-[150px] z-20 ${headerBgClass}`;
             th += `<th style="${ws}" class="${cls}">${col.name}</th>`;
         }
         th += `</tr><tr class="bg-gray-100 text-[9px]">`;
         for(let i=0; i<allCols.length; i++) {
             let col = allCols[i], cls = "px-1 py-0.5 border-r border-slate-200", ws = `width: ${col.width}px; min-width: ${col.width}px;`;
             if(i===0) { cls += " sticky left-0 z-10 bg-gray-100"; ws += "width:40px;"; }
-            if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; ws += "width:70px;"; }
-            if(i===2) { cls += " sticky left-[110px] z-10 bg-gray-100"; ws += "width:120px;"; }
+            if(i===1) { cls += " sticky left-[40px] z-10 bg-gray-100"; ws += "width:110px;"; }
+            if(i===2) { cls += " sticky left-[150px] z-10 bg-gray-100"; ws += "width:190px;"; }
             
             if (col.filterKey) {
                 th += `<th style="${ws}" class="${cls}" data-colkey="${col.filterKey}"><div class="filter-container" id="filter_${col.filterKey}"></div></th>`;
@@ -1789,7 +1812,12 @@
 
         const updateBtnText = () => {
             const count = selectedSet.size;
-            span.innerText = count === 0 ? 'Semua' : `${count} terpilih`;
+            if (count === 0) span.innerText = 'Semua';
+            else if (count === 1) {
+                const singleVal = Array.from(selectedSet)[0];
+                const singleIdx = values.indexOf(singleVal);
+                span.innerText = singleIdx >= 0 ? displayValues[singleIdx] : String(singleVal);
+            } else span.innerText = `${count} terpilih`;
             if(count > 0) btn.classList.add('active');
             else btn.classList.remove('active');
         };
@@ -1889,7 +1917,12 @@
 
         const updateBtnText = () => {
             const count = selectedSet.size;
-            span.innerText = count === 0 ? 'Semua' : `${count} terpilih`;
+            if (count === 0) span.innerText = 'Semua';
+            else if (count === 1) {
+                const singleVal = Array.from(selectedSet)[0];
+                const singleIdx = values.indexOf(singleVal);
+                span.innerText = singleIdx >= 0 ? displayValues[singleIdx] : String(singleVal);
+            } else span.innerText = `${count} terpilih`;
             if(count > 0) btn.classList.add('active');
             else btn.classList.remove('active');
         };
@@ -2043,6 +2076,8 @@
         
         const filterEl = document.getElementById('filterAttendanceDetail');
         const mode = filterEl ? filterEl.value : "ALL"; 
+        const unitFilterEl = document.getElementById('filterUnitMode');
+        const unitMode = unitFilterEl ? unitFilterEl.value : 'ALL';
         
         const activeFilters = [];
         for (let key in filters) { if(filters[key].size > 0) activeFilters.push({key, set: filters[key]}); }
@@ -2072,6 +2107,10 @@
             if (currentViewMode === 'SALARY' && row.status === 'STAFF') return false;
 
             if (hasSearch && !(row.id.toLowerCase().includes(searchKeyword) || row.name.toLowerCase().includes(searchKeyword))) return false;
+
+            const isUnit2 = row.id && String(row.id).toUpperCase().startsWith('SM');
+            if (unitMode === 'UNIT2' && !isUnit2) return false;
+            if (unitMode === 'UNIT1' && isUnit2) return false;
             
             // LOGIKA FILTER MANGKIR BERTURUT-TURUT
             if (currentViewMode === 'MANGKIR') {
@@ -2079,24 +2118,34 @@
                 
                 let streak = 0;
                 let rincianArr = [];
+                let allMangkirDates = [];
 
                 for (let i = 0; i < mangkirTargetDates.length; i++) {
                     let d = mangkirTargetDates[i];
                     let tglNum = d.getDate();
                     let cell = row.tanggalData[tglNum];
                     let kode = cell && cell.kode ? cell.kode.toUpperCase() : "";
+                    const labelTgl = `${String(tglNum).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
 
                     if (kode === "AB" || kode === "LWP") {
-                        streak++;
-                        rincianArr.unshift(`${String(tglNum).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`);
-                    } else {
+                        allMangkirDates.unshift(labelTgl);
+                        if (streak === i) {
+                            streak++;
+                            rincianArr.unshift(labelTgl);
+                        }
+                    } else if (streak > 0) {
                         break;
                     }
                 }
                 
                 const selectedDays = document.getElementById('mangkirDays').value; 
+                const nonConsecutiveCount = allMangkirDates.length;
                 if (selectedDays === "ALL") {
-                    if (streak < 3) return false;
+                    if (Math.max(streak, nonConsecutiveCount) < 1) return false;
+                } else if (selectedDays === "3_NON") {
+                    if (nonConsecutiveCount < 3) return false;
+                    row.mangkirCount = nonConsecutiveCount;
+                    row.mangkirDates = allMangkirDates.join(', ');
                 } else {
                     let reqDays = parseInt(selectedDays);
                     if (reqDays === 5) {
@@ -2104,10 +2153,13 @@
                     } else {
                         if (streak !== reqDays) return false;
                     }
+                    row.mangkirCount = streak;
+                    row.mangkirDates = rincianArr.join(', ');
                 }
-                
-                row.mangkirCount = streak;
-                row.mangkirDates = rincianArr.join(', ');
+                if (selectedDays !== "3_NON") {
+                    row.mangkirCount = streak;
+                    row.mangkirDates = rincianArr.join(', ');
+                }
             }
 
             for (let i = 0; i < activeFilters.length; i++) {
@@ -2247,7 +2299,7 @@
         
         for(let index = currentRenderIndex; index < endIndex; index++) {
             let row = currentFilteredData[index];
-            htmlChunks.push(`<tr class="hover:bg-blue-50 border-b border-slate-200">`);
+            htmlChunks.push(`<tr class="hover:bg-blue-50 border-b border-slate-200 cursor-pointer" data-row-index="${index}" title="Klik untuk lihat time record">`);
             
             let sBadge = row.status==="WORKER"?'<span class="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[9px]">WORKER</span>':
                          row.status==="STAFF"?'<span class="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[9px]">STAFF</span>':
@@ -2256,12 +2308,12 @@
             let rId = highlightText(row.id, keyword), rName = highlightText(row.name, keyword);
             htmlChunks.push(
                 `<td class="sticky-no px-1 py-0.5 text-slate-500 font-medium" style="width:40px;background:white;">${index+1}</td>`,
-                `<td class="sticky-id px-1 py-0.5 font-bold text-slate-800" style="width:70px;background:white;">${rId}</td>`,
-                `<td class="sticky-name px-1 py-0.5 text-slate-700 truncate" style="width:120px;background:white;" title="${row.name}">${rName}</td>`,
-                `<td class="col-section-fixed px-1 py-0.5 text-slate-600 truncate" style="width:100px;">${row.section}</td>`,
-                `<td class="col-posisi-fixed px-1 py-0.5 text-slate-600 truncate" style="width:100px;">${row.position}</td>`,
+                `<td class="sticky-id px-1 py-0.5 font-bold text-slate-800" style="width:110px;background:white;">${rId}</td>`,
+                `<td class="sticky-name px-1 py-0.5 text-slate-700 truncate" style="width:190px;background:white;" title="${row.name}">${rName}</td>`,
+                `<td class="col-section-fixed px-1 py-0.5 text-slate-600 truncate" style="width:130px;">${row.section}</td>`,
+                `<td class="col-posisi-fixed px-1 py-0.5 text-slate-600 truncate" style="width:130px;">${row.position}</td>`,
                 `<td class="col-join-fixed px-1 py-0.5 text-slate-500" style="width:85px;">${row.joinDate}</td>`,
-                `<td class="col-status-fixed px-1 py-0.5" style="width:75px;">${sBadge}</td>`
+                `<td class="col-status-fixed px-1 py-0.5" style="width:95px;">${sBadge}</td>`
             );
 
             if (currentViewMode === 'SALARY') {
@@ -2317,7 +2369,18 @@
         }
         
         const tBody = document.getElementById('tableBody');
-        if (tBody) tBody.insertAdjacentHTML('beforeend', htmlChunks.join(''));
+        if (tBody) {
+            tBody.insertAdjacentHTML('beforeend', htmlChunks.join(''));
+            tBody.querySelectorAll('tr[data-row-index]').forEach(tr => {
+                if (tr.dataset.boundClick === '1') return;
+                tr.dataset.boundClick = '1';
+                tr.addEventListener('click', () => {
+                    const idx = Number(tr.dataset.rowIndex || '0');
+                    const row = currentFilteredData[idx];
+                    if (row) window.openTimeRecord(row.id);
+                });
+            });
+        }
         currentRenderIndex = endIndex;
     }
 
@@ -3000,10 +3063,70 @@
         window.gabungkanDanRender();
     });
 
+    window.openTimeRecord = function(identifier) {
+        const normalized = String(identifier || '').trim().toLowerCase();
+        if (!normalized) return;
+        const row = window.databaseGlobal.find(r => String(r.id).toLowerCase() === normalized || String(r.name).toLowerCase() === normalized);
+        if (!row) return;
+
+        const dates = [...window.semuaTanggal];
+        const rows = dates.map(tgl => {
+            const cell = row.tanggalData[tgl] || {};
+            return { tgl, kode: cell.kode || '—', absen: cell.time || '—', lembur: cell.ot || '—' };
+        });
+
+        const titleEl = document.getElementById('timeRecordTitle');
+        const subEl = document.getElementById('timeRecordSubtitle');
+        const contentEl = document.getElementById('timeRecordContent');
+        const modalEl = document.getElementById('timeRecordModal');
+        if (!titleEl || !subEl || !contentEl || !modalEl) return;
+
+        titleEl.textContent = `Time Record - ${row.name}`;
+        subEl.textContent = `ID: ${row.id} • ${row.section || '-'} • ${row.position || '-'} • Rekap data aktif`;
+        contentEl.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-3"><div class="text-[11px] text-slate-500">ID</div><div class="font-bold text-slate-800">${row.id}</div></div>
+                <div class="bg-white rounded-xl border border-slate-200 p-3"><div class="text-[11px] text-slate-500">Nama</div><div class="font-bold text-slate-800">${row.name}</div></div>
+                <div class="bg-white rounded-xl border border-slate-200 p-3"><div class="text-[11px] text-slate-500">Section</div><div class="font-bold text-slate-800">${row.section || '-'}</div></div>
+                <div class="bg-white rounded-xl border border-slate-200 p-3"><div class="text-[11px] text-slate-500">Status</div><div class="font-bold text-slate-800">${row.status || '-'}</div></div>
+            </div>
+            <div class="overflow-auto bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <table class="min-w-full text-[12px]">
+                    <thead>
+                        <tr class="bg-slate-900 text-white">
+                            <th class="px-3 py-2 text-left">Tanggal</th>
+                            <th class="px-3 py-2 text-left">Kode</th>
+                            <th class="px-3 py-2 text-left">Absen</th>
+                            <th class="px-3 py-2 text-left">Lembur</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(r => `<tr class="border-b border-slate-100 hover:bg-slate-50"><td class="px-3 py-2 font-semibold">Tgl ${r.tgl}</td><td class="px-3 py-2">${r.kode}</td><td class="px-3 py-2 font-mono">${r.absen}</td><td class="px-3 py-2 font-mono text-purple-700">${r.lembur}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+        modalEl.classList.remove('hidden');
+        modalEl.classList.add('flex');
+    };
+
+    window.closeTimeRecord = function() {
+        const modalEl = document.getElementById('timeRecordModal');
+        if (!modalEl) return;
+        modalEl.classList.add('hidden');
+        modalEl.classList.remove('flex');
+    };
+
     safeAddListener('btnApplySalary', 'click', () => window.gabungkanDanRender());
     safeAddListener('btnApplyMangkir', 'click', () => window.gabungkanDanRender());
 
-    safeAddListener('globalSearch', 'input', debounce(() => window.gabungkanDanRender(), 250));
+    safeAddListener('globalSearch', 'input', debounce(() => {
+        window.gabungkanDanRender();
+        const keyword = (document.getElementById('globalSearch')?.value || '').trim().toLowerCase();
+        if (!keyword) return;
+        const matches = window.databaseGlobal.filter(r => String(r.id).toLowerCase() === keyword || String(r.name).toLowerCase() === keyword);
+        if (matches.length === 1) window.openTimeRecord(matches[0].id);
+    }, 250));
+    safeAddListener('filterUnitMode', 'change', () => window.gabungkanDanRender());
     safeAddListener('dateFrom', 'change', () => { window.gabungkanDanRender(); });
     safeAddListener('dateTo', 'change', () => { window.gabungkanDanRender(); });
     safeAddListener('filterAttendanceDetail', 'change', () => window.gabungkanDanRender());
