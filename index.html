@@ -4020,5 +4020,810 @@ nameCellStyle: sanitizeStyleObject(getWorksheetCell(worksheetDense || worksheet,
     document.addEventListener('keydown', handleEnterClose);
 })();
 </script>
+
+<script id="turnout-tab-patch">
+(function(){
+    const TURNOUT_STORAGE_KEY = 'hoplun_turnout_rows_v1';
+    window.turnoutRows = window.turnoutRows || [];
+    window.turnoutFileName = window.turnoutFileName || '';
+
+    function injectTurnoutStyles(){
+        if(document.getElementById('turnoutPatchStyles')) return;
+        const style = document.createElement('style');
+        style.id = 'turnoutPatchStyles';
+        style.textContent = `
+            .view-tab.active-turnout{background:linear-gradient(135deg,#92400e,#f59e0b)!important;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+            #turnoutFileDisplay{min-width:120px}
+        `;
+        document.head.appendChild(style);
+    }
+
+    function createTurnoutUi(){
+        injectTurnoutStyles();
+        if(document.getElementById('hiddenTurnoutInput')) return;
+
+        const hidden = document.createElement('input');
+        hidden.type = 'file';
+        hidden.id = 'hiddenTurnoutInput';
+        hidden.accept = '.xlsx,.xls';
+        hidden.className = 'hidden';
+        document.body.appendChild(hidden);
+
+        const topControls = document.querySelector('#mainDashboard > div:first-child > div:last-child');
+        if(topControls){
+            const sep = document.createElement('div');
+            sep.className = 'w-px h-5 bg-slate-500 mx-1';
+            const wrap = document.createElement('div');
+            wrap.className = 'flex items-center gap-1';
+            wrap.innerHTML = `
+                <span class="text-[9px] font-bold text-amber-300">📊 File TURN:</span>
+                <input type="text" id="turnoutFileDisplay" readonly placeholder="Pilih file TURN..." class="text-[9px] px-1.5 py-1 rounded w-28 bg-slate-800 border border-slate-600 text-white cursor-pointer">
+                <button id="btnPickTurnout" class="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded text-[9px] font-bold transition">Update TURN</button>
+            `;
+            topControls.appendChild(sep);
+            topControls.appendChild(wrap);
+            wrap.querySelector('#btnPickTurnout').addEventListener('click', ()=> hidden.click());
+            wrap.querySelector('#turnoutFileDisplay').addEventListener('click', ()=> hidden.click());
+        }
+
+        const tabWrap = document.querySelector('#mainDashboard > div:nth-child(2) .bg-slate-200');
+        if(tabWrap && !document.getElementById('tabTurnout')){
+            const btn = document.createElement('button');
+            btn.id = 'tabTurnout';
+            btn.className = 'view-tab inactive';
+            btn.textContent = 'Karyawan Keluar';
+            tabWrap.appendChild(btn);
+        }
+
+        hidden.addEventListener('change', async (e)=>{
+            const file = (e.target.files || [])[0];
+            if(!file) return;
+            try{
+                const rows = await parseTurnoutFile(file);
+                window.turnoutRows = rows;
+                window.turnoutFileName = file.name;
+                localStorage.setItem(TURNOUT_STORAGE_KEY, JSON.stringify({ fileName:file.name, rows }));
+                const display = document.getElementById('turnoutFileDisplay');
+                if(display) display.value = file.name;
+                if(typeof window.showAlert === 'function') window.showAlert('Sukses', `File TURN berhasil dimuat: <b>${file.name}</b><br>Total data: <b>${rows.length}</b>`);
+                if (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT') {
+                    filters = {};
+                    window.gabungkanDanRender();
+                }
+            }catch(err){
+                console.error(err);
+                if(typeof window.showAlert === 'function') window.showAlert('Gagal', 'File TURN tidak bisa dibaca.');
+            } finally {
+                hidden.value = '';
+            }
+        });
+
+        const turnoutTab = document.getElementById('tabTurnout');
+        if(turnoutTab){
+            turnoutTab.addEventListener('click', ()=>{
+                if (typeof currentViewMode === 'undefined') return;
+                currentViewMode = 'TURNOUT';
+                if(document.getElementById('tabAttend')) document.getElementById('tabAttend').className = 'view-tab inactive';
+                if(document.getElementById('tabOT')) document.getElementById('tabOT').className = 'view-tab inactive';
+                if(document.getElementById('tabSalary')) document.getElementById('tabSalary').className = 'view-tab inactive';
+                if(document.getElementById('tabMangkir')) document.getElementById('tabMangkir').className = 'view-tab inactive';
+                turnoutTab.className = 'view-tab active-turnout';
+
+                const salaryPanel = document.getElementById('salaryConfigPanel');
+                const mangkirPanel = document.getElementById('mangkirConfigPanel');
+                const dateFilterGroup = document.getElementById('dateFilterGroup');
+                const filterAttendanceDetail = document.getElementById('filterAttendanceDetail');
+                const btnSummary = document.getElementById('btnSummary');
+                if(salaryPanel) salaryPanel.classList.add('hidden');
+                if(mangkirPanel) mangkirPanel.classList.add('hidden');
+                if(dateFilterGroup) dateFilterGroup.style.display = 'none';
+                if(filterAttendanceDetail) filterAttendanceDetail.style.display = 'none';
+                if(btnSummary) btnSummary.style.display = 'none';
+
+                filters = {};
+                window.gabungkanDanRender();
+            });
+        }
+
+        const saved = localStorage.getItem(TURNOUT_STORAGE_KEY);
+        if(saved){
+            try{
+                const parsed = JSON.parse(saved);
+                if(Array.isArray(parsed.rows)){
+                    window.turnoutRows = parsed.rows;
+                    window.turnoutFileName = parsed.fileName || '';
+                    const display = document.getElementById('turnoutFileDisplay');
+                    if(display && parsed.fileName) display.value = parsed.fileName;
+                }
+            }catch(e){}
+        }
+    }
+
+    async function parseTurnoutFile(file){
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data, { type:'array', cellDates:true, raw:false });
+        const sheetName = wb.SheetNames.find(n => /TURN/i.test(String(n || ''))) || wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
+        const aoa = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, defval:'' });
+
+        const normalizeHeader = (v) => String(v || '')
+            .toUpperCase()
+            .replace(/[\n\r]+/g,' ')
+            .replace(/\s+/g,' ')
+            .trim();
+
+        const headerAliases = {
+            no: ['NO'],
+            nama: ['NAMA'],
+            idNo: ['ID NO','IDNO','ID'],
+            section: ['SECTION'],
+            positionTitle: ['POSITION / TITLE','POSITION/TITLE','POSITION TITLE','POSITION'],
+            joinDate: ['JOIN DATE','JOINDATE'],
+            category: ['CATEGORY'],
+            reasonOfOut: ['REASON OF OUT','REASON OUT'],
+            resignedDate: ['RESIGNED DATE','RESIGN DATE'],
+            declaredReason: ['DECLARED REASON'],
+            prosedur: ['PROSEDUR (SESUAI/TIDAK)','PROSEDUR','PROSEDURE (SESUAI/TIDAK)'],
+            status: ['STATUS'],
+            sewerGrading: ['SEWER GRADING','SEWER GRADING '],
+            caraPembayaran: ['CARA PEMBAYARAN'],
+            tglTransfer: ['TGL TRANSFER']
+        };
+
+        let headerRowIndex = -1;
+        let headerMap = null;
+
+        for(let i = 0; i < aoa.length; i++){
+            const row = (aoa[i] || []).slice(0, 17).map(normalizeHeader);
+            const map = {};
+            Object.entries(headerAliases).forEach(([key, aliases]) => {
+                const idx = row.findIndex(v => aliases.includes(v));
+                if(idx >= 0) map[key] = idx;
+            });
+            if(map.no != null && map.nama != null && map.idNo != null){
+                headerRowIndex = i;
+                headerMap = map;
+                break;
+            }
+        }
+
+        if(headerRowIndex < 0){
+            headerRowIndex = 2;
+            headerMap = {
+                no: 1,
+                nama: 2,
+                idNo: 3,
+                section: 4,
+                positionTitle: 5,
+                joinDate: 6,
+                category: 7,
+                reasonOfOut: 8,
+                resignedDate: 9,
+                declaredReason: 10,
+                prosedur: 12,
+                status: 13,
+                sewerGrading: 14,
+                caraPembayaran: 15,
+                tglTransfer: 16
+            };
+        }
+
+        const getVal = (row, key) => {
+            const idx = headerMap && headerMap[key] != null ? headerMap[key] : -1;
+            return idx >= 0 ? String(row[idx] || '').trim() : '';
+        };
+
+        const rows = [];
+        for(let i = headerRowIndex + 1; i < aoa.length; i++){
+            const r = (aoa[i] || []).slice(0, 17);
+            const no = getVal(r, 'no');
+            const nama = getVal(r, 'nama');
+            const idNo = getVal(r, 'idNo');
+            const section = getVal(r, 'section');
+            const positionTitle = getVal(r, 'positionTitle');
+            const joinDate = getVal(r, 'joinDate');
+            const category = getVal(r, 'category');
+            const reasonOfOut = getVal(r, 'reasonOfOut');
+            const resignedDate = getVal(r, 'resignedDate');
+            const declaredReason = getVal(r, 'declaredReason');
+            const prosedur = getVal(r, 'prosedur');
+            const status = getVal(r, 'status');
+            const sewerGrading = getVal(r, 'sewerGrading');
+            const caraPembayaran = getVal(r, 'caraPembayaran');
+            const tglTransfer = getVal(r, 'tglTransfer');
+            if(!(no || nama || idNo || section || positionTitle || resignedDate)) continue;
+            if(normalizeHeader(no) === 'NO' && normalizeHeader(nama) === 'NAMA') continue;
+            rows.push({
+                no, nama, idNo, section, positionTitle, joinDate, category,
+                reasonOfOut, resignedDate, declaredReason, prosedur, status,
+                sewerGrading, caraPembayaran, tglTransfer
+            });
+        }
+        return rows;
+    }
+
+    const turnoutColumns = [
+        { key:'no', name:'NO', width:52, searchable:false },
+        { key:'nama', name:'NAMA', width:220, searchable:true },
+        { key:'idNo', name:'ID No', width:120, searchable:true },
+        { key:'section', name:'SECTION', width:120, searchable:true },
+        { key:'positionTitle', name:'POSITION / TITLE', width:160, searchable:true },
+        { key:'joinDate', name:'JOIN DATE', width:120, searchable:true },
+        { key:'category', name:'CATEGORY', width:120, searchable:true },
+        { key:'reasonOfOut', name:'Reason of Out', width:120, searchable:true },
+        { key:'resignedDate', name:'Resigned Date', width:120, searchable:true },
+        { key:'declaredReason', name:'DECLARED REASON', width:260, searchable:true },
+        { key:'prosedur', name:'PROSEDUR (SESUAI/TIDAK)', width:190, searchable:true },
+        { key:'status', name:'STATUS', width:110, searchable:true },
+        { key:'sewerGrading', name:'Sewer Grading', width:100, searchable:true },
+        { key:'caraPembayaran', name:'CARA PEMBAYARAN', width:120, searchable:true },
+        { key:'tglTransfer', name:'TGL TRANSFER', width:120, searchable:true }
+    ];
+
+    function escapeHtml(s){
+        return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function truncateStyle(width){ return `width:${width}px;min-width:${width}px;max-width:${width}px;`; }
+
+    const originalGabungkan = window.gabungkanDanRender;
+    const originalPrecompute = precomputeFilterOptions;
+    const originalBuildHeader = buildFilterHeader;
+    const originalApply = applyAllFiltersFast;
+    const originalRender = renderTable;
+    const originalExport = exportToExcel;
+    const originalUpdateRekap = updateRekapUtama;
+
+    precomputeFilterOptions = function(){
+        if (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT') {
+            filterOptions = {};
+            turnoutColumns.forEach(col => {
+                if(col.key === 'no') return;
+                const setVals = new Set();
+                (window.turnoutRows || []).forEach(r => {
+                    const val = r[col.key];
+                    setVals.add((val === undefined || val === null || val === '') ? '__EMPTY__' : val);
+                });
+                const values = Array.from(setVals).sort((a,b)=>(a==='__EMPTY__'?-1:b==='__EMPTY__'?1:String(a).localeCompare(String(b))));
+                filterOptions[col.key] = { values, displayValues: values.map(v => v==='__EMPTY__' ? 'Kosong' : v) };
+            });
+            return;
+        }
+        return originalPrecompute();
+    };
+
+    buildFilterHeader = function(){
+        if (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT') {
+            const thead = document.getElementById('tableHeader');
+            if(!thead) return;
+            let html = '<tr class="bg-amber-800 text-white text-[10px]">';
+            turnoutColumns.forEach((col, i) => {
+                let cls = 'px-1 py-1 border-r border-amber-700/60';
+                let ws = truncateStyle(col.width);
+                if(i===0) cls += ' sticky left-0 z-20 bg-amber-900';
+                if(i===1) cls += ' sticky left-[52px] z-20 bg-amber-900';
+                if(i===2) cls += ' sticky left-[272px] z-20 bg-amber-900';
+                html += `<th class="${cls}" style="${ws}">${col.name}</th>`;
+            });
+            html += '</tr><tr class="bg-amber-50 text-[9px]">';
+            turnoutColumns.forEach((col, i) => {
+                let cls = 'px-1 py-0.5 border-r border-amber-100';
+                let ws = truncateStyle(col.width);
+                if(i===0) cls += ' sticky left-0 z-10 bg-amber-50';
+                if(i===1) cls += ' sticky left-[52px] z-10 bg-amber-50';
+                if(i===2) cls += ' sticky left-[272px] z-10 bg-amber-50';
+                if(col.key === 'no'){
+                    html += `<th class="${cls}" style="${ws}"></th>`;
+                } else {
+                    html += `<th class="${cls}" style="${ws}" data-colkey="${col.key}"><div class="filter-container" id="filter_${col.key}"></div></th>`;
+                }
+            });
+            html += '</tr>';
+            thead.innerHTML = html;
+            turnoutColumns.forEach(col => {
+                if(col.key === 'no') return;
+                const container = document.getElementById(`filter_${col.key}`);
+                if(!container) return;
+                const options = filterOptions[col.key];
+                if(!options) return;
+                if(!filters[col.key]) filters[col.key] = new Set();
+                createSearchableMultiSelect(container, options.values, options.displayValues, filters[col.key], col.key, ()=>renderTable());
+            });
+            return;
+        }
+        return originalBuildHeader();
+    };
+
+    applyAllFiltersFast = function(){
+        if (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT') {
+            const rows = Array.isArray(window.turnoutRows) ? window.turnoutRows.slice() : [];
+            const searchInput = document.getElementById('globalSearch');
+            const q = searchInput ? String(searchInput.value || '').trim().toLowerCase() : '';
+            const activeFilters = Object.keys(filters || {}).filter(key => filters[key] && filters[key].size);
+            return rows.filter(row => {
+                if(q){
+                    const hay = [
+                        row.nama,row.idNo,row.section,row.positionTitle,row.category,row.reasonOfOut,row.declaredReason,row.status
+                    ].join(' ').toLowerCase();
+                    if(!hay.includes(q)) return false;
+                }
+                for(const key of activeFilters){
+                    const set = filters[key];
+                    const val = row[key];
+                    const isEmpty = (val === undefined || val === null || val === '');
+                    if (!set.has(val) && !(isEmpty && set.has('__EMPTY__'))) return false;
+                }
+                return true;
+            });
+        }
+        return originalApply();
+    };
+
+    updateRekapUtama = function(dataList){
+        if (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT') {
+            const counts = { WORKER:0, STAFF:0, SECURITY:0, OTHER:0 };
+            (dataList || []).forEach(r => {
+                const s = String(r.status || '').trim().toUpperCase();
+                if(s === 'WORKER') counts.WORKER++;
+                else if(s === 'STAFF') counts.STAFF++;
+                else if(s === 'SECURITY') counts.SECURITY++;
+                else counts.OTHER++;
+            });
+            const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+            setEl('w1', counts.WORKER); setEl('s1', counts.STAFF); setEl('all1', (dataList || []).length);
+            setEl('w2', 0); setEl('s2', counts.SECURITY + counts.OTHER); setEl('all2', counts.SECURITY + counts.OTHER);
+            setEl('totalWorker', counts.WORKER); setEl('totalStaff', counts.STAFF); setEl('totalSecurity', counts.SECURITY); setEl('totalSemua', (dataList || []).length);
+            return;
+        }
+        return originalUpdateRekap(dataList);
+    };
+
+    renderTable = function(){
+        if (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT') {
+            currentFilteredData = applyAllFiltersFast();
+            updateRekapUtama(currentFilteredData);
+            const tBody = document.getElementById('tableBody');
+            if(!tBody) return;
+            if(!window.turnoutRows || !window.turnoutRows.length){
+                tBody.innerHTML = `<tr><td colspan="${turnoutColumns.length}" class="p-4 text-center text-slate-500 font-bold">Belum ada file TURN yang dimuat</td></tr>`;
+                return;
+            }
+            if(!currentFilteredData.length){
+                tBody.innerHTML = `<tr><td colspan="${turnoutColumns.length}" class="p-4 text-center text-slate-500 font-bold">Tidak ada data yang sesuai filter</td></tr>`;
+                return;
+            }
+            const keyword = String((document.getElementById('globalSearch') || {}).value || '').trim().toLowerCase();
+            const rowsHtml = currentFilteredData.map((row, idx) => {
+                const cells = turnoutColumns.map((col, i) => {
+                    let cls = 'px-2 py-1 border-b border-slate-200 bg-white text-slate-700';
+                    let ws = truncateStyle(col.width);
+                    if(i===0) cls += ' sticky left-0 z-10 bg-white text-center font-semibold';
+                    if(i===1) cls += ' sticky left-[52px] z-10 bg-white';
+                    if(i===2) cls += ' sticky left-[272px] z-10 bg-white font-semibold text-slate-800';
+                    const rawVal = (col.key === 'no') ? (row.no || (idx+1)) : (row[col.key] ?? '');
+                    const val = keyword ? highlightText(escapeHtml(rawVal), keyword) : escapeHtml(rawVal);
+                    return `<td class="${cls}" style="${ws}" title="${escapeHtml(rawVal)}">${val || '&mdash;'}</td>`;
+                }).join('');
+                return `<tr class="hover:bg-amber-50">${cells}</tr>`;
+            }).join('');
+            tBody.innerHTML = rowsHtml;
+            return;
+        }
+        return originalRender();
+    };
+
+    exportToExcel = function(){
+        if (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT') {
+            const data = applyAllFiltersFast();
+            if(!data.length){
+                if(typeof window.showAlert === 'function') window.showAlert('Peringatan','Tidak ada data untuk diexport');
+                return;
+            }
+            const exportRows = data.map(r => ({
+                'NO': r.no, 'NAMA': r.nama, 'ID No': r.idNo, 'SECTION': r.section,
+                'POSITION / TITLE': r.positionTitle, 'JOIN DATE': r.joinDate, 'CATEGORY': r.category,
+                'Reason of Out': r.reasonOfOut, 'Resigned Date': r.resignedDate, 'DECLARED REASON': r.declaredReason,
+                'PROSEDUR (SESUAI/TIDAK)': r.prosedur, 'STATUS': r.status, 'Sewer Grading': r.sewerGrading,
+                'CARA PEMBAYARAN': r.caraPembayaran, 'TGL TRANSFER': r.tglTransfer
+            }));
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            XLSX.utils.book_append_sheet(wb, ws, 'Karyawan Keluar');
+            XLSX.writeFile(wb, 'Karyawan_Keluar_TURN.xlsx');
+            return;
+        }
+        return originalExport();
+    };
+
+    window.gabungkanDanRender = function(){
+        if (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT') {
+            precomputeFilterOptions();
+            buildFilterHeader();
+            renderTable();
+            const dbStatusEl = document.getElementById('dbStatus');
+            if(dbStatusEl) dbStatusEl.innerHTML = `📊 Karyawan Keluar: ${(window.turnoutRows || []).length} data`;
+            return;
+        }
+        return originalGabungkan();
+    };
+
+    function patchExistingTabClicks(){
+        const map = [
+            ['tabAttend','active-attend'],
+            ['tabOT','active-ot'],
+            ['tabSalary','active-salary'],
+            ['tabMangkir','active-mangkir']
+        ];
+        map.forEach(([id, activeClass]) => {
+            const el = document.getElementById(id);
+            if(!el || el.dataset.turnoutPatch === '1') return;
+            el.dataset.turnoutPatch = '1';
+            el.addEventListener('click', ()=>{
+                const turnoutTab = document.getElementById('tabTurnout');
+                if(turnoutTab) turnoutTab.className = 'view-tab inactive';
+                const dateFilterGroup = document.getElementById('dateFilterGroup');
+                const filterAttendanceDetail = document.getElementById('filterAttendanceDetail');
+                if(dateFilterGroup) dateFilterGroup.style.display = '';
+                if(filterAttendanceDetail) filterAttendanceDetail.style.display = '';
+            }, true);
+        });
+    }
+
+    function initTurnoutPatch(){
+        createTurnoutUi();
+        patchExistingTabClicks();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTurnoutPatch);
+    } else {
+        initTurnoutPatch();
+    }
+})();
+</script>
+
+
+<script>
+(function(){
+  function ensureTurnoutTopbarVisible(){
+    const topHeader = document.querySelector('#mainDashboard > div:first-child');
+    const topControls = document.querySelector('#mainDashboard > div:first-child > div:last-child');
+    if(topHeader) topHeader.style.overflow = 'visible';
+    if(topControls){
+      topControls.style.flexWrap = 'wrap';
+      topControls.style.rowGap = '8px';
+      topControls.style.columnGap = '8px';
+      topControls.style.maxWidth = '100%';
+      topControls.style.overflow = 'visible';
+    }
+    const fileDisplay = document.getElementById('turnoutFileDisplay');
+    const btnPick = document.getElementById('btnPickTurnout');
+    if(fileDisplay){
+      fileDisplay.style.width = '170px';
+      fileDisplay.style.minWidth = '170px';
+      fileDisplay.style.display = 'inline-block';
+    }
+    if(btnPick){
+      btnPick.style.display = 'inline-block';
+      btnPick.style.whiteSpace = 'nowrap';
+    }
+  }
+
+  function setBaseTabsInactive(){
+    const mapping = [
+      ['tabAttend','inactive'],
+      ['tabOT','inactive'],
+      ['tabSalary','inactive'],
+      ['tabMangkir','inactive'],
+      ['tabTurnout','inactive']
+    ];
+    mapping.forEach(([id,cls])=>{
+      const el=document.getElementById(id);
+      if(el) el.className = 'view-tab ' + cls;
+    });
+  }
+
+  function switchToTurnoutView(){
+    window.currentViewMode = 'TURNOUT';
+    try { currentViewMode = 'TURNOUT'; } catch(e) {}
+    setBaseTabsInactive();
+    const tab = document.getElementById('tabTurnout');
+    if(tab) tab.className = 'view-tab active-turnout';
+    const salaryPanel = document.getElementById('salaryConfigPanel');
+    const mangkirPanel = document.getElementById('mangkirConfigPanel');
+    const dateFilterGroup = document.getElementById('dateFilterGroup');
+    const filterAttendanceDetail = document.getElementById('filterAttendanceDetail');
+    const btnSummary = document.getElementById('btnSummary');
+    if(salaryPanel) salaryPanel.classList.add('hidden');
+    if(mangkirPanel) mangkirPanel.classList.add('hidden');
+    if(dateFilterGroup) dateFilterGroup.style.display = 'none';
+    if(filterAttendanceDetail) filterAttendanceDetail.style.display = 'none';
+    if(btnSummary) btnSummary.style.display = 'none';
+    if(typeof filters !== 'undefined') filters = {};
+    if(typeof window.gabungkanDanRender === 'function') window.gabungkanDanRender();
+  }
+
+  function restoreNormalControls(){
+    const turnoutTab = document.getElementById('tabTurnout');
+    if(turnoutTab) turnoutTab.className = 'view-tab inactive';
+    ensureTurnoutTopbarVisible();
+  }
+
+  function bindTurnoutTab(){
+    const tab = document.getElementById('tabTurnout');
+    if(!tab || tab.dataset.v17Bound === '1') return;
+    tab.dataset.v17Bound = '1';
+    tab.onclick = function(ev){
+      if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+      switchToTurnoutView();
+      return false;
+    };
+    tab.addEventListener('click', function(ev){
+      if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+      switchToTurnoutView();
+      return false;
+    }, true);
+  }
+
+  function patchOtherTabs(){
+    ['tabAttend','tabOT','tabSalary','tabMangkir'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el || el.dataset.v17Restore==='1') return;
+      el.dataset.v17Restore='1';
+      el.addEventListener('click', restoreNormalControls, true);
+    });
+  }
+
+  function initV17(){
+    ensureTurnoutTopbarVisible();
+    bindTurnoutTab();
+    patchOtherTabs();
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initV17);
+  else initV17();
+
+  let tries = 0;
+  const timer = setInterval(()=>{
+    initV17();
+    tries += 1;
+    if(tries > 20) clearInterval(timer);
+  }, 500);
+})();
+</script>
+
+<script id="turnout-persist-summary-v18">
+(function(){
+  const TURNOUT_STORAGE_KEY = 'hoplun_turnout_rows_v1';
+
+  function normalizeId(val){
+    return String(val || '').toUpperCase().replace(/\s+/g,'').trim();
+  }
+
+  function restoreTurnoutState(){
+    try {
+      if (Array.isArray(window.turnoutRows) && window.turnoutRows.length) return window.turnoutRows;
+      const saved = localStorage.getItem(TURNOUT_STORAGE_KEY);
+      if (!saved) return window.turnoutRows || [];
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed.rows)) {
+        window.turnoutRows = parsed.rows;
+        window.turnoutFileName = parsed.fileName || '';
+        const display = document.getElementById('turnoutFileDisplay');
+        if (display && parsed.fileName) display.value = parsed.fileName;
+      }
+    } catch(e) {
+      console.warn('restoreTurnoutState failed', e);
+    }
+    return window.turnoutRows || [];
+  }
+
+  function getTurnoutIdSet(){
+    const rows = restoreTurnoutState();
+    const set = new Set();
+    (rows || []).forEach(r => {
+      const id = normalizeId(r && r.idNo);
+      if (id) set.add(id);
+    });
+    return set;
+  }
+
+  const originalGabungkanDanRender = window.gabungkanDanRender;
+  window.gabungkanDanRender = function(){
+    if ((window.currentViewMode === 'TURNOUT' || (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT'))) {
+      restoreTurnoutState();
+    }
+    return originalGabungkanDanRender.apply(this, arguments);
+  };
+
+  const originalRenderTable = window.renderTable;
+  window.renderTable = function(){
+    if ((window.currentViewMode === 'TURNOUT' || (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT'))) {
+      restoreTurnoutState();
+    }
+    return originalRenderTable.apply(this, arguments);
+  };
+
+  const originalOpenSummary = window.openSummary;
+  window.openSummary = function(){
+    if (!(window.currentViewMode === 'ATTEND' || (typeof currentViewMode !== 'undefined' && currentViewMode === 'ATTEND'))) {
+      return originalOpenSummary.apply(this, arguments);
+    }
+
+    const filteredData = (typeof currentFilteredData !== 'undefined' && Array.isArray(currentFilteredData)) ? currentFilteredData : [];
+    if(!filteredData.length) {
+      if(typeof window.showAlert === 'function') window.showAlert('Info','Tidak ada data yang ditampilkan pada kriteria saat ini.');
+      return;
+    }
+
+    const fromSel = document.getElementById('dateFromFilter');
+    const toSel = document.getElementById('dateToFilter');
+    const fromVal = fromSel ? fromSel.value : 'ALL';
+    const toVal = toSel ? toSel.value : 'ALL';
+    const dateRange = (typeof getSelectedDateRange === 'function') ? getSelectedDateRange(fromVal, toVal) : (window.semuaTanggal || []);
+
+    if(!dateRange || !dateRange.length) {
+      if(typeof window.showAlert === 'function') window.showAlert('Info','Tidak ada tanggal pada rentang yang dipilih.');
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    let processDate = today;
+
+    const validDates = [];
+    dateRange.forEach(tgl => {
+      const parts = String(tgl || '').split('-');
+      if (parts.length !== 2) return;
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = month >= 2 ? today.getFullYear() : today.getFullYear();
+      const dObj = new Date(year, month, day);
+      if (isNaN(dObj.getTime())) return;
+      if (dObj.getDay() === 0 || dObj.getDay() === 6) return;
+      if (typeof window.isHolidayDate === 'function' && window.isHolidayDate(tgl)) return;
+      if (dObj > processDate) return;
+      validDates.push({ tgl, dateObj: dObj, dateStr: (typeof formatDateToString === 'function') ? formatDateToString(dObj) : tgl });
+    });
+
+    if(validDates.length === 0) {
+      if(typeof window.showAlert === 'function') window.showAlert('Info', 'Tidak ada tanggal kerja valid hingga tanggal proses yang ditentukan.');
+      return;
+    }
+
+    const titleEl = document.getElementById('summaryTitle');
+    if (titleEl) titleEl.innerText = 'Laporan Summary Kehadiran';
+
+    const allowedPositions = new Set([
+      'SEWING OPERATOR',
+      'STRAPLINE SEWING OPERATOR',
+      'SAMPLE MAKER',
+      'WORKER SEWING OPERATOR'
+    ]);
+
+    const turnoutIdSet = getTurnoutIdSet();
+    const reportData = {};
+    validDates.forEach(vd => {
+      reportData[vd.tgl] = { A: { ab: 0, hc: 0 }, B: { ab: 0, hc: 0 }, str: vd.dateStr };
+    });
+
+    function isEligibleSummaryPosition(pos) {
+      const p = String(pos || '').toUpperCase().replace(/\s+/g, ' ').trim();
+      return allowedPositions.has(p);
+    }
+
+    function isBluePrpForDate(row, tgl) {
+      if ((String(row.idColor || '').toUpperCase().trim()) !== 'BIRU') return false;
+      const kode = String(row.tanggalData?.[tgl]?.kode || '').toUpperCase().trim();
+      return kode === 'PRP';
+    }
+
+    for (const row of filteredData) {
+      const status = String(row.status || '').toUpperCase().trim();
+      if (status !== 'WORKER') continue;
+      if (!isEligibleSummaryPosition(row.position)) continue;
+      if (turnoutIdSet.has(normalizeId(row.id))) continue;
+
+      const idColor = String(row.idColor || '').toUpperCase().trim();
+      for (const vd of validDates) {
+        let cat = null;
+        if (idColor === 'ORANYE' || idColor === 'KUNING') cat = 'A';
+        else if (idColor === 'HIJAU' || isBluePrpForDate(row, vd.tgl)) cat = 'B';
+        if (!cat) continue;
+
+        reportData[vd.tgl][cat].hc++;
+        const kode = String(row.tanggalData?.[vd.tgl]?.kode || '').toUpperCase().trim();
+        if (kode === 'AB' || kode === 'LWP') reportData[vd.tgl][cat].ab++;
+      }
+    }
+
+    window.currentSummaryData = { type: 'ATTENDANCE', reportData, validDates, turnoutExcluded: turnoutIdSet.size };
+
+    let html = `<div class="mb-3 font-bold text-slate-800 text-[13px] text-center uppercase tracking-wide">SEMARANG - Update Daily Absentism Direct Sewer</div>` +
+      `<div class="mb-2 text-[11px] text-slate-600">Summary ini otomatis mengurangi karyawan yang ada di tab <b>Karyawan Keluar</b> berdasarkan <b>ID</b>.</div>` +
+      `<div class="overflow-x-auto pb-2"><table class="w-full border-collapse border border-slate-700 text-[11px] text-center whitespace-nowrap"><thead>` +
+      `<tr class="bg-slate-300 text-slate-800 font-bold"><th rowspan="3" class="p-1.5 border border-slate-700 align-middle">Date</th><th colspan="9" class="p-1.5 border border-slate-700 text-[13px]">Direct Sewer Absentism</th></tr>` +
+      `<tr class="text-slate-800 font-bold"><th colspan="3" class="p-1.5 border border-slate-700" style="background:#f59e0b;color:#111827;">Shift A</th><th colspan="3" class="p-1.5 border border-slate-700" style="background:#22c55e;color:#111827;">Shift B</th><th colspan="3" class="p-1.5 border border-slate-700 bg-slate-300">TOTAL</th></tr>` +
+      `<tr class="bg-slate-200 text-slate-700 font-bold"><th class="p-1.5 border border-slate-700 w-10">AB</th><th class="p-1.5 border border-slate-700 w-14">HC Sew A</th><th class="p-1.5 border border-slate-700 w-12">%</th><th class="p-1.5 border border-slate-700 w-10">AB</th><th class="p-1.5 border border-slate-700 w-14">HC Sew B</th><th class="p-1.5 border border-slate-700 w-12">%</th><th class="p-1.5 border border-slate-700 w-10">AB</th><th class="p-1.5 border border-slate-700 w-16">HC Direct Sew</th><th class="p-1.5 border border-slate-700 w-12">%</th></tr>` +
+      `</thead><tbody>`;
+
+    const sum = { A: { ab: 0, hc: 0 }, B: { ab: 0, hc: 0 }, T: { ab: 0, hc: 0 } };
+    validDates.forEach(vd => {
+      const r = reportData[vd.tgl];
+      const totAB = r.A.ab + r.B.ab;
+      const totHC = r.A.hc + r.B.hc;
+      sum.A.ab += r.A.ab; sum.A.hc += r.A.hc;
+      sum.B.ab += r.B.ab; sum.B.hc += r.B.hc;
+      sum.T.ab += totAB; sum.T.hc += totHC;
+      const pctA = r.A.hc ? (r.A.ab / r.A.hc * 100).toFixed(1).replace('.', ',') + '%' : '';
+      const pctB = r.B.hc ? (r.B.ab / r.B.hc * 100).toFixed(1).replace('.', ',') + '%' : '';
+      const pctT = totHC ? (totAB / totHC * 100).toFixed(1).replace('.', ',') + '%' : '';
+      html += `<tr><td class="p-1.5 border border-slate-700 font-medium">${r.str}</td><td class="p-1.5 border border-slate-700">${r.A.ab || ''}</td><td class="p-1.5 border border-slate-700">${r.A.hc || ''}</td><td class="p-1.5 border border-slate-700">${pctA}</td><td class="p-1.5 border border-slate-700">${r.B.ab || ''}</td><td class="p-1.5 border border-slate-700">${r.B.hc || ''}</td><td class="p-1.5 border border-slate-700">${pctB}</td><td class="p-1.5 border border-slate-700 font-bold">${totAB || ''}</td><td class="p-1.5 border border-slate-700">${totHC || ''}</td><td class="p-1.5 border border-slate-700 font-bold">${pctT}</td></tr>`;
+    });
+
+    const days = validDates.length || 1;
+    const avgAb = Math.round(sum.T.ab / days);
+    const avgHc = Math.round(sum.T.hc / days);
+    const avgPctT = avgHc ? (avgAb / avgHc * 100).toFixed(1).replace('.', ',') + '%' : '';
+    html += `<tr class="bg-slate-300 font-bold"><td colspan="7" class="p-1.5 border border-slate-700 text-center">AVERAGE</td><td class="p-1.5 border border-slate-700">${avgAb || ''}</td><td class="p-1.5 border border-slate-700">${avgHc || ''}</td><td class="p-1.5 border border-slate-700">${avgPctT}</td></tr>`;
+    html += `</tbody></table></div>`;
+
+    const contentEl = document.getElementById('summaryContent');
+    if (contentEl) contentEl.innerHTML = html;
+    const modalEl = document.getElementById('summaryModal');
+    if (modalEl) { modalEl.classList.remove('hidden'); modalEl.classList.add('flex'); }
+  };
+
+  function rebindTurnoutTabPersistence(){
+    const tab = document.getElementById('tabTurnout');
+    if (!tab || tab.dataset.v18Bound === '1') return;
+    tab.dataset.v18Bound = '1';
+    const handler = function(ev){
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      restoreTurnoutState();
+      window.currentViewMode = 'TURNOUT';
+      try { currentViewMode = 'TURNOUT'; } catch(e) {}
+      const ids = ['tabAttend','tabOT','tabSalary','tabMangkir','tabTurnout'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.className = 'view-tab inactive';
+      });
+      tab.className = 'view-tab active-turnout';
+      const salaryPanel = document.getElementById('salaryConfigPanel');
+      const mangkirPanel = document.getElementById('mangkirConfigPanel');
+      const dateFilterGroup = document.getElementById('dateFilterGroup');
+      const filterAttendanceDetail = document.getElementById('filterAttendanceDetail');
+      const btnSummary = document.getElementById('btnSummary');
+      if(salaryPanel) salaryPanel.classList.add('hidden');
+      if(mangkirPanel) mangkirPanel.classList.add('hidden');
+      if(dateFilterGroup) dateFilterGroup.style.display = 'none';
+      if(filterAttendanceDetail) filterAttendanceDetail.style.display = 'none';
+      if(btnSummary) btnSummary.style.display = 'none';
+      if(typeof filters !== 'undefined') filters = {};
+      if(typeof window.gabungkanDanRender === 'function') window.gabungkanDanRender();
+      return false;
+    };
+    tab.onclick = handler;
+    tab.addEventListener('click', handler, true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', rebindTurnoutTabPersistence);
+  } else {
+    rebindTurnoutTabPersistence();
+  }
+
+  let tries = 0;
+  const timer = setInterval(function(){
+    rebindTurnoutTabPersistence();
+    if ((window.currentViewMode === 'TURNOUT' || (typeof currentViewMode !== 'undefined' && currentViewMode === 'TURNOUT'))) {
+      restoreTurnoutState();
+    }
+    tries++;
+    if (tries > 20) clearInterval(timer);
+  }, 500);
+})();
+</script>
+
 </body>
 </html>
