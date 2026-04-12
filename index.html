@@ -805,6 +805,255 @@
             .sticky-name { width: 220px !important; min-width: 220px !important; max-width: 220px !important; }
         }
 
+    
+
+        /* ================= UI V7 SIMPLE MODERN ================= */
+        body.ui-v7 {
+            padding: 16px;
+            background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 32%, #eef4ff 100%);
+        }
+        body.ui-v7 .dashboard-container {
+            border-radius: 24px;
+            border: 1px solid #dbe4f3;
+            box-shadow: 0 18px 60px rgba(15, 23, 42, 0.10);
+            background: rgba(255,255,255,.94);
+        }
+        body.ui-v7 #mainDashboard {
+            display: grid;
+            grid-template-rows: auto auto auto minmax(0,1fr);
+            min-height: calc(100vh - 32px);
+        }
+        body.ui-v7 #mainDashboard > div:first-child {
+            padding: 16px 18px !important;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%) !important;
+            border-bottom: none !important;
+        }
+        body.ui-v7 #mainDashboard > div:first-child > div:last-child {
+            padding: 10px 12px !important;
+            border-radius: 18px !important;
+            background: rgba(15, 23, 42, 0.28) !important;
+            border: 1px solid rgba(255,255,255,.08) !important;
+            gap: 10px !important;
+        }
+        body.ui-v7 #mainDashboard > div:nth-child(2) {
+            margin: 14px 16px 10px;
+            padding: 0 !important;
+            background: transparent !important;
+            border-bottom: none !important;
+            display: block !important;
+        }
+        body.ui-v7 .v7-toolbar {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        body.ui-v7 .v7-top-row,
+        body.ui-v7 .v7-bottom-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        body.ui-v7 .v7-top-left,
+        body.ui-v7 .v7-top-right,
+        body.ui-v7 .v7-bottom-left,
+        body.ui-v7 .v7-bottom-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+        body.ui-v7 .v7-bottom-right {
+            margin-left: auto;
+        }
+        body.ui-v7 .v7-tabs-wrap {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 6px;
+            padding: 5px !important;
+            border-radius: 16px !important;
+            border: 1px solid #dbe4f3 !important;
+            background: #f8fafc !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+            margin-right: 0 !important;
+        }
+        body.ui-v7 .view-tab {
+            padding: 10px 16px !important;
+            border-radius: 12px !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+        }
+        body.ui-v7 #salaryConfigPanel,
+        body.ui-v7 #mangkirConfigPanel {
+            padding: 8px !important;
+            border-radius: 16px !important;
+            gap: 8px !important;
+            margin-right: 0 !important;
+            max-width: 100%;
+        }
+        body.ui-v7 .v7-summary-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        body.ui-v7 .v7-summary-wrap > div {
+            border-radius: 16px !important;
+            box-shadow: none !important;
+            padding: 8px 12px !important;
+            min-height: 40px;
+        }
+        body.ui-v7 #dbStatus {
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            padding: 0 14px !important;
+            border-radius: 999px !important;
+            white-space: nowrap;
+        }
+        body.ui-v7 #modernSearchWrap {
+            min-width: 0 !important;
+            width: 300px !important;
+            max-width: 300px !important;
+            padding: 6px 10px !important;
+            border-radius: 16px !important;
+            box-shadow: 0 8px 20px rgba(37,99,235,.08), inset 0 1px 0 rgba(255,255,255,.75) !important;
+        }
+        body.ui-v7 .modern-search-icon {
+            width: 30px;
+            height: 30px;
+        }
+        body.ui-v7 #globalSearch {
+            width: 100% !important;
+            min-width: 0 !important;
+            font-size: 11px !important;
+        }
+        body.ui-v7 #dateFilterGroup,
+        body.ui-v7 #filterAttendanceDetail,
+        body.ui-v7 #filterUnitMode,
+        body.ui-v7 #btnExport,
+        body.ui-v7 #btnSummary {
+            min-height: 38px;
+        }
+        body.ui-v7 #dateFilterGroup {
+            border-radius: 16px !important;
+            padding: 4px 8px !important;
+        }
+        body.ui-v7 #filterAttendanceDetail,
+        body.ui-v7 #filterUnitMode {
+            padding-left: 12px !important;
+            padding-right: 30px !important;
+            border-radius: 14px !important;
+            max-width: none !important;
+            min-width: 160px;
+        }
+        body.ui-v7 #btnExport,
+        body.ui-v7 #btnSummary {
+            padding: 0 16px !important;
+            border-radius: 14px !important;
+            font-size: 11px !important;
+            box-shadow: none !important;
+        }
+        body.ui-v7 #lastUpdateInfo {
+            margin: 0 16px 10px;
+            padding: 12px 14px !important;
+            border-radius: 16px !important;
+            border-left: none !important;
+            border: 1px solid #fed7aa !important;
+            background: linear-gradient(135deg, #fff7ed, #fffbeb) !important;
+            max-height: none;
+        }
+        body.ui-v7 .table-container {
+            margin: 0 16px 16px;
+            border-radius: 18px;
+            border: 1px solid #dbe4f3;
+            box-shadow: 0 8px 28px rgba(15,23,42,.06);
+            min-height: 0;
+        }
+        body.ui-v7 tbody tr:hover td {
+            background: rgba(239,246,255,0.72) !important;
+        }
+        body.ui-v7 .loading-overlay {
+            background: rgba(15,23,42,0.12) !important;
+            align-items: flex-start !important;
+            justify-content: flex-end !important;
+            padding: 22px !important;
+        }
+        body.ui-v7 .loading-content {
+            margin-top: 82px;
+            min-width: 340px !important;
+            border-radius: 20px !important;
+        }
+        body.ui-v7 #summaryModal > div,
+        body.ui-v7 #timeRecordModal > div,
+        body.ui-v7 #modernAlert > div {
+            border-radius: 22px !important;
+        }
+        @media (max-width: 1100px) {
+            body.ui-v7 #modernSearchWrap {
+                width: 100% !important;
+                max-width: none !important;
+            }
+            body.ui-v7 .v7-bottom-left,
+            body.ui-v7 .v7-bottom-right,
+            body.ui-v7 .v7-top-left,
+            body.ui-v7 .v7-top-right {
+                width: 100%;
+            }
+            body.ui-v7 .v7-bottom-right {
+                margin-left: 0;
+            }
+            body.ui-v7 #filterAttendanceDetail,
+            body.ui-v7 #filterUnitMode {
+                min-width: 140px;
+            }
+        }
+        @media (max-width: 768px) {
+            body.ui-v7 {
+                padding: 10px;
+            }
+            body.ui-v7 #mainDashboard {
+                min-height: calc(100vh - 20px);
+            }
+            body.ui-v7 #mainDashboard > div:first-child,
+            body.ui-v7 .v7-toolbar,
+            body.ui-v7 #lastUpdateInfo,
+            body.ui-v7 .table-container {
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+            body.ui-v7 #mainDashboard > div:nth-child(2) {
+                margin: 10px 10px 8px;
+            }
+            body.ui-v7 #mainDashboard > div:first-child {
+                padding: 14px !important;
+            }
+            body.ui-v7 #mainDashboard > div:first-child > div:last-child {
+                width: 100%;
+            }
+            body.ui-v7 .v7-tabs-wrap {
+                width: 100%;
+                overflow-x: auto;
+                justify-content: flex-start;
+            }
+            body.ui-v7 #dateFilterGroup,
+            body.ui-v7 #filterAttendanceDetail,
+            body.ui-v7 #filterUnitMode,
+            body.ui-v7 #btnExport,
+            body.ui-v7 #btnSummary,
+            body.ui-v7 #modernSearchWrap {
+                width: 100% !important;
+                max-width: none !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -2167,13 +2416,18 @@ nameCellStyle: sanitizeStyleObject(getWorksheetCell(worksheetDense || worksheet,
                 
                 window.gabungkanDanRender();
                 window.displayLastUpdate(valid);
-                
-                // MENGUNGGAH KE CLOUD FIREBASE
-                if(window.saveToCloud) {
-                    if(loadingDetailText) loadingDetailText.innerText = "Mengunggah Data Karyawan (Chunking) ke Firebase Cloud...";
-                    await window.saveToCloud('karyawan');
-                } else {
-                    window.saveToLocalStorage();
+
+                if(loadingDetailText) loadingDetailText.innerText = "Menyimpan ke browser...";
+                window.saveToLocalStorage();
+                if(loadingProgressFill) loadingProgressFill.style.width = '100%';
+                if(loadingProgressText) loadingProgressText.innerText = '100%';
+                if(loadingFileCount) loadingFileCount.innerText = `${totalFiles} / ${totalFiles} file`;
+                await yieldToBrowser();
+
+                // Sinkron cloud dijalankan di background supaya loading tidak nyangkut
+                if(window.syncCloudInBackground) {
+                    if(loadingDetailText) loadingDetailText.innerText = "Sinkron cloud berjalan di background...";
+                    window.syncCloudInBackground('karyawan');
                 }
 
             }
@@ -3906,7 +4160,7 @@ nameCellStyle: sanitizeStyleObject(getWorksheetCell(worksheetDense || worksheet,
         } catch (error) { window.showAlert("Error", "Gagal membaca folder: " + error.message); } finally { e.target.value = ""; }
     });
     
-    safeAddListener('cancelLoadingBtn', 'click', () => { if(isProcessing) cancelProcessing = true; });
+    safeAddListener('cancelLoadingBtn', 'click', () => { if(isProcessing) { cancelProcessing = true; const t = document.getElementById('loadingDetailText'); if(t) t.innerText = 'Membatalkan proses...'; } });
     
     safeAddListener('hiddenTimeInput', 'change', async (e) => {
         try {
@@ -3930,13 +4184,9 @@ nameCellStyle: sanitizeStyleObject(getWorksheetCell(worksheetDense || worksheet,
                     window.gabungkanDanRender();
                 }
                 
-                // MENGUNGGAH KE CLOUD FIREBASE
-                if(window.saveToCloud) {
-                    if(loadingDetailText) loadingDetailText.innerText = "Mengunggah Data Time ke Firebase Cloud...";
-                    await window.saveToCloud('time');
-                } else {
-                    window.saveToLocalStorage();
-                }
+                window.saveToLocalStorage();
+                if(loadingDetailText) loadingDetailText.innerText = "Sinkron time ke cloud di background...";
+                if(window.syncCloudInBackground) window.syncCloudInBackground('time');
                 
             } else { 
                 window.showAlert("Gagal", `File Time (${file.name}) kosong atau format salah.`); 
@@ -4822,6 +5072,1201 @@ nameCellStyle: sanitizeStyleObject(getWorksheetCell(worksheetDense || worksheet,
     tries++;
     if (tries > 20) clearInterval(timer);
   }, 500);
+})();
+</script>
+
+
+<script id="ui-v7-modern-layout">
+(function(){
+  function moveIf(el, parent){ if(el && parent && el.parentNode !== parent) parent.appendChild(el); }
+  function setupModernMenu(){
+    document.body.classList.add('ui-v7');
+    const dashboard = document.getElementById('mainDashboard');
+    if(!dashboard || !dashboard.children[1]) return;
+    const controls = dashboard.children[1];
+    if(controls.dataset.v7Ready === '1') return;
+    const left = controls.children[0];
+    const right = controls.children[1];
+    if(!left || !right) return;
+
+    const tabWrap = left.children[0];
+    const salary = document.getElementById('salaryConfigPanel');
+    const mangkir = document.getElementById('mangkirConfigPanel');
+    const summaryWrap = Array.from(left.children).find(el => el !== tabWrap && el !== salary && el !== mangkir);
+    const searchWrap = document.getElementById('modernSearchWrap');
+    const dateGroup = document.getElementById('dateFilterGroup');
+    const filterAttendance = document.getElementById('filterAttendanceDetail');
+    const filterUnit = document.getElementById('filterUnitMode');
+    const btnExport = document.getElementById('btnExport');
+    const btnSummary = document.getElementById('btnSummary');
+    const dbStatus = document.getElementById('dbStatus');
+
+    const shell = document.createElement('div');
+    shell.className = 'v7-toolbar';
+
+    const topRow = document.createElement('div');
+    topRow.className = 'v7-top-row';
+    const topLeft = document.createElement('div');
+    topLeft.className = 'v7-top-left';
+    const topRight = document.createElement('div');
+    topRight.className = 'v7-top-right';
+
+    const bottomRow = document.createElement('div');
+    bottomRow.className = 'v7-bottom-row';
+    const bottomLeft = document.createElement('div');
+    bottomLeft.className = 'v7-bottom-left';
+    const bottomRight = document.createElement('div');
+    bottomRight.className = 'v7-bottom-right';
+
+    if(tabWrap) tabWrap.classList.add('v7-tabs-wrap');
+    if(summaryWrap) summaryWrap.classList.add('v7-summary-wrap');
+
+    moveIf(tabWrap, topLeft);
+    moveIf(salary, topLeft);
+    moveIf(mangkir, topLeft);
+    moveIf(summaryWrap, topRight);
+    moveIf(dbStatus, topRight);
+
+    moveIf(searchWrap, bottomLeft);
+    moveIf(dateGroup, bottomRight);
+    moveIf(filterAttendance, bottomRight);
+    moveIf(filterUnit, bottomRight);
+    moveIf(btnExport, bottomRight);
+    moveIf(btnSummary, bottomRight);
+
+    topRow.append(topLeft, topRight);
+    bottomRow.append(bottomLeft, bottomRight);
+    shell.append(topRow, bottomRow);
+
+    controls.innerHTML = '';
+    controls.appendChild(shell);
+    controls.dataset.v7Ready = '1';
+  }
+
+  function patchCloudSync(){
+    if(window.syncCloudInBackground) return;
+    window.syncCloudInBackground = function(type){
+      if(typeof window.saveToCloud !== 'function') return;
+      setTimeout(async function(){
+        try { await window.saveToCloud(type); }
+        catch(err){ console.warn('Cloud sync background gagal:', err); }
+      }, 50);
+    };
+  }
+
+  function forceHideLoader(){
+    const overlay = document.getElementById('loadingOverlay');
+    if(overlay) overlay.classList.add('hidden');
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    setupModernMenu();
+    patchCloudSync();
+    setTimeout(setupModernMenu, 300);
+    setTimeout(setupModernMenu, 1200);
+  });
+
+  window.addEventListener('load', function(){
+    setupModernMenu();
+    patchCloudSync();
+  });
+
+  const observer = new MutationObserver(function(){
+    const controls = document.getElementById('mainDashboard')?.children?.[1];
+    if(controls && controls.dataset.v7Ready !== '1') setupModernMenu();
+    const turnoutTab = document.getElementById('tabTurnout');
+    const tabWrap = document.querySelector('.v7-tabs-wrap');
+    if(turnoutTab && tabWrap && turnoutTab.parentNode !== tabWrap) tabWrap.appendChild(turnoutTab);
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener('error', function(){ setTimeout(forceHideLoader, 200); });
+})();
+</script>
+
+
+<script id="ui-v8-clean-tabs-and-rekap">
+(function(){
+  function ensureStyle(){
+    if (document.getElementById('ui-v8-style')) return;
+    const style = document.createElement('style');
+    style.id = 'ui-v8-style';
+    style.textContent = `
+      .ui-v8 #mainDashboard > div:nth-child(2){padding:12px !important;}
+      .ui-v8 .v8-toolbar{display:flex;flex-direction:column;gap:10px;width:100%;}
+      .ui-v8 .v8-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+      .ui-v8 .v8-left,.ui-v8 .v8-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;}
+      .ui-v8 .v8-left{flex:1 1 auto;}
+      .ui-v8 .v8-right{flex:0 1 auto;justify-content:flex-end;}
+      .ui-v8 .v8-config{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:0;}
+      .ui-v8 .v8-tabs-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+      .ui-v8 .v8-summary-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+      .ui-v8 .v8-summary-inline > div{margin:0 !important;}
+      .ui-v8 #modernSearchWrap{min-width:260px !important;padding:8px 12px !important;border-radius:16px !important;}
+      .ui-v8 #modernSearchWrap .modern-search-icon{width:30px;height:30px;}
+      .ui-v8 #globalSearch{width:180px !important;max-width:180px !important;font-size:11px !important;}
+      .ui-v8 #dateFilterGroup{min-height:36px;}
+      .ui-v8 #btnExport,.ui-v8 #btnSummary,.ui-v8 #dbStatus{margin:0 !important;}
+      .ui-v8 #lastUpdateInfo{display:none !important;}
+      .ui-v8 .v8-rendering{opacity:.72;pointer-events:none;}
+      @media (max-width: 980px){
+        .ui-v8 .v8-row{align-items:flex-start;}
+        .ui-v8 .v8-right{width:100%;justify-content:flex-start;}
+        .ui-v8 #globalSearch{width:150px !important;max-width:150px !important;}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function moveIf(el, parent){ if(el && parent && el.parentNode !== parent) parent.appendChild(el); }
+
+  function buildLayout(){
+    document.body.classList.add('ui-v8');
+    const dashboard = document.getElementById('mainDashboard');
+    if(!dashboard || !dashboard.children[1]) return;
+    const controls = dashboard.children[1];
+
+    const tabWrap = document.getElementById('tabAttend')?.parentElement;
+    const salary = document.getElementById('salaryConfigPanel');
+    const mangkir = document.getElementById('mangkirConfigPanel');
+    const w1 = document.getElementById('w1');
+    const w2 = document.getElementById('w2');
+    const card1 = w1 ? w1.closest('div.bg-blue-50\/80, div[class*="bg-blue-50"]') : null;
+    const card2 = w2 ? w2.closest('div.bg-orange-50\/80, div[class*="bg-orange-50"]') : null;
+    let summaryWrap = null;
+    if(card1 && card2 && card1.parentElement === card2.parentElement) summaryWrap = card1.parentElement;
+    else if(card1) summaryWrap = card1.parentElement;
+    const searchWrap = document.getElementById('modernSearchWrap');
+    const dateGroup = document.getElementById('dateFilterGroup');
+    const filterAttendance = document.getElementById('filterAttendanceDetail');
+    const filterUnit = document.getElementById('filterUnitMode');
+    const btnExport = document.getElementById('btnExport');
+    const btnSummary = document.getElementById('btnSummary');
+    const dbStatus = document.getElementById('dbStatus');
+
+    const shell = document.createElement('div');
+    shell.className = 'v8-toolbar';
+
+    const topRow = document.createElement('div');
+    topRow.className = 'v8-row';
+    const topLeft = document.createElement('div');
+    topLeft.className = 'v8-left';
+    const topRight = document.createElement('div');
+    topRight.className = 'v8-right';
+
+    const configRow = document.createElement('div');
+    configRow.className = 'v8-config';
+
+    const bottomRow = document.createElement('div');
+    bottomRow.className = 'v8-row';
+    const bottomLeft = document.createElement('div');
+    bottomLeft.className = 'v8-left';
+    const bottomRight = document.createElement('div');
+    bottomRight.className = 'v8-right';
+
+    if(tabWrap) tabWrap.classList.add('v8-tabs-wrap');
+    if(summaryWrap) summaryWrap.classList.add('v8-summary-inline');
+
+    moveIf(tabWrap, topLeft);
+    moveIf(summaryWrap, topLeft);
+
+    moveIf(btnSummary, topRight);
+    moveIf(dbStatus, topRight);
+
+    moveIf(salary, configRow);
+    moveIf(mangkir, configRow);
+
+    moveIf(searchWrap, bottomLeft);
+    moveIf(dateGroup, bottomRight);
+    moveIf(filterAttendance, bottomRight);
+    moveIf(filterUnit, bottomRight);
+    moveIf(btnExport, bottomRight);
+
+    topRow.append(topLeft, topRight);
+    bottomRow.append(bottomLeft, bottomRight);
+    shell.append(topRow, configRow, bottomRow);
+
+    controls.innerHTML = '';
+    controls.appendChild(shell);
+    controls.dataset.v7Ready = '1';
+    controls.dataset.v8Ready = '1';
+  }
+
+  function hideLastUpdatePanel(){
+    const panel = document.getElementById('lastUpdateInfo');
+    if(panel){
+      panel.classList.add('hidden');
+      panel.style.display = 'none';
+      panel.innerHTML = '';
+    }
+  }
+
+  function patchUpdateInfo(){
+    window.renderLastUpdateBar = function(){ hideLastUpdatePanel(); };
+    const originalDisplayLastUpdate = window.displayLastUpdate;
+    if(!window.displayLastUpdate || window.displayLastUpdate.__v8Patched) return;
+    window.displayLastUpdate = function(filesArray){
+      if(typeof originalDisplayLastUpdate === 'function'){
+        const result = originalDisplayLastUpdate.apply(this, arguments);
+        hideLastUpdatePanel();
+        return result;
+      }
+    };
+    window.displayLastUpdate.__v8Patched = true;
+    hideLastUpdatePanel();
+  }
+
+  function patchQueuedRender(){
+    if(window.gabungkanDanRender && window.gabungkanDanRender.__v8Queued) return;
+    const original = window.gabungkanDanRender;
+    if(typeof original !== 'function') return;
+    let scheduled = false;
+    let running = false;
+    const run = function(){
+      if(running) return;
+      running = true;
+      const table = document.getElementById('tableContainer');
+      if(table) table.classList.add('v8-rendering');
+      requestAnimationFrame(function(){
+        setTimeout(function(){
+          try { original.apply(window, []); }
+          finally {
+            running = false;
+            scheduled = false;
+            if(table) table.classList.remove('v8-rendering');
+          }
+        }, 0);
+      });
+    };
+    const wrapped = function(){
+      if(scheduled || running) return;
+      scheduled = true;
+      run();
+    };
+    wrapped.__v8Queued = true;
+    wrapped.__v8Original = original;
+    window.gabungkanDanRender = wrapped;
+  }
+
+  function applyView(view){
+    const same = (typeof currentViewMode !== 'undefined' ? currentViewMode : window.currentViewMode) === view;
+    if(same) return;
+    try { currentViewMode = view; } catch(e) {}
+    window.currentViewMode = view;
+
+    const setClass = (id, cls) => {
+      const el = document.getElementById(id);
+      if(el) el.className = 'view-tab ' + cls;
+    };
+    setClass('tabAttend', view === 'ATTENDANCE' ? 'active-attend' : 'inactive');
+    setClass('tabOT', view === 'OVERTIME' ? 'active-ot' : 'inactive');
+    setClass('tabSalary', view === 'SALARY' ? 'active-salary' : 'inactive');
+    setClass('tabMangkir', view === 'MANGKIR' ? 'active-mangkir' : 'inactive');
+
+    const salary = document.getElementById('salaryConfigPanel');
+    const mangkir = document.getElementById('mangkirConfigPanel');
+    const dateGroup = document.getElementById('dateFilterGroup');
+    const filterAttendance = document.getElementById('filterAttendanceDetail');
+    const btnSummary = document.getElementById('btnSummary');
+
+    if(salary) salary.classList.toggle('hidden', view !== 'SALARY');
+    if(mangkir) mangkir.classList.toggle('hidden', view !== 'MANGKIR');
+    if(dateGroup) dateGroup.style.display = (view === 'ATTENDANCE' || view === 'OVERTIME') ? 'flex' : 'none';
+    if(filterAttendance) filterAttendance.style.display = view === 'ATTENDANCE' ? 'block' : 'none';
+    if(btnSummary) btnSummary.style.display = (view === 'ATTENDANCE' || view === 'MANGKIR') ? 'inline-block' : 'none';
+
+    if(typeof normalizeFiltersForCurrentView === 'function') normalizeFiltersForCurrentView();
+    if(typeof window.gabungkanDanRender === 'function') window.gabungkanDanRender();
+  }
+
+  function patchTabClicks(){
+    const bind = (id, view) => {
+      const el = document.getElementById(id);
+      if(!el || el.dataset.v8TabBound === '1') return;
+      el.dataset.v8TabBound = '1';
+      el.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        applyView(view);
+        return false;
+      }, true);
+    };
+    bind('tabAttend', 'ATTENDANCE');
+    bind('tabOT', 'OVERTIME');
+    bind('tabSalary', 'SALARY');
+    bind('tabMangkir', 'MANGKIR');
+  }
+
+  function patchLoaderWatchdog(){
+    if(window.__v8LoaderWatchdog) return;
+    window.__v8LoaderWatchdog = setInterval(function(){
+      const overlay = document.getElementById('loadingOverlay');
+      const pct = document.getElementById('loadingProgressText');
+      const count = document.getElementById('loadingFileCount');
+      if(!overlay || overlay.classList.contains('hidden')) return;
+      const pctText = String(pct?.textContent || '').trim();
+      const countText = String(count?.textContent || '').trim();
+      const m = countText.match(/(\d+)\s*\/\s*(\d+)/);
+      const done = pctText === '100%' || (false);
+      if(pctText === '100%' || (m && m[1] === m[2] && m[2] !== '0')){
+        setTimeout(function(){
+          const pctText2 = String(document.getElementById('loadingProgressText')?.textContent || '').trim();
+          const countText2 = String(document.getElementById('loadingFileCount')?.textContent || '').trim();
+          const m2 = countText2.match(/(\d+)\s*\/\s*(\d+)/);
+          if(overlay && !overlay.classList.contains('hidden') && (pctText2 === '100%' || (m2 && m2[1] === m2[2] && m2[2] !== '0'))){
+            overlay.classList.add('hidden');
+          }
+        }, 1200);
+      }
+    }, 1000);
+  }
+
+  function init(){
+    ensureStyle();
+    buildLayout();
+    patchUpdateInfo();
+    patchQueuedRender();
+    patchTabClicks();
+    patchLoaderWatchdog();
+    hideLastUpdatePanel();
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+  window.addEventListener('load', init);
+  setTimeout(init, 300);
+  setTimeout(init, 1200);
+})();
+</script>
+
+
+<script id="ui-v9-compact-topbar">
+(function(){
+  function ensureV9Style(){
+    if(document.getElementById('ui-v9-style')) return;
+    const style = document.createElement('style');
+    style.id = 'ui-v9-style';
+    style.textContent = `
+      body.ui-v9{padding:6px !important;background:linear-gradient(180deg,#edf3ff 0%,#f8fbff 100%) !important;}
+      body.ui-v9 #mainDashboard{min-height:calc(100vh - 12px);display:grid;grid-template-rows:auto auto minmax(0,1fr);} 
+      body.ui-v9 .dashboard-container{border-radius:18px !important;box-shadow:0 12px 30px rgba(15,23,42,.10) !important;}
+      body.ui-v9 #mainDashboard > div:first-child{padding:10px 14px !important;border-bottom:1px solid rgba(255,255,255,.08) !important;}
+      body.ui-v9 #mainDashboard > div:first-child h1{font-size:14px !important;letter-spacing:.04em !important;}
+      body.ui-v9 #mainDashboard > div:first-child p{font-size:9px !important;line-height:1.1 !important;}
+      body.ui-v9 #mainDashboard > div:first-child img{width:28px !important;height:28px !important;padding:2px !important;}
+      body.ui-v9 #mainDashboard > div:first-child > div:last-child{gap:8px !important;padding:8px 10px !important;border-radius:14px !important;}
+      body.ui-v9 #mainDashboard > div:first-child input[type="text"]{height:30px !important;min-height:30px !important;font-size:10px !important;padding:0 8px !important;border-radius:10px !important;}
+      body.ui-v9 #mainDashboard > div:first-child button{height:30px !important;min-height:30px !important;padding:0 10px !important;font-size:10px !important;border-radius:10px !important;}
+      body.ui-v9 #folderXlsbDisplay, body.ui-v9 #fileTimeDisplay, body.ui-v9 #turnoutFileDisplay{width:86px !important;min-width:86px !important;max-width:86px !important;}
+
+      body.ui-v9 #mainDashboard > div:nth-child(2){margin:8px !important;padding:0 !important;background:transparent !important;border:none !important;box-shadow:none !important;backdrop-filter:none !important;}
+      body.ui-v9 .v9-toolbar{display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:#fff;border:1px solid #dbe4f3;border-radius:16px;box-shadow:0 6px 18px rgba(15,23,42,.05);} 
+      body.ui-v9 .v9-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;min-width:0;}
+      body.ui-v9 .v9-left, body.ui-v9 .v9-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;}
+      body.ui-v9 .v9-left{flex:1 1 auto;}
+      body.ui-v9 .v9-right{flex:0 1 auto;justify-content:flex-end;}
+      body.ui-v9 .v9-config{display:none;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;}
+      body.ui-v9 .v9-config:not(.hidden){display:flex;}
+      body.ui-v9 .v9-tabs-wrap{display:inline-flex !important;align-items:center;gap:4px;padding:4px !important;border-radius:14px !important;background:#f8fafc !important;border:1px solid #dbe4f3 !important;box-shadow:none !important;}
+      body.ui-v9 .view-tab{padding:7px 12px !important;border-radius:10px !important;font-size:10px !important;min-height:30px !important;}
+      body.ui-v9 .v9-summary-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+      body.ui-v9 .v9-summary-inline > div{padding:6px 10px !important;min-height:30px !important;border-radius:12px !important;box-shadow:none !important;margin:0 !important;}
+      body.ui-v9 .v9-summary-inline span{font-size:10px !important;}
+      body.ui-v9 .v9-summary-inline #w1, body.ui-v9 .v9-summary-inline #s1, body.ui-v9 .v9-summary-inline #all1, body.ui-v9 .v9-summary-inline #w2, body.ui-v9 .v9-summary-inline #s2, body.ui-v9 .v9-summary-inline #all2{font-size:10px !important;}
+      body.ui-v9 #dbStatus{min-height:30px !important;height:30px !important;padding:0 10px !important;font-size:10px !important;border-radius:999px !important;box-shadow:none !important;white-space:nowrap;}
+      body.ui-v9 #modernSearchWrap{min-width:220px !important;max-width:220px !important;width:220px !important;padding:4px 8px !important;border-radius:14px !important;box-shadow:none !important;}
+      body.ui-v9 .modern-search-icon{width:24px !important;height:24px !important;box-shadow:none !important;}
+      body.ui-v9 #globalSearch{width:150px !important;max-width:150px !important;min-width:150px !important;font-size:10px !important;font-weight:600 !important;}
+      body.ui-v9 #dateFilterGroup{min-height:30px !important;padding:2px 6px !important;border-radius:12px !important;box-shadow:none !important;}
+      body.ui-v9 #dateFilterGroup select, body.ui-v9 #dateFilterGroup button{min-height:26px !important;height:26px !important;font-size:9px !important;}
+      body.ui-v9 #filterAttendanceDetail, body.ui-v9 #filterUnitMode{min-height:30px !important;height:30px !important;font-size:10px !important;min-width:122px !important;padding-left:10px !important;padding-right:26px !important;border-radius:12px !important;}
+      body.ui-v9 #btnExport, body.ui-v9 #btnSummary{min-height:30px !important;height:30px !important;padding:0 12px !important;font-size:10px !important;border-radius:12px !important;box-shadow:none !important;}
+      body.ui-v9 #salaryConfigPanel, body.ui-v9 #mangkirConfigPanel{padding:6px !important;border-radius:12px !important;gap:6px !important;box-shadow:none !important;}
+      body.ui-v9 #salaryConfigPanel select, body.ui-v9 #salaryConfigPanel input, body.ui-v9 #mangkirConfigPanel select, body.ui-v9 #mangkirConfigPanel input{min-height:28px !important;height:28px !important;font-size:10px !important;}
+      body.ui-v9 #btnApplySalary, body.ui-v9 #btnApplyMangkir{min-height:28px !important;height:28px !important;font-size:10px !important;}
+      body.ui-v9 #lastUpdateInfo{display:none !important;}
+      body.ui-v9 .table-container{margin:0 8px 8px !important;border-radius:14px !important;box-shadow:none !important;min-height:0;}
+      body.ui-v9 thead tr:first-child th{padding:7px 6px !important;font-size:9px !important;height:28px !important;}
+      body.ui-v9 thead tr:nth-child(2) th{top:28px !important;height:30px !important;padding:4px !important;}
+      body.ui-v9 td{padding:5px 6px !important;font-size:10px !important;}
+      body.ui-v9 .sticky-no{width:38px !important;min-width:38px !important;max-width:38px !important;}
+      body.ui-v9 .sticky-id{left:38px !important;width:112px !important;min-width:112px !important;max-width:112px !important;}
+      body.ui-v9 .sticky-name{left:150px !important;width:210px !important;min-width:210px !important;max-width:210px !important;}
+      body.ui-v9 .col-section-fixed{width:120px !important;min-width:120px !important;}
+      body.ui-v9 .col-posisi-fixed{width:130px !important;min-width:130px !important;}
+      body.ui-v9 .col-join-fixed{width:92px !important;min-width:92px !important;}
+      body.ui-v9 .col-status-fixed{width:96px !important;min-width:96px !important;}
+      body.ui-v9 .attendance-col{min-width:72px !important;}
+      body.ui-v9 .loading-overlay{align-items:flex-start !important;justify-content:flex-end !important;padding:16px !important;background:rgba(15,23,42,.08) !important;}
+      body.ui-v9 .loading-content{margin-top:62px !important;min-width:300px !important;padding:16px !important;border-radius:16px !important;}
+      body.ui-v9 .loading-content .spinner{width:24px !important;height:24px !important;margin-bottom:8px !important;}
+      body.ui-v9 .loading-content .progress-bar-container{margin:10px 0 6px 0 !important;}
+      body.ui-v9 .loading-content button{min-height:30px !important;height:30px !important;font-size:10px !important;}
+      @media (max-width: 1180px){
+        body.ui-v9 .v9-right{width:100%;justify-content:flex-start;}
+        body.ui-v9 #modernSearchWrap{width:190px !important;min-width:190px !important;max-width:190px !important;}
+        body.ui-v9 #globalSearch{width:120px !important;min-width:120px !important;max-width:120px !important;}
+      }
+      @media (max-width: 860px){
+        body.ui-v9 .v9-left, body.ui-v9 .v9-right{width:100%;}
+        body.ui-v9 #modernSearchWrap, body.ui-v9 #filterAttendanceDetail, body.ui-v9 #filterUnitMode, body.ui-v9 #dateFilterGroup{width:100% !important;max-width:none !important;min-width:0 !important;}
+        body.ui-v9 #globalSearch{width:100% !important;min-width:0 !important;max-width:none !important;}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function moveIf(el, parent){ if(el && parent && el.parentNode !== parent) parent.appendChild(el); }
+
+  function buildCompactLayout(){
+    const dashboard = document.getElementById('mainDashboard');
+    if(!dashboard || !dashboard.children[1]) return;
+    const controls = dashboard.children[1];
+    const tabWrap = document.getElementById('tabAttend')?.parentElement;
+    const salary = document.getElementById('salaryConfigPanel');
+    const mangkir = document.getElementById('mangkirConfigPanel');
+    const searchWrap = document.getElementById('modernSearchWrap');
+    const dateGroup = document.getElementById('dateFilterGroup');
+    const filterAttendance = document.getElementById('filterAttendanceDetail');
+    const filterUnit = document.getElementById('filterUnitMode');
+    const btnExport = document.getElementById('btnExport');
+    const btnSummary = document.getElementById('btnSummary');
+    const dbStatus = document.getElementById('dbStatus');
+    const w1 = document.getElementById('w1');
+    const w2 = document.getElementById('w2');
+    const card1 = w1 ? w1.closest('div.bg-blue-50\\/80, div[class*="bg-blue-50"]') : null;
+    const card2 = w2 ? w2.closest('div.bg-orange-50\\/80, div[class*="bg-orange-50"]') : null;
+    let summaryWrap = null;
+    if(card1 && card2 && card1.parentElement === card2.parentElement) summaryWrap = card1.parentElement;
+    else if(card1) summaryWrap = card1.parentElement;
+    if(summaryWrap) summaryWrap.classList.add('v9-summary-inline');
+    if(tabWrap) tabWrap.classList.add('v9-tabs-wrap');
+
+    const shell = document.createElement('div');
+    shell.className = 'v9-toolbar';
+    const row1 = document.createElement('div'); row1.className = 'v9-row';
+    const row1Left = document.createElement('div'); row1Left.className = 'v9-left';
+    const row1Right = document.createElement('div'); row1Right.className = 'v9-right';
+    const row2 = document.createElement('div'); row2.className = 'v9-row';
+    const row2Left = document.createElement('div'); row2Left.className = 'v9-left';
+    const row2Right = document.createElement('div'); row2Right.className = 'v9-right';
+    const row3 = document.createElement('div'); row3.className = 'v9-config';
+
+    moveIf(tabWrap, row1Left);
+    moveIf(summaryWrap, row1Right);
+    moveIf(dbStatus, row1Right);
+
+    moveIf(searchWrap, row2Left);
+    moveIf(dateGroup, row2Right);
+    moveIf(filterAttendance, row2Right);
+    moveIf(filterUnit, row2Right);
+    moveIf(btnExport, row2Right);
+    moveIf(btnSummary, row2Right);
+
+    if(salary) moveIf(salary, row3);
+    if(mangkir) moveIf(mangkir, row3);
+
+    row1.append(row1Left, row1Right);
+    row2.append(row2Left, row2Right);
+    shell.append(row1, row2, row3);
+
+    controls.innerHTML = '';
+    controls.appendChild(shell);
+    controls.dataset.v9Ready = '1';
+  }
+
+  function hideLastUpdate(){
+    const panel = document.getElementById('lastUpdateInfo');
+    if(panel){ panel.classList.add('hidden'); panel.style.display = 'none'; panel.innerHTML = ''; }
+  }
+
+  function patchLastUpdate(){
+    const originalDisplay = window.displayLastUpdate;
+    if(originalDisplay && !originalDisplay.__v9Patched){
+      window.displayLastUpdate = function(){
+        const res = originalDisplay.apply(this, arguments);
+        hideLastUpdate();
+        return res;
+      };
+      window.displayLastUpdate.__v9Patched = true;
+    }
+    window.renderLastUpdateBar = hideLastUpdate;
+    hideLastUpdate();
+  }
+
+  function patchCompactRender(){
+    const fn = window.gabungkanDanRender;
+    if(typeof fn !== 'function' || fn.__v9Compact) return;
+    let raf = 0;
+    const wrapped = function(){
+      if(raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(function(){
+        raf = 0;
+        fn.apply(window, []);
+      });
+    };
+    wrapped.__v9Compact = true;
+    wrapped.__v9Original = fn;
+    window.gabungkanDanRender = wrapped;
+  }
+
+  function applyViewState(){
+    const row3 = document.querySelector('.v9-config');
+    const view = (typeof currentViewMode !== 'undefined' ? currentViewMode : window.currentViewMode) || 'ATTENDANCE';
+    if(!row3) return;
+    if(view === 'SALARY' || view === 'MANGKIR') row3.classList.remove('hidden');
+    else row3.classList.add('hidden');
+  }
+
+  function initV9(){
+    document.body.classList.remove('ui-v7');
+    document.body.classList.remove('ui-v8');
+    document.body.classList.add('ui-v9');
+    ensureV9Style();
+    buildCompactLayout();
+    patchLastUpdate();
+    patchCompactRender();
+    applyViewState();
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initV9);
+  else initV9();
+  window.addEventListener('load', initV9);
+  setTimeout(initV9, 250);
+  setTimeout(initV9, 1200);
+  document.addEventListener('click', function(ev){
+    const target = ev.target.closest('#tabAttend,#tabOT,#tabSalary,#tabMangkir,#tabTurnout,#btnApplySalary,#btnApplyMangkir');
+    if(target) setTimeout(applyViewState, 0);
+  }, true);
+})();
+</script>
+
+
+<script id="summary-turnout-require-v10">
+(function(){
+  const STORAGE_KEY = 'hoplun_turnout_rows_v1';
+
+  function normalizeId(val){
+    return String(val || '').toUpperCase().replace(/\s+/g, '').trim();
+  }
+
+  function getCurrentView(){
+    try {
+      if (typeof currentViewMode !== 'undefined' && currentViewMode) return currentViewMode;
+    } catch(e) {}
+    return window.currentViewMode || '';
+  }
+
+  function restoreTurnoutRows(){
+    if (Array.isArray(window.turnoutRows) && window.turnoutRows.length) return window.turnoutRows;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return Array.isArray(window.turnoutRows) ? window.turnoutRows : [];
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed.rows)) {
+        window.turnoutRows = parsed.rows;
+        window.turnoutFileName = parsed.fileName || window.turnoutFileName || '';
+        const display = document.getElementById('turnoutFileDisplay');
+        if (display && parsed.fileName) display.value = parsed.fileName;
+      }
+    } catch (e) {
+      console.warn('restoreTurnoutRows v10 gagal', e);
+    }
+    return Array.isArray(window.turnoutRows) ? window.turnoutRows : [];
+  }
+
+  function buildTurnoutIdSet(rows){
+    const set = new Set();
+    (rows || []).forEach(r => {
+      const id = normalizeId((r && (r.idNo || r.id || r.ID || r['ID NO'] || r['ID_NO'])) || '');
+      if (id) set.add(id);
+    });
+    return set;
+  }
+
+  const previousOpenSummary = window.openSummary;
+  window.openSummary = function(){
+    const view = getCurrentView();
+    if (view !== 'ATTENDANCE') {
+      return previousOpenSummary.apply(this, arguments);
+    }
+
+    const turnoutRows = restoreTurnoutRows();
+    if (!turnoutRows.length) {
+      if (typeof window.showAlert === 'function') {
+        window.showAlert(
+          'Peringatan',
+          'Summary Kehadiran membutuhkan data <b>TURN OVER / Karyawan Keluar</b>.<br>Silakan upload data TURN OVER dulu, lalu klik <b>Summary</b> lagi.'
+        );
+      } else {
+        alert('Summary Kehadiran membutuhkan data TURN OVER / Karyawan Keluar. Silakan upload data TURN OVER dulu.');
+      }
+      return;
+    }
+
+    const turnoutIdSet = buildTurnoutIdSet(turnoutRows);
+    const originalApply = (typeof applyAllFiltersFast === 'function') ? applyAllFiltersFast : window.applyAllFiltersFast;
+    if (typeof originalApply !== 'function') {
+      return previousOpenSummary.apply(this, arguments);
+    }
+
+    const filteredApply = function(){
+      const rows = originalApply.apply(this, arguments) || [];
+      return rows.filter(row => !turnoutIdSet.has(normalizeId(row && row.id)));
+    };
+
+    let restoreGlobalApply = null;
+    try {
+      restoreGlobalApply = applyAllFiltersFast;
+      applyAllFiltersFast = filteredApply;
+    } catch(e) {}
+
+    const restoreWindowApply = window.applyAllFiltersFast;
+    window.applyAllFiltersFast = filteredApply;
+
+    try {
+      const result = previousOpenSummary.apply(this, arguments);
+      const summaryContent = document.getElementById('summaryContent');
+      if (summaryContent && !document.getElementById('summaryTurnoutInfoV10')) {
+        const info = document.createElement('div');
+        info.id = 'summaryTurnoutInfoV10';
+        info.className = 'mb-2 text-[11px] text-slate-600';
+        info.innerHTML = 'Summary ini sudah otomatis <b>mengurangi karyawan yang ada di data TURN OVER / Karyawan Keluar</b> berdasarkan <b>ID</b>.';
+        summaryContent.prepend(info);
+      }
+      return result;
+    } finally {
+      window.applyAllFiltersFast = restoreWindowApply || originalApply;
+      try {
+        applyAllFiltersFast = restoreGlobalApply || originalApply;
+      } catch(e) {}
+    }
+  };
+})();
+</script>
+
+
+
+
+<script id="perf-stabilizer-v12">
+(function(){
+  function removeSummaryCriteriaBar(){
+    const bar = document.getElementById('summaryCriteriaBarV11');
+    if(bar) bar.remove();
+    const style = document.getElementById('summaryCriteriaStyleV11');
+    if(style) style.remove();
+    const oldTimer = window.__summaryCriteriaBarTimerV11;
+    if(oldTimer) clearTimeout(oldTimer);
+  }
+
+  function getActiveView(){
+    try {
+      if (typeof currentViewMode !== 'undefined' && currentViewMode) return currentViewMode;
+    } catch(e) {}
+    return window.currentViewMode || 'ATTENDANCE';
+  }
+
+  function setTabClass(id, activeClass, active){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.className = 'view-tab ' + (active ? activeClass : 'inactive');
+  }
+
+  let renderQueued = false;
+  let renderRunning = false;
+  let rerenderRequested = false;
+
+  function scheduleMainRender(reason){
+    removeSummaryCriteriaBar();
+    if (renderRunning) {
+      rerenderRequested = true;
+      return;
+    }
+    if (renderQueued) return;
+    renderQueued = true;
+
+    const runner = function(){
+      renderQueued = false;
+      renderRunning = true;
+      const status = document.getElementById('dbStatus');
+      const oldStatus = status ? status.innerHTML : '';
+      if (status && reason === 'tab-switch') status.innerHTML = '⏳ Memuat menu...';
+      const job = function(){
+        try {
+          if (typeof window.gabungkanDanRender === 'function') {
+            const fn = window.gabungkanDanRender.__perfV12Original || window.gabungkanDanRender;
+            fn.apply(window, []);
+          }
+        } finally {
+          renderRunning = false;
+          if (status && oldStatus && String(status.innerHTML).includes('Memuat menu')) status.innerHTML = oldStatus;
+          if (rerenderRequested) {
+            rerenderRequested = false;
+            scheduleMainRender('rerender');
+          }
+        }
+      };
+      if (window.requestIdleCallback) {
+        requestIdleCallback(job, { timeout: 180 });
+      } else {
+        setTimeout(job, 24);
+      }
+    };
+
+    requestAnimationFrame(runner);
+  }
+
+  function patchGlobalRenderQueue(){
+    const current = window.gabungkanDanRender;
+    if (typeof current !== 'function' || current.__perfV12Wrapped) return;
+    const wrapped = function(){ scheduleMainRender('generic'); };
+    wrapped.__perfV12Wrapped = true;
+    wrapped.__perfV12Original = current;
+    window.gabungkanDanRender = wrapped;
+  }
+
+  function updatePanelsForView(view){
+    const salary = document.getElementById('salaryConfigPanel');
+    const mangkir = document.getElementById('mangkirConfigPanel');
+    const dateGroup = document.getElementById('dateFilterGroup');
+    const filterAttendance = document.getElementById('filterAttendanceDetail');
+    const btnSummary = document.getElementById('btnSummary');
+
+    if (salary) salary.classList.toggle('hidden', view !== 'SALARY');
+    if (mangkir) mangkir.classList.toggle('hidden', view !== 'MANGKIR');
+    if (dateGroup) dateGroup.style.display = (view === 'ATTENDANCE' || view === 'OVERTIME') ? 'flex' : 'none';
+    if (filterAttendance) filterAttendance.style.display = view === 'ATTENDANCE' ? 'block' : 'none';
+    if (btnSummary) btnSummary.style.display = (view === 'ATTENDANCE' || view === 'MANGKIR') ? 'inline-flex' : 'none';
+  }
+
+  function applyView(view){
+    const current = getActiveView();
+    if (current === view) return;
+    try { currentViewMode = view; } catch(e) {}
+    window.currentViewMode = view;
+
+    setTabClass('tabAttend', 'active-attend', view === 'ATTENDANCE');
+    setTabClass('tabOT', 'active-ot', view === 'OVERTIME');
+    setTabClass('tabSalary', 'active-salary', view === 'SALARY');
+    setTabClass('tabMangkir', 'active-mangkir', view === 'MANGKIR');
+    setTabClass('tabTurnout', 'active-turnout', view === 'TURNOUT');
+
+    updatePanelsForView(view);
+
+    if (view === 'TURNOUT') {
+      const dateGroup = document.getElementById('dateFilterGroup');
+      const filterAttendance = document.getElementById('filterAttendanceDetail');
+      const btnSummary = document.getElementById('btnSummary');
+      if (dateGroup) dateGroup.style.display = 'none';
+      if (filterAttendance) filterAttendance.style.display = 'none';
+      if (btnSummary) btnSummary.style.display = 'none';
+      try { if (typeof filters !== 'undefined') filters = {}; } catch(e) {}
+      if (typeof window.restoreTurnoutState === 'function') window.restoreTurnoutState();
+    }
+
+    if (typeof normalizeFiltersForCurrentView === 'function') {
+      try { normalizeFiltersForCurrentView(); } catch(e) {}
+    }
+
+    scheduleMainRender('tab-switch');
+  }
+
+  function rebindTab(id, view){
+    const oldEl = document.getElementById(id);
+    if (!oldEl || oldEl.dataset.perfV12Bound === '1') return;
+    const newEl = oldEl.cloneNode(true);
+    newEl.dataset.perfV12Bound = '1';
+    oldEl.parentNode.replaceChild(newEl, oldEl);
+    newEl.addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      applyView(view);
+      return false;
+    });
+  }
+
+  function patchTabBindings(){
+    rebindTab('tabAttend', 'ATTENDANCE');
+    rebindTab('tabOT', 'OVERTIME');
+    rebindTab('tabSalary', 'SALARY');
+    rebindTab('tabMangkir', 'MANGKIR');
+    rebindTab('tabTurnout', 'TURNOUT');
+  }
+
+  function patchLoaderGuard(){
+    if (window.__perfV12LoaderGuard) return;
+    window.__perfV12LoaderGuard = setInterval(function(){
+      const overlay = document.getElementById('loadingOverlay');
+      if (!overlay || overlay.classList.contains('hidden')) return;
+      const countText = String(document.getElementById('loadingFileCount')?.textContent || '').trim();
+      const pctText = String(document.getElementById('loadingProgressText')?.textContent || '').trim();
+      const detailText = String(document.getElementById('loadingDetailText')?.textContent || '').trim().toLowerCase();
+      const m = countText.match(/(\d+)\s*\/\s*(\d+)/);
+      const allDone = pctText === '100%' || (m && m[1] === m[2] && m[2] !== '0');
+      const stalled = (pctText === '0%' || pctText === '1%' || pctText === '2%') && detailText.includes('background');
+      if (allDone) {
+        setTimeout(function(){ if (overlay && !overlay.classList.contains('hidden')) overlay.classList.add('hidden'); }, 800);
+      } else if (stalled && m && m[2] === '0') {
+        setTimeout(function(){
+          const overlay2 = document.getElementById('loadingOverlay');
+          const countText2 = String(document.getElementById('loadingFileCount')?.textContent || '').trim();
+          if (overlay2 && !overlay2.classList.contains('hidden') && countText2 === countText) {
+            overlay2.classList.add('hidden');
+          }
+        }, 5000);
+      }
+    }, 1200);
+  }
+
+  function init(){
+    removeSummaryCriteriaBar();
+    patchGlobalRenderQueue();
+    patchTabBindings();
+    patchLoaderGuard();
+    updatePanelsForView(getActiveView());
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+  window.addEventListener('load', init);
+  setTimeout(init, 250);
+  setTimeout(init, 1200);
+})();
+</script>
+
+
+<script>
+(function(){
+  function normalizeText(value){
+    return String(value == null ? '' : value)
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function getActiveView(){
+    try {
+      return window.currentViewMode || currentViewMode || 'ATTENDANCE';
+    } catch (e) {
+      return window.currentViewMode || 'ATTENDANCE';
+    }
+  }
+
+  function buildBaseSearchIndex(row){
+    if (!row) return '';
+    if (row.__v13SearchBase) return row.__v13SearchBase;
+    const baseParts = [
+      row.id, row.name, row.section, row.position, row.joinDate, row.status,
+      row.idColor
+    ];
+    row.__v13SearchBase = normalizeText(baseParts.join(' '));
+    return row.__v13SearchBase;
+  }
+
+  function buildViewSearchIndex(row, view){
+    if (!row) return '';
+    const cacheKey = '__v13Search_' + view;
+    if (row[cacheKey]) return row[cacheKey];
+
+    let extraParts = [];
+    if (view === 'SALARY') {
+      extraParts = [row.mkLalu, row.mkIni, row.gajiLalu, row.gajiIni, row.selisih];
+    } else if (view === 'MANGKIR') {
+      extraParts = [row.mangkirCount, row.mangkirDates];
+    } else if (view === 'TURNOUT') {
+      extraParts = [
+        row.no, row.nama, row.idNo, row.section, row.positionTitle, row.joinDate,
+        row.category, row.reasonOfOut, row.resignedDate, row.declaredReason,
+        row.prosedur, row.status, row.sewerGrading, row.caraPembayaran, row.tglTransfer
+      ];
+    }
+
+    row[cacheKey] = normalizeText(extraParts.join(' '));
+    return row[cacheKey];
+  }
+
+  function queryMatchesRow(row, query, view){
+    const normalized = normalizeText(query);
+    if (!normalized) return true;
+    const tokens = normalized.split(' ').filter(Boolean);
+    if (!tokens.length) return true;
+
+    const haystack = (buildBaseSearchIndex(row) + ' ' + buildViewSearchIndex(row, view)).trim();
+    if (!haystack) return false;
+    for (const token of tokens) {
+      if (!haystack.includes(token)) return false;
+    }
+    return true;
+  }
+
+  function patchApplyAllFilters(){
+    const currentApply = window.applyAllFiltersFast || window.__applyAllFiltersFast || null;
+    if (typeof currentApply !== 'function' || currentApply.__v13SearchPatched) return;
+
+    const enhancedApply = function(){
+      const input = document.getElementById('globalSearch');
+      const rawQuery = input ? String(input.value || '').trim() : '';
+      if (!rawQuery) return currentApply.apply(this, arguments);
+
+      const originalValue = input.value;
+      input.value = '';
+      let baseRows = [];
+      try {
+        baseRows = currentApply.apply(this, arguments) || [];
+      } finally {
+        input.value = originalValue;
+      }
+
+      const activeView = getActiveView();
+      return baseRows.filter(row => queryMatchesRow(row, rawQuery, activeView));
+    };
+
+    enhancedApply.__v13SearchPatched = true;
+    enhancedApply.__v13Original = currentApply;
+    window.applyAllFiltersFast = enhancedApply;
+    try { applyAllFiltersFast = enhancedApply; } catch (e) {}
+  }
+
+  function fastRenderSearch(){
+    if (typeof window.renderTable === 'function') {
+      window.renderTable();
+      return;
+    }
+    try {
+      if (typeof renderTable === 'function') renderTable();
+      else if (typeof window.gabungkanDanRender === 'function') window.gabungkanDanRender();
+    } catch (e) {
+      if (typeof window.gabungkanDanRender === 'function') window.gabungkanDanRender();
+    }
+  }
+
+  function bindFastSearch(){
+    const input = document.getElementById('globalSearch');
+    if (!input || input.dataset.v13FastSearch === '1') return;
+
+    const cloned = input.cloneNode(true);
+    cloned.value = input.value;
+    cloned.dataset.v13FastSearch = '1';
+    input.parentNode.replaceChild(cloned, input);
+
+    let debounceTimer = null;
+    let rafId = null;
+
+    function runSearch(immediate){
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+      }
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+
+      const exec = function(){
+        rafId = requestAnimationFrame(function(){
+          fastRenderSearch();
+
+          const keyword = normalizeText(cloned.value);
+          if (!keyword) return;
+          const activeView = getActiveView();
+          if (activeView === 'TURNOUT') return;
+
+          const rows = Array.isArray(window.databaseGlobal) ? window.databaseGlobal : [];
+          const matches = rows.filter(function(r){
+            return normalizeText(r && r.id) === keyword || normalizeText(r && r.name) === keyword;
+          });
+          if (matches.length === 1 && typeof window.openTimeRecord === 'function') {
+            window.openTimeRecord(matches[0].id);
+          }
+        });
+      };
+
+      if (immediate) exec();
+      else debounceTimer = setTimeout(exec, 80);
+    }
+
+    cloned.addEventListener('input', function(){ runSearch(false); });
+    cloned.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        runSearch(true);
+      }
+    });
+    cloned.addEventListener('search', function(){ runSearch(true); });
+  }
+
+  function init(){
+    patchApplyAllFilters();
+    bindFastSearch();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  window.addEventListener('load', init);
+  setTimeout(init, 200);
+  setTimeout(init, 1000);
+})();
+</script>
+
+
+
+<script id="view-consistency-v14">
+(function(){
+  function resolveViewFromClasses(){
+    const checks = [
+      ['tabTurnout','active-turnout','TURNOUT'],
+      ['tabMangkir','active-mangkir','MANGKIR'],
+      ['tabSalary','active-salary','SALARY'],
+      ['tabOT','active-ot','OVERTIME'],
+      ['tabAttend','active-attend','ATTENDANCE']
+    ];
+    for (const [id, cls, view] of checks) {
+      const el = document.getElementById(id);
+      if (el && el.classList.contains(cls)) return view;
+    }
+    return '';
+  }
+
+  function getView(){
+    const classView = resolveViewFromClasses();
+    if (classView) return classView;
+    try {
+      if (typeof currentViewMode !== 'undefined' && currentViewMode) return currentViewMode;
+    } catch (e) {}
+    return window.currentViewMode || window.__activeViewV14 || 'ATTENDANCE';
+  }
+
+  function setView(view){
+    window.__activeViewV14 = view;
+    window.currentViewMode = view;
+    try { currentViewMode = view; } catch (e) {}
+  }
+
+  function setTabState(view){
+    const mapping = {
+      tabAttend: ['ATTENDANCE', 'active-attend'],
+      tabOT: ['OVERTIME', 'active-ot'],
+      tabSalary: ['SALARY', 'active-salary'],
+      tabMangkir: ['MANGKIR', 'active-mangkir'],
+      tabTurnout: ['TURNOUT', 'active-turnout']
+    };
+    Object.keys(mapping).forEach(function(id){
+      const el = document.getElementById(id);
+      if (!el) return;
+      const def = mapping[id];
+      el.className = 'view-tab ' + (def[0] === view ? def[1] : 'inactive');
+      el.dataset.v14View = def[0];
+    });
+  }
+
+  function setPanelState(view){
+    const salaryPanel = document.getElementById('salaryConfigPanel');
+    const mangkirPanel = document.getElementById('mangkirConfigPanel');
+    const dateFilterGroup = document.getElementById('dateFilterGroup');
+    const filterAttendanceDetail = document.getElementById('filterAttendanceDetail');
+    const btnSummary = document.getElementById('btnSummary');
+
+    if (salaryPanel) salaryPanel.classList.toggle('hidden', view !== 'SALARY');
+    if (mangkirPanel) mangkirPanel.classList.toggle('hidden', view !== 'MANGKIR');
+    if (dateFilterGroup) dateFilterGroup.style.display = (view === 'ATTENDANCE' || view === 'OVERTIME') ? 'flex' : 'none';
+    if (filterAttendanceDetail) filterAttendanceDetail.style.display = view === 'ATTENDANCE' ? 'block' : 'none';
+    if (btnSummary) btnSummary.style.display = (view === 'ATTENDANCE' || view === 'MANGKIR') ? 'inline-flex' : 'none';
+  }
+
+  let queued = false;
+  let lastReason = 'init';
+  const baseRender = window.gabungkanDanRender;
+  function renderNow(){
+    const view = getView();
+    setView(view);
+    setTabState(view);
+    setPanelState(view);
+    if (view === 'TURNOUT' && typeof window.restoreTurnoutState === 'function') {
+      try { window.restoreTurnoutState(); } catch (e) {}
+    }
+    if (typeof baseRender === 'function') return baseRender.apply(window, []);
+  }
+
+  function queueRender(reason){
+    lastReason = reason || lastReason;
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function(){
+      queued = false;
+      renderNow();
+    });
+  }
+
+  window.gabungkanDanRender = function(){
+    return renderNow();
+  };
+
+  if (typeof window.renderTable === 'function') {
+    const originalRenderTable = window.renderTable;
+    window.renderTable = function(){
+      const view = getView();
+      setView(view);
+      return originalRenderTable.apply(this, arguments);
+    };
+  }
+
+  if (typeof window.applyAllFiltersFast === 'function') {
+    const originalApply = window.applyAllFiltersFast;
+    window.applyAllFiltersFast = function(){
+      const view = getView();
+      setView(view);
+      return originalApply.apply(this, arguments);
+    };
+  }
+
+  function bindOne(id, view){
+    const oldEl = document.getElementById(id);
+    if (!oldEl) return;
+    const newEl = oldEl.cloneNode(true);
+    newEl.dataset.v14Bound = '1';
+    oldEl.parentNode.replaceChild(newEl, oldEl);
+    newEl.addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setView(view);
+      setTabState(view);
+      setPanelState(view);
+      if (typeof normalizeFiltersForCurrentView === 'function') {
+        try { normalizeFiltersForCurrentView(); } catch (e) {}
+      }
+      if (view === 'TURNOUT' && typeof window.restoreTurnoutState === 'function') {
+        try { window.restoreTurnoutState(); } catch (e) {}
+      }
+      queueRender('tab:' + view);
+      return false;
+    }, {capture:true});
+  }
+
+  function bindTabs(){
+    bindOne('tabAttend', 'ATTENDANCE');
+    bindOne('tabOT', 'OVERTIME');
+    bindOne('tabSalary', 'SALARY');
+    bindOne('tabMangkir', 'MANGKIR');
+    bindOne('tabTurnout', 'TURNOUT');
+  }
+
+  function init(){
+    bindTabs();
+    const view = getView();
+    setView(view);
+    setTabState(view);
+    setPanelState(view);
+    queueRender('init');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 </script>
 
